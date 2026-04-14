@@ -24,6 +24,7 @@ class Product(models.Model):
     talla = models.CharField(choices=TALLAS)
     created_at = models.DateTimeField(auto_now_add=True)
     update_at = models.DateField(auto_now=True)
+    # los productos también tienen imagenes, 3. Cómo lo añado?
 
 class Venta(models.Model):
     comprador = models.ForeignKey(User,on_delete=models.SET_NULL, null=True, related_name="comprador")
