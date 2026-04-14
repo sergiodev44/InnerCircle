@@ -11,6 +11,7 @@ class Profile(models.Model):
     # max length?
     bio = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    img_perfil = models.ImageField()
 
 class Product(models.Model):
     ESTADO_PRODUCTO = [("DISP","disponible"), ("RESV","reservado"), ("VEND","vendido")]
