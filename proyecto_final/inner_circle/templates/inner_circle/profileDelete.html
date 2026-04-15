@@ -1,4 +1,12 @@
 {% extends "base.html" %}
 {% block main %}
 <h3>Desear Borrar el Perfil de Usuario?</h3>
+
+<form method="post">
+    {% csrf_token %}
+    {{form.as_p()}}
+    <button type="submit">eliminar</button>
+</form>
+<a href="{% url 'inner_circle:profile_detail' pk=profile.pk %}">cancelar</a>
+
 {% endblock main %}
