@@ -1,4 +1,27 @@
 {% extends "base.html" %}
 {% block main %}
+<h2>Home</h2>
 <h3>Lista de Productos</h3>
+{% if request.user.is_authenticated %}
+    <p>{{user.profile.name_tag}}</p>
+    <form method="post" action="logout">
+    {% csrf_token %}
+    {{form.as_p()}}
+    <button type="submit">logout</button>
+    </form>
+{% else %}
+    <p>ve a la pantalla de login</p>
+    <a href="{% url 'login' %}">login</a>
+{% endif %}
+
+{% if request.objects.all %}
+    {% for p in productos  %}
+        {{p.name}}
+        {{p.precio}}
+        {{p.talla}}
+    {% endfor %}
+{% else %}
+    <p>no hay productos aún<p>
+{% endif %}
+
 {% endblock main %}
