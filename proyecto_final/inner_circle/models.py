@@ -11,7 +11,7 @@ class Profile(models.Model):
     # max length?
     bio = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-    img_perfil = models.ImageField()
+    img_perfil = models.ImageField
 
 class Product(models.Model):
     ESTADO_PRODUCTO = [("DISP","disponible"), ("RESV","reservado"), ("VEND","vendido")]
@@ -25,6 +25,7 @@ class Product(models.Model):
     talla = models.CharField(choices=TALLAS)
     created_at = models.DateTimeField(auto_now_add=True)
     update_at = models.DateField(auto_now=True)
+    img_prod = models.ImageField
     # los productos también tienen imagenes, 3. Cómo lo añado?
 
 class Venta(models.Model):
