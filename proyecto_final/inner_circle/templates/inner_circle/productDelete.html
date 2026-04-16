@@ -4,7 +4,7 @@
 
 <form method="post">
     {% csrf_token %}
-    {{form.as_p()}}
+    {{form.as_p}}
     <button type="submit">eliminar</button>
 </form>
 <a href="{% url 'inner_circle:proudcto_detail' pk=producto.pk %}">cancelar</a>

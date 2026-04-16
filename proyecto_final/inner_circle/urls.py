@@ -13,7 +13,7 @@ urlpatterns = [
     path('perfil/<int:pk>/eliminar/', profileDeleteView.as_view(), name="profile_delete"),
 
     # Products
-    path('productos/', productListView.as_view(), name="product_list"),
+    path('', productListView.as_view(), name="producto_list"),
     path('productos/amigos/', amigosProductListView.as_view(), name="amigos_product_list"),
     path('productos/crear/', productCreateView.as_view(), name="product_create"),
     path('productos/<int:pk>/actualizar/', productUpdateView.as_view(), name="product_update"),

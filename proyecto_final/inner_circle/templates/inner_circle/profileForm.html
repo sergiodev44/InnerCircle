@@ -3,7 +3,7 @@
 <h3>Actualizar Perfil de Usuario</h3>
 <form method="post">
     {% csrf_token %}
-    {{form.as_p()}}
+    {{form.as_p}}
     <button type="submit">enviar</button>
 </form>
 <a href="{% url 'inner_circle:profile_detail' %}">cancelar</a>

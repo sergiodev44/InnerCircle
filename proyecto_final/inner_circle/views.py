@@ -13,7 +13,7 @@ class profileUpdateView(LoginRequiredMixin,UserPassesTestMixin,UpdateView):
     model = Profile
     template_name = "profileForm.html"
     form_class = ProfileForm
-    success_url = reverse_lazy("inner:profile_detail")
+    success_url = reverse_lazy("inner_circle:profile_detail")
     def test_func(self):
         return self.request.user.pk == self.get_object().user.pk
 
@@ -22,17 +22,16 @@ class profileDeleteView(LoginRequiredMixin,UserPassesTestMixin,DeleteView):
     template_name = "profileDelete.html"
     def test_func(self):
         return self.request.user.pk == self.get_object().user.pk
-
-    # montar el logout
-    #success_url = reverse_lazy("....")
+    success_url = reverse_lazy("inner_circle:producto_list")
+    # success_url = reverse_lazy("logout")
     
 
 # PRODUCTS
-class productListView(DetailView):
+class productListView(ListView):
     model = Product
     template_name = "productList.html"
     
-class amigosProductListView(DetailView):
+class amigosProductListView(ListView):
     model = Product
     template_name = "amigosProductList.html"
     
@@ -83,7 +82,7 @@ class resenaCreateView(LoginRequiredMixin,CreateView):
     model = Resena
     form_class = ResenaForm
     template_name = "resenaForm.html"
-    success_url = reverse_lazy("inner:resena_list")
+    success_url = reverse_lazy("inner:producto_list")
 
 # class resenaDetailView:
 #     pass
@@ -91,6 +90,6 @@ class resenaCreateView(LoginRequiredMixin,CreateView):
 class resenaDeleteView(LoginRequiredMixin, UserPassesTestMixin,DeleteView):
     model = Resena
     template_name = "resenaDelete.html"
-    success_url = reverse_lazy("inner:resena_list")
+    success_url = reverse_lazy("inner:producto_list")
     def test_func(self):
         return self.request.user.pk == self.get_object().user.pk

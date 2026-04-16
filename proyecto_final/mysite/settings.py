@@ -55,7 +55,7 @@ ROOT_URLCONF = 'mysite.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': ["inner_circle/templates/inner_circle"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -117,6 +117,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-LOGIN_URL = "/"
-LOGOUT_URL = "/"
+LOGIN_URL = "inner/"
+LOGOUT_URL = "inner/"
 
+AUTH_USER_MODEL = "inner_circle.User"

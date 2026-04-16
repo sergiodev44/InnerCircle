@@ -6,7 +6,7 @@
     <p>{{user.profile.name_tag}}</p>
     <form method="post" action="logout">
     {% csrf_token %}
-    {{form.as_p()}}
+    {{form.as_p}}
     <button type="submit">logout</button>
     </form>
 {% else %}
