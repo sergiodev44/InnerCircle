@@ -1,4 +1,12 @@
 {% extends "base.html" %}
 {% block main %}
 <h3>Seguro que quieres borrar este producto?</h3>
+
+<form method="post">
+    {% csrf_token %}
+    {{form.as_p}}
+    <button type="submit">eliminar</button>
+</form>
+<a href="{% url 'inner_circle:proudcto_detail' pk=producto.pk %}">cancelar</a>
+
 {% endblock main %}

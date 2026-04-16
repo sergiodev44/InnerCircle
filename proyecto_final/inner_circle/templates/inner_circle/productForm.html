@@ -1,4 +1,11 @@
 {% extends "base.html" %}
 {% block main %}
 <h3>Formulario de Productos</h3>
+<form method="post">
+    {% csrf_token %}
+    {{form.as_p}}
+    <button type="submit">enviar</button>
+</form>
+<a href="{% url 'inner_circle:home' %}">cancelar</a>
+
 {% endblock main %}
