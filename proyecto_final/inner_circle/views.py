@@ -1,28 +1,27 @@
-# from django.shortcuts import render
 from .models import Profile, Product, Venta, Resena
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DeleteView, UpdateView, DetailView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from .forms import ProfileForm
+from .forms import ProfileForm, ProductForm, ResenaForm
 
 # PROFILE
-class profileUpdateView(UpdateView,LoginRequiredMixin,UserPassesTestMixin):
+class profileDetailView(DetailView):
+    model = Profile
+    template_name = "profileDetail.html"
+    
+class profileUpdateView(LoginRequiredMixin,UserPassesTestMixin,UpdateView):
     model = Profile
     template_name = "profileForm.html"
     form_class = ProfileForm
     success_url = reverse_lazy("inner:profile_detail")
-
     def test_func(self):
-        if self.user.pk == request.user.pk:
-            return False
+        return self.request.user.pk == self.get_object().user.pk
 
-class profileDeleteView(DeleteView,LoginRequiredMixin,UserPassesTestMixin):
+class profileDeleteView(LoginRequiredMixin,UserPassesTestMixin,DeleteView):
     model = Profile
     template_name = "profileDelete.html"
-
     def test_func(self):
-        if self.user.pk == request.user.pk:
-            return False
+        return self.request.user.pk == self.get_object().user.pk
 
     # montar el logout
     #success_url = reverse_lazy("....")
@@ -32,70 +31,66 @@ class profileDeleteView(DeleteView,LoginRequiredMixin,UserPassesTestMixin):
 class productListView(DetailView):
     model = Product
     template_name = "productList.html"
-    pass
+    
 class amigosProductListView(DetailView):
     model = Product
     template_name = "amigosProductList.html"
-    pass
+    
 class productDetailView(DetailView):
     model = Product
-    template_name = "ProductDetail.html"
-    pass
+    template_name = "productDetail.html"
+    
 
-class productCreateView(CreateView,LoginRequiredMixin):
+class productCreateView(LoginRequiredMixin,CreateView,):
     model = Product
-    # form_class = productForm
+    form_class = ProductForm
     template_name = "productForm.html"
     success_url = reverse_lazy("inner:producto_list")
-    pass
-class productUpdateView(UpdateView,LoginRequiredMixin,UserPassesTestMixin):
+    
+class productUpdateView(LoginRequiredMixin,UserPassesTestMixin,UpdateView,):
     model = Product
-    # form_class = productForm
+    form_class = ProductForm
     template_name = "productForm.html"
     success_url = reverse_lazy("inner:producto_list")
     def test_func(self):
-        if self.user.pk == request.user.pk:
-            return False
-    pass
-class productDeleteView(DeleteView,LoginRequiredMixin,UserPassesTestMixin):
+        return self.request.user.pk == self.get_object().user.pk
+    
+class productDeleteView(LoginRequiredMixin,UserPassesTestMixin,DeleteView):
     model = Product
     template_name = "productDelete.html"
     success_url = reverse_lazy("inner:producto_list")
-
     def test_func(self):
-        if self.user.pk == request.user.pk:
-            return False
-    pass
+        return self.request.user.pk == self.get_object().user.pk
+
 
 
 # VENTAS
-class ventaDetailView(DetailView,LoginRequiredMixin,UserPassesTestMixin):
+class ventaDetailView(LoginRequiredMixin,UserPassesTestMixin,DetailView):
     model = Venta
     template_name = "ventaDetail.html"
-
     def test_func(self):
-        if self.user.pk == request.user.pk:
-            return False
-    pass
+        return self.request.user.pk == self.get_object().user.pk
 
 
-class resenaCreateView(CreateView,LoginRequiredMixin):
+# RESEÑAS
+class resenaDetailView(LoginRequiredMixin,UserPassesTestMixin,DetailView):
     model = Resena
-    # form_class = resenaForm
+    template_name = "resenaDetail.html"
+    def test_func(self):
+        return self.request.user.pk == self.get_object().user.pk
+    
+class resenaCreateView(LoginRequiredMixin,CreateView):
+    model = Resena
+    form_class = ResenaForm
     template_name = "resenaForm.html"
     success_url = reverse_lazy("inner:resena_list")
-    pass
 
 # class resenaDetailView:
 #     pass
 
-class resenaDeleteView(DeleteView, LoginRequiredMixin, UserPassesTestMixin):
+class resenaDeleteView(LoginRequiredMixin, UserPassesTestMixin,DeleteView):
     model = Resena
     template_name = "resenaDelete.html"
     success_url = reverse_lazy("inner:resena_list")
-     # only the review writer can delete its own review
-     # ill fix this later
     def test_func(self):
-        if self.user.pk == request.user.pk:
-            return False
-    pass
+        return self.request.user.pk == self.get_object().user.pk

@@ -1,15 +1,39 @@
-from django.forms import ModelForm, forms
+from django import forms 
+from django.forms import ModelForm
 from .models import Profile, Product, Venta, Resena
 
-class ProfileForm(ModelForm):
+class ProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ["user", "nombre_tag", "bio", "img_perfil"]
+        fields = ["nombre_tag", "bio", "img_perfil"]
         widgets = {
-            "user": forms.TextInput(attrs={}),
             "nombre_tag": forms.TextInput(attrs={}),
             "bio": forms.Textarea(attrs={'cols':30,'rows':2}),
             "img_perfil": forms.ClearableFileInput(attrs={}),
             
         }
-         
+
+
+class ProductForm(forms.ModelForm):
+    class Meta:
+        model = Product
+        fields = ["nombre","descripcion","estado","precio","talla"]
+        widgets = {
+            "nombre": forms.TextInput(attrs={}),
+            "description": forms.Textarea(attrs={'cols':30, 'rows':3}),
+            "estado": forms.Select(attrs={}),
+            "talla": forms.Select(attrs={}),
+            "img_prod": forms.ClearableFileInput(attrs={}),
+
+        }
+
+
+class ResenaForm(forms.ModelForm): 
+        model = Resena
+        fields = ["escritor", "recibidor","venta","contenido","puntuacion"]
+        widgets = {
+             "escritor": forms.Select(attrs={}),
+             "recibidor": forms.Select(attrs={}),
+             "venta": forms.Select(attrs={}),
+             "contenido": forms.Textarea(attrs={'cols':30, 'rows':12}),
+        }
