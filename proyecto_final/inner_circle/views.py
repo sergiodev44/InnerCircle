@@ -1,8 +1,15 @@
-from .models import Profile, Product, Venta, Resena
+from .models import Profile, Product, Venta, Resena, User
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DeleteView, UpdateView, DetailView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from .forms import ProfileForm, ProductForm, ResenaForm
+from .forms import ProfileForm, ProductForm, ResenaForm, UserForm
+
+# USER
+class userCreateView(CreateView,):
+    model = User
+    form_class = UserForm
+    template_name = "UserForm.html"
+    success_url = reverse_lazy("login")
 
 # PROFILE
 class profileDetailView(DetailView):

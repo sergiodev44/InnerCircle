@@ -1,6 +1,18 @@
-from django import forms 
+from django import forms
 from django.forms import ModelForm
-from .models import Profile, Product, Venta, Resena
+from .models import Profile, Product, Venta, Resena, User
+from django.contrib.auth.forms import UserCreationForm
+
+class UserForm(UserCreationForm):
+     class Meta:
+        model = User
+        fields = ["username", "mobile"]
+        widgets = {
+             "username" : forms.TextInput(attrs={}),
+             "mobile" : forms.NumberInput(attrs={}),
+        }
+
+
 
 class ProfileForm(forms.ModelForm):
     class Meta:
