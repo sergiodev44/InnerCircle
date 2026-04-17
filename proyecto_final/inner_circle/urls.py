@@ -1,12 +1,14 @@
 
 from django.urls import path
-from .views import profileDetailView,profileUpdateView, profileDeleteView
+from .views import profileDetailView,profileUpdateView, profileDeleteView, userCreateView
 from .views import productListView, amigosProductListView, productCreateView, productUpdateView, productDeleteView
 from .views import ventaDetailView, resenaDetailView, resenaCreateView, resenaDeleteView
 
 app_name = "inner_circle"
 
 urlpatterns = [
+    # User
+    path('user/create', userCreateView.as_view(), name="user_create"),
     # Profile
     path('perfil/<int:pk>/', profileDetailView.as_view(), name="profile_detail"),
     path('perfil/<int:pk>/actualizar/', profileUpdateView.as_view(), name="profile_update"),

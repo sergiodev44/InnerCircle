@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    "inner_circle",
+    "inner_circle.apps.InnerCircleConfig",
 ]
 
 MIDDLEWARE = [
@@ -117,7 +117,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-LOGIN_URL = "inner/"
-LOGOUT_URL = "inner/"
+LOGIN_REDIRECT_URL = "/inner/"
+LOGOUT_REDIRECT_URL = "/inner/"
 
 AUTH_USER_MODEL = "inner_circle.User"

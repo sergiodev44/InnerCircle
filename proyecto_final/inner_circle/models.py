@@ -3,7 +3,7 @@ from django.contrib.auth.models import AbstractUser
 
 
 class User(AbstractUser):
-    pass
+    mobile = models.IntegerField()
 
 class Profile(models.Model):
     user = models.OneToOneField(User,on_delete=models.CASCADE)

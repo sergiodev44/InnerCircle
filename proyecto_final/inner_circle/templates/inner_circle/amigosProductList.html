@@ -1,10 +1,9 @@
 {% extends "base.html" %}
 {% block main %}
-<h2>Home</h2>
-<a href="{% url 'inner_circle:amigos_product_list'}">productos de amigos</a>
-<h3>Lista de Productos</h3>
+<a href="{% url 'inner_circle:producto_list' %}">productos global</a>
+<a href="{% url 'inner_circle:p' %}">perfil de usuario</a>
+<h3>Lista de Productos de Amigos</h3>
 {% if request.user.is_authenticated %}
-    <a href="{% url 'inner_circle:profile_detail' pk=request.user.profile.pk %}">ir a perfil de usuario</a>
     <p>{{user.profile.name_tag}}</p>
     <p>{{user.username}}</p>
     <form method="post" action="{% url 'logout' %}">
@@ -26,5 +25,4 @@
 {% else %}
     <p>no hay productos aún<p>
 {% endif %}
-
 {% endblock main %}
