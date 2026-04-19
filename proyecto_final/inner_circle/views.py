@@ -37,6 +37,7 @@ class profileDeleteView(LoginRequiredMixin,UserPassesTestMixin,DeleteView):
 class productListView(ListView):
     model = Product
     template_name = "productList.html"
+    context_object_name = "productos"
     
 class amigosProductListView(ListView):
     model = Product
@@ -45,13 +46,14 @@ class amigosProductListView(ListView):
 class productDetailView(DetailView):
     model = Product
     template_name = "productDetail.html"
+    context_object_name = "producto"
     
 
 class productCreateView(LoginRequiredMixin,CreateView,):
     model = Product
     form_class = ProductForm
     template_name = "productForm.html"
-    success_url = reverse_lazy("inner:producto_list")
+    success_url = reverse_lazy("inner_circle:producto_list")
     
 class productUpdateView(LoginRequiredMixin,UserPassesTestMixin,UpdateView,):
     model = Product

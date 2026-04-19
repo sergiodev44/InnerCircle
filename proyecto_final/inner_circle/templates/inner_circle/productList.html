@@ -1,10 +1,11 @@
 {% extends "base.html" %}
 {% block main %}
 <h2>Home</h2>
-<a href="{% url 'inner_circle:amigos_product_list'}">productos de amigos</a>
+<a href="{% url 'inner_circle:amigos_product_list' %}">productos de amigos</a>
 <h3>Lista de Productos</h3>
 {% if request.user.is_authenticated %}
     <a href="{% url 'inner_circle:profile_detail' pk=request.user.profile.pk %}">ir a perfil de usuario</a>
+    <a href="{% url 'inner_circle:product_create' %}">crear producto</a>
     <p>{{user.profile.name_tag}}</p>
     <p>{{user.username}}</p>
     <form method="post" action="{% url 'logout' %}">
@@ -17,11 +18,14 @@
     <a href="{% url 'login' %}">login</a>
 {% endif %}
 
-{% if request.objects.all %}
+{% if productos %}
     {% for p in productos  %}
-        {{p.name}}
+    <p>
+        {{p.nombre}}
         {{p.precio}}
         {{p.talla}}
+        <a href='{% url "inner_circle:product_delete" pk=p.pk %}'>borrar</a>
+    </p>
     {% endfor %}
 {% else %}
     <p>no hay productos aún<p>

@@ -29,10 +29,10 @@ class ProfileForm(forms.ModelForm):
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        fields = ["nombre","descripcion","estado","precio","talla"]
+        fields = ["nombre","descripcion","estado","precio","talla","img_prod"]
         widgets = {
             "nombre": forms.TextInput(attrs={}),
-            "description": forms.Textarea(attrs={'cols':30, 'rows':3}),
+            "descripcion": forms.Textarea(attrs={'cols':30, 'rows':3}),
             "estado": forms.Select(attrs={}),
             "talla": forms.Select(attrs={}),
             "img_prod": forms.ClearableFileInput(attrs={}),

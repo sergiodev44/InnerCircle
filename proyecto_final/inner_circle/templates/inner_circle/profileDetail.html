@@ -1,4 +1,5 @@
 {% extends "base.html" %}
 {% block main %}
 <h3>Detallas del Perfil</h3>
+<a href="{% url 'inner_circle:profile_update' pk=request.user.pk %}">actualizar perfil</a>
 {% endblock main %}
