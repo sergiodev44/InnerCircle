@@ -57,3 +57,13 @@ class Resena(models.Model):
 
 # Idea opcional es meter como mensajes para negociar precios,
 #  interacción vendedor / comprador ??? TBD
+
+
+class FriendRequest(models.Model):
+    estado_peticion = [("pendiente", "pendiente"), ("aceptada", "aceptada"), ("rechazada", "rechazada")]
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="envia_solicitud")
+    recibidor2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name="recibe_solicitud")
+    status = models.CharField(choices=estado_peticion, default="pendiente")
+    sent_at = models.DateTimeField(auto_now_add=True)
+    # añadir un mensaje opcional?
+

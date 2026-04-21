@@ -1,8 +1,8 @@
-from .models import Profile, Product, Venta, Resena, User
+from .models import Profile, Product, Venta, Resena, User, FriendRequest
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DeleteView, UpdateView, DetailView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from .forms import ProfileForm, ProductForm, ResenaForm, UserForm
+from .forms import ProfileForm, ProductForm, ResenaForm, UserForm, FriendRequestForm
 
 # USER
 class userCreateView(CreateView,):
@@ -114,6 +114,18 @@ class resenaCreateView(LoginRequiredMixin,CreateView):
 class resenaDeleteView(LoginRequiredMixin, UserPassesTestMixin,DeleteView):
     model = Resena
     template_name = "resenaDelete.html"
-    success_url = reverse_lazy("inner:producto_list")
+    success_url = reverse_lazy("inner_circle:producto_list")
     def test_func(self):
         return self.request.user.pk == self.get_object().user.pk
+    
+
+# FriendRequest
+class frequestCreateView(LoginRequiredMixin, UserPassesTestMixin,CreateView):
+    model = FriendRequest
+    template_name = "frequestForm.html"
+    form_class = FriendRequestForm
+    def get_success_url(self):
+        return  reverse_lazy("inner_circle:profile_detail",
+        kwargs={"pk" : self.get_object().user.profile.pk}
+        )
+  
