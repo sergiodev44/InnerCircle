@@ -1,5 +1,28 @@
 {% extends "base.html" %}
 {% block main %}
-<h3>Detallas del Perfil</h3>
-<a href="{% url 'inner_circle:profile_update' pk=request.user.pk %}">actualizar perfil</a>
+<h3>Detalles del Perfil</h3>
+
+{% if perfil.img_perfil %}
+    <img src="{{perfil.img_perfil.url}}" alt="" width="40" height="40">
+{% else %}
+    <img src="https://img.freepik.com/premium-vector/vector-flat-illustration-grayscale-avatar-user-profile-person-icon-gender-neutral-silhouette-profile-picture-suitable-social-media-profiles-icons-screensavers-as-templatex9xa_719432-2210.jpg?semt=ais_hybrid&w=740&q=80" width="40" height="40">
+{% endif %}
+
+{% if perfil.nombre_tag  %}
+    <p>{{perfil.nombre_tag}} #{{perfil.user.username}}</p>
+{% else %}
+   <p> Cómo quieres que otros te llamen?</p>
+{% endif %}
+    
+{% if perfil.bio %}
+    <p>{{perfil.bio}}</p>
+{% else %}
+    <p>Cuéntanos quién eres</p>
+{% endif %}
+
+
+    
+
+<a href="{% url 'inner_circle:profile_update' pk=request.user.profile.pk %}">actualizar perfil</a><br>
+<a href="{% url 'inner_circle:producto_list' %}">volver</a>
 {% endblock main %}

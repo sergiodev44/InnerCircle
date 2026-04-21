@@ -14,17 +14,21 @@
     <button type="submit">logout</button>
     </form>
 {% else %}
-    <p>ve a la pantalla de login</p>
+    <p>ve a la pantalla de login
     <a href="{% url 'login' %}">login</a>
+    </p>
 {% endif %}
 
 {% if productos %}
     {% for p in productos  %}
     <p>
+        <img src="{{p.user.profile.img_perfil.url}}" alt="" width="20" height="20">
         {{p.nombre}}
         {{p.precio}}
         {{p.talla}}
+        creador por: {{p.user.profile.nombre_tag}}
         <a href='{% url "inner_circle:product_delete" pk=p.pk %}'>borrar</a>
+        <img src="{{p.img_prod.url}}" alt="" width=200 height=200>
     </p>
     {% endfor %}
 {% else %}

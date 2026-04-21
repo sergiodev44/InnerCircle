@@ -14,10 +14,15 @@ class Profile(models.Model):
     img_perfil = models.ImageField(upload_to="profiles/")
 
 class Product(models.Model):
+    """
+    no incluir zapatos porque no van por tallas
+    productos con medidas específicas por ejemplo correas, 
+    deberían tener un campo opcional de extra info en el form no?
+    """
     ESTADO_PRODUCTO = [("DISP","disponible"), ("RESV","reservado"), ("VEND","vendido")]
     TALLAS = [("S", "pequeña"), ("M", "mediana"), ("L", "grande"), ("XL", "muy grande")]
 
-    user = models.ForeignKey(User,on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey(User,on_delete=models.CASCADE)
     nombre = models.CharField(max_length=200)
     descripcion = models.TextField()
     estado = models.CharField(choices=ESTADO_PRODUCTO)
