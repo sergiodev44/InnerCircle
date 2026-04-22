@@ -22,8 +22,45 @@
 
 
 
-<a href="{% url 'inner_circle:request_create' pk=request.user.profile.pk %}">enviar peticion amistad</a><br>
+<a href="{% url 'inner_circle:frequest_create' pk=request.user.profile.pk %}">enviar peticion amistad</a><br>
 
 <a href="{% url 'inner_circle:profile_update' pk=request.user.profile.pk %}">actualizar perfil</a><br>
 <a href="{% url 'inner_circle:producto_list' %}">volver</a>
+
+<h3>Peticiones de amistad</h3>
+
+{% if frequest %}
+
+{% for fr in frequest  %}
+    <p>{{fr.sender}} {{fr.status}} {{fr.sent_at}}</p>
+    <form method="post" action="{% url 'inner_circle:frequest_respuesta' pk=fr.pk %}">
+        {% csrf_token %}
+        <button type="submit" name="action" value="aceptar">Aceptar</button>
+        <button type="submit" name="action" value="rechazar">Rechazar</button>
+    </form>
+    {% endfor %}
+{% else %}
+        <p>no tienes peticiones de amistad</p>
+    
+    
+{% endif %}
+
+<h3> Lista de amigos </h3>
+
+{% if amigos %}
+    
+    {% for amigo in amigos  %}
+    <form method="post" action="{% url 'inner_circle:friend_remove' pk=amigo.pk %}">
+        {% csrf_token %}
+    {{ amigo.profile.nombre_tag}}
+    <button type="submit" name="action" value="remove">X</button>
+    </form>
+        
+    {% endfor %}
+        
+{% else %} 
+<p>no tienes amigos<p>
+{% endif %}
+    
+    
 {% endblock main %}

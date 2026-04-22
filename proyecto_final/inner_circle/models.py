@@ -4,6 +4,8 @@ from django.contrib.auth.models import AbstractUser
 
 class User(AbstractUser):
     mobile = models.IntegerField()
+    #Atributo para el tema de la amistad
+    friends = models.ManyToManyField('self', symmetrical=True, blank=True)
 
 class Profile(models.Model):
     user = models.OneToOneField(User,on_delete=models.CASCADE)
@@ -66,4 +68,7 @@ class FriendRequest(models.Model):
     status = models.CharField(choices=estado_peticion, default="pendiente")
     sent_at = models.DateTimeField(auto_now_add=True)
     # añadir un mensaje opcional?
+
+    class Meta:
+        unique_together = ["sender", "recibidor2"]
 

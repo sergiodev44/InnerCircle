@@ -3,6 +3,8 @@ from django.urls import reverse_lazy
 from django.views.generic import ListView, DeleteView, UpdateView, DetailView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .forms import ProfileForm, ProductForm, ResenaForm, UserForm, FriendRequestForm
+from django.views import View
+from django.shortcuts import redirect
 
 # USER
 class userCreateView(CreateView,):
@@ -16,6 +18,12 @@ class profileDetailView(DetailView):
     model = Profile
     template_name = "profileDetail.html"
     context_object_name = "perfil"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["frequest"] = self.get_object().user.recibe_solicitud.all()
+        context["amigos"] = self.get_object().user.friends.all()
+        return context
     
 class profileUpdateView(LoginRequiredMixin,UserPassesTestMixin,UpdateView):
     model = Profile
@@ -44,9 +52,13 @@ class productListView(ListView):
     template_name = "productList.html"
     context_object_name = "productos"
     
-class amigosProductListView(ListView):
+class amigosProductListView(ListView, LoginRequiredMixin):
     model = Product
     template_name = "amigosProductList.html"
+    context_object_name = "amigos_productos"
+    def get_queryset(self):
+        return Product.objects.filter(user__in=self.request.user.friends.all())
+    
     
 class productDetailView(DetailView):
     model = Product
@@ -120,12 +132,55 @@ class resenaDeleteView(LoginRequiredMixin, UserPassesTestMixin,DeleteView):
     
 
 # FriendRequest
-class frequestCreateView(LoginRequiredMixin, UserPassesTestMixin,CreateView):
+class frequestCreateView(LoginRequiredMixin,CreateView):
     model = FriendRequest
-    template_name = "frequestForm.html"
+    template_name = "fRequestForm.html"
     form_class = FriendRequestForm
+
+    def form_valid(self, form):
+        if form.instance.recibidor2 == self.request.user:
+            form.add_error("No puedes enviar solicitud a tí mismo")
+            return self.form_invalid(form)
+        form.instance.sender = self.request.user 
+        return super().form_valid(form)
+    
     def get_success_url(self):
         return  reverse_lazy("inner_circle:profile_detail",
-        kwargs={"pk" : self.get_object().user.profile.pk}
+        kwargs={"pk" : self.request.user.profile.pk}
         )
   
+# REMEMBER #
+### Esta bien necesita revisión ###
+class frRequestResponseView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        fr = FriendRequest.objects.get(pk=self.kwargs['pk'])
+        return self.request.user == fr.recibidor2
+    
+    def post(self, request, *args, **kwargs):
+        fr = FriendRequest.objects.get(pk=self.kwargs['pk'])
+        action = request.POST.get('action')
+
+        if action == 'aceptar':
+            request.user.friends.add(fr.sender)
+            fr.delete()
+        elif action == 'rechazar':
+            fr.delete()
+
+        return redirect('inner_circle:profile_detail', pk=request.user.profile.pk)
+    
+
+# REMEMBER #
+### Esta bien necesita revisión ###
+class friendDeleteView(LoginRequiredMixin, View):
+
+    def post(self, request, *args, **kwargs):
+        amigo = User.objects.get(pk=self.kwargs['pk'])
+        action = request.POST.get('action')
+
+        if action == 'remove':
+            request.user.friends.remove(amigo)
+        
+        return redirect('inner_circle:profile_detail', pk=request.user.profile.pk )
+    
+
+    

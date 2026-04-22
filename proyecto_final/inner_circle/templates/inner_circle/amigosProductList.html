@@ -1,11 +1,10 @@
 {% extends "base.html" %}
 {% block main %}
 <a href="{% url 'inner_circle:producto_list' %}">productos global</a>
-<a href="{% url 'inner_circle:p' %}">perfil de usuario</a>
+<a href="{% url 'inner_circle:profile_detail' pk=request.user.profile.pk %}">perfil de usuario</a>
 <h3>Lista de Productos de Amigos</h3>
 {% if request.user.is_authenticated %}
-    <p>{{user.profile.name_tag}}</p>
-    <p>{{user.username}}</p>
+    <p>>>{{user.profile.nombre_tag}}<<</p>
     <form method="post" action="{% url 'logout' %}">
     {% csrf_token %}
     {{form.as_p}}
@@ -16,7 +15,29 @@
     <a href="{% url 'login' %}">login</a>
 {% endif %}
 
-{% if request.objects.all %}
+
+{% if amigos_productos %}  
+        {% for p in amigos_productos %}
+        <p>
+        
+        {% if p.user.profile.img_perfil %}
+            <img src="{{p.user.profile.img_perfil.url}}" alt="" width="20" height="20">
+        {% endif %}
+            
+        {{p.nombre}}
+        {{p.precio}}
+        {{p.talla}}
+        creador por: {{p.user.profile.nombre_tag}}
+        
+        <img src="{{p.img_prod.url}}" alt="" width=200 height=200>
+        </p>
+     
+        {% endfor %}
+    
+{% endif %}
+    
+
+{% if productos %}
     {% for p in productos  %}
         {{p.name}}
         {{p.precio}}

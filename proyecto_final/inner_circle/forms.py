@@ -40,7 +40,8 @@ class ProductForm(forms.ModelForm):
         }
 
 
-class ResenaForm(forms.ModelForm): 
+class ResenaForm(forms.ModelForm):
+    class Meta:
         model = Resena
         fields = ["escritor", "recibidor","venta","contenido","puntuacion"]
         widgets = {
@@ -51,8 +52,9 @@ class ResenaForm(forms.ModelForm):
         }
 
 class FriendRequestForm(forms.ModelForm):
+    class Meta:
         model = FriendRequest
         fields = ["recibidor2"]
         widgets = {
-             "recibidor2" : forms.Select(Attrs={}),
+             "recibidor2" : forms.Select(attrs={}),
         }
