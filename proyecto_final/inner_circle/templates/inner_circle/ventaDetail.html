@@ -1,4 +1,14 @@
 {% extends "base.html" %}
 {% block main %}
 <h3>Detallas de la venta</h3>
+    
+       <p> Vendedor: {{venta.vendedor.profile.nombre_tag}} </p>
+       <p> Comprador: {{venta.comprador.profile.nombre_tag}} </p>
+       <p> Product: {{product.nombre}} </p>
+        <p>Talla: {{product.talla}} </p>
+        <p>Precio: {{producto.precio}}€ </p>
+        <p>Importe Total: {{venta.precio}}€ </p>
+
+<a href="{% url 'inner_circle:profile_detail' pk=venta.comprador.pk %}">volver perfil</a>
+   
 {% endblock main %}
