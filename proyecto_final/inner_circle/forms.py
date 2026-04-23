@@ -1,6 +1,6 @@
 from django import forms
 from django.forms import ModelForm
-from .models import Profile, Product, Venta, Resena, User
+from .models import Profile, Product, Venta, Resena, User, FriendRequest
 from django.contrib.auth.forms import UserCreationForm
 
 class UserForm(UserCreationForm):
@@ -40,7 +40,8 @@ class ProductForm(forms.ModelForm):
         }
 
 
-class ResenaForm(forms.ModelForm): 
+class ResenaForm(forms.ModelForm):
+    class Meta:
         model = Resena
         fields = ["escritor", "recibidor","venta","contenido","puntuacion"]
         widgets = {
@@ -48,4 +49,12 @@ class ResenaForm(forms.ModelForm):
              "recibidor": forms.Select(attrs={}),
              "venta": forms.Select(attrs={}),
              "contenido": forms.Textarea(attrs={'cols':30, 'rows':12}),
+        }
+
+class FriendRequestForm(forms.ModelForm):
+    class Meta:
+        model = FriendRequest
+        fields = ["recibidor2"]
+        widgets = {
+             "recibidor2" : forms.Select(attrs={}),
         }
