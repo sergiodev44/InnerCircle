@@ -52,9 +52,8 @@ class Venta(models.Model):
      
 
 class Resena(models.Model):
-    # NOTA = [("1", "1"),("2","2"),("3","3"),("4","4"),("5","5")]
-    escritor = models.ForeignKey(User,on_delete=models.SET_NULL, null=True, related_name="escritor")
-    recibidor = models.ForeignKey(User,on_delete=models.SET_NULL, null=True, related_name="recibidor")
+    escritor = models.ForeignKey(User,on_delete=models.CASCADE, null=True, related_name="escritor")
+    recibidor = models.ForeignKey(User,on_delete=models.CASCADE, null=True, related_name="recibidor")
     venta = models.ForeignKey(Venta, on_delete=models.CASCADE, related_name="venta")
     contenido = models.TextField()
     puntuacion = models.IntegerField(choices=[(i,str(i)) for i in range(1,6)])
@@ -77,4 +76,15 @@ class FriendRequest(models.Model):
 
     class Meta:
         unique_together = ["sender", "recibidor2"]
+
+class Mensaje(models.Model):
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="m_enviados")
+    receptor = models.ForeignKey(User, on_delete=models.CASCADE, related_name="m_recibidos")
+    producto = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="mensajes")
+    contenido = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+    
 

@@ -1,67 +1,85 @@
 {% extends "base.html" %}
 {% block main %}
 <h3>Detalles del Perfil</h3>
+ {% if profile.img_perfil %}
+        <img src="{{profile.img_perfil.url}}" alt="" width="90" height="90">
+    {% else %}
+        <img src="https://img.freepik.com/premium-vector/vector-flat-illustration-grayscale-avatar-user-profile-person-icon-gender-neutral-silhouette-profile-picture-suitable-social-media-profiles-icons-screensavers-as-templatex9xa_719432-2210.jpg?semt=ais_hybrid&w=740&q=80" width="40" height="40">
+    {% endif %}
 
-{% if perfil.img_perfil %}
-    <img src="{{perfil.img_perfil.url}}" alt="" width="40" height="40">
-{% else %}
-    <img src="https://img.freepik.com/premium-vector/vector-flat-illustration-grayscale-avatar-user-profile-person-icon-gender-neutral-silhouette-profile-picture-suitable-social-media-profiles-icons-screensavers-as-templatex9xa_719432-2210.jpg?semt=ais_hybrid&w=740&q=80" width="40" height="40">
-{% endif %}
-
-{% if perfil.nombre_tag  %}
-    <p>{{perfil.nombre_tag}} #{{perfil.user.username}}</p>
+{% if profile.nombre_tag  %}
+    <p>{{profile.nombre_tag}} #{{profile.user.username}}</p>
 {% else %}
    <p> Cómo quieres que otros te llamen?</p>
 {% endif %}
     
-{% if perfil.bio %}
-    <p>{{perfil.bio}}</p>
+{% if profile.bio %}
+    <p>{{profile.bio}}</p>
 {% else %}
     <p>Cuéntanos quién eres</p>
 {% endif %}
 
 
-<a href="{% url 'inner_circle:mis_productos' pk=request.user.profile.pk %}">mis productos</a><br>
-<a href="{% url 'inner_circle:profile_notis' pk=request.user.profile.pk %}">notificaciones</a><br>
+{% if profile.user.pk == request.user.pk %}
 <a href="{% url 'inner_circle:frequest_create' pk=request.user.profile.pk %}">enviar peticion amistad</a><br>
-
 <a href="{% url 'inner_circle:profile_update' pk=request.user.profile.pk %}">actualizar perfil</a><br>
-<a href="{% url 'inner_circle:producto_list' %}">volver</a>
-
-<h3>Peticiones de amistad</h3>
-
-{% if frequest %}
-
-{% for fr in frequest  %}
-    <p>{{fr.sender}} {{fr.status}} {{fr.sent_at}}</p>
-    <form method="post" action="{% url 'inner_circle:frequest_respuesta' pk=fr.pk %}">
-        {% csrf_token %}
-        <button type="submit" name="action" value="aceptar">Aceptar</button>
-        <button type="submit" name="action" value="rechazar">Rechazar</button>
-    </form>
-    {% endfor %}
-{% else %}
-        <p>no tienes peticiones de amistad</p>
-    
+<a href="{% url 'inner_circle:resena_create' pk=request.user.profile.pk %}">crear reseña</a><br> 
     
 {% endif %}
 
+
+{% if user.is_authenticated %}
+
+<form method="post" action="{% url 'logout' %}">
+    {% csrf_token %}
+    {{form.as_p}}
+    <button type="submit">logout</button>
+    </form>
+{% else %}
+    <p>ve a la pantalla de login
+    <a href="{% url 'login' %}">login</a>
+    </p>
+    
+{% endif %}
+    
+<h3> Mis Reseñas </h3>
+
+{% if mis_resenas %}
+    
+    {% for r in mis_resenas  %}
+     {% if r.escritor.profile.img_perfil %}
+        <img src="{{r.escritor.profile.img_perfil.url}}" alt="" width="20" height="20">
+    {% else %}
+        <img src="https://img.freepik.com/premium-vector/vector-flat-illustration-grayscale-avatar-user-profile-person-icon-gender-neutral-silhouette-profile-picture-suitable-social-media-profiles-icons-screensavers-as-templatex9xa_719432-2210.jpg?semt=ais_hybrid&w=740&q=80" width="20" height="20">
+    {% endif %}
+
+        {{r.escritor.profile.nombre_tag}} - {{r.puntuacion}} - {{r.contenido}} - {{r.created_at}}
+    {% endfor %}
+        
+{% else %}
+<p> El usuario no tiene reseñas </p>
+    
+{% endif %}
+    
+
+{% if profile.user.pk == request.user.pk %}
 <h3> Lista de amigos </h3>
 
-{% if amigos %}
-    
-    {% for amigo in amigos  %}
-    <form method="post" action="{% url 'inner_circle:friend_remove' pk=amigo.pk %}">
-        {% csrf_token %}
-    {{ amigo.profile.nombre_tag}}
-    <button type="submit" name="action" value="remove">X</button>
-    </form>
+
+    {% if amigos %}
         
-    {% endfor %}
-        
-{% else %} 
-<p>no tienes amigos<p>
+        {% for amigo in amigos  %}
+        <form method="post" action="{% url 'inner_circle:friend_remove' pk=amigo.pk %}">
+            {% csrf_token %}
+        <a  href="{% url 'inner_circle:profile_detail' pk=amigo.profile.pk %}"> {{amigo.profile.nombre_tag}} </a>
+        <button type="submit" name="action" value="remove">X</button>
+        </form>
+            
+        {% endfor %}
+            
+    {% else %} 
+    <p>no tienes amigos<p>
+    {% endif %}
 {% endif %}
-    
     
 {% endblock main %}

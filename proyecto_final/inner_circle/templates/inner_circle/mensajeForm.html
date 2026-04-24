@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block main %}
+<h3>Enviar Mensaje</h3>
+<p>Producto: {{ producto.nombre }}</p>
+<p>Destinatario: {{ receptor.profile.nombre_tag }}</p>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="hidden" name="producto" value="{{ producto.pk }}">
+    <input type="hidden" name="receptor" value="{{ receptor.pk }}">
+    <button type="submit">Enviar</button>
+</form>
+
+<a href="{% url 'inner_circle:conversacion_detail' product_pk=producto.pk user_pk=receptor.pk %}">Volver a conversación</a>
+{% endblock main %}

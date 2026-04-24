@@ -10,6 +10,39 @@
 
 </head>
 <h1>InnerCircle</h1>
+<nav>
+  
+  {% if user.is_authenticated %}
+
+    {% if user.profile.img_perfil %}
+        <img src="{{user.profile.img_perfil.url}}" alt="" width="40" height="40">
+    {% else %}
+        <img src="https://img.freepik.com/premium-vector/vector-flat-illustration-grayscale-avatar-user-profile-person-icon-gender-neutral-silhouette-profile-picture-suitable-social-media-profiles-icons-screensavers-as-templatex9xa_719432-2210.jpg?semt=ais_hybrid&w=740&q=80" width="40" height="40">
+    {% endif %}
+
+    {% if user.profile.nombre_tag  %}
+      <a href="{% url 'inner_circle:profile_detail' pk=request.user.profile.pk %}">{{user.profile.nombre_tag}}</a>
+    {% else %}
+      <a href="{% url 'inner_circle:profile_detail' pk=request.user.profile.pk %}">{{user.username}}</a>
+    {% endif %}
+
+    <a href="{% url 'inner_circle:producto_list' %}"> general</a>
+    <a href="{% url 'inner_circle:mis_productos' pk=request.user.profile.pk %}">mis productos</a>
+    <a href="{% url 'inner_circle:amigos_product_list' %}">productos de amigos</a>
+    <a href="{% url 'inner_circle:product_create' %}">crear producto</a>
+    <a href="{% url 'inner_circle:ventas_list' pk=request.user.profile.pk %}">ventas</a>
+    <a href="{% url 'inner_circle:profile_notis' pk=request.user.profile.pk %}">notificaciones</a>
+   
+
+
+  {% else %}
+   <p>ve a la pantalla de login
+    <a href="{% url 'login' %}">login</a>
+    </p>
+    
+  {% endif %}
+    
+</nav>
 <body>
     {% block main %}
     {% endblock  %}

@@ -1,27 +1,5 @@
 {% extends "base.html" %}
 {% block main %}
-<h2>Home</h2>
-
-
-{% if request.user.is_authenticated %}
-    <h4>>>{{user.profile.nombre_tag}}<<</h4>
-    <a href="{% url 'inner_circle:profile_detail' pk=request.user.profile.pk %}">ir a perfil de usuario</a><br>
-    <a href="{% url 'inner_circle:profile_notis' pk=request.user.profile.pk %}">notificaciones</a><br>
-    <a href="{% url 'inner_circle:amigos_product_list' %}">productos de amigos</a><br>
-    <a href="{% url 'inner_circle:product_create' %}">crear producto</a>
-   
-
-    <form method="post" action="{% url 'logout' %}">
-    {% csrf_token %}
-    {{form.as_p}}
-    <button type="submit">logout</button>
-    </form>
-{% else %}
-    <p>ve a la pantalla de login
-    <a href="{% url 'login' %}">login</a>
-    </p>
-{% endif %}
-
 <h3>General</h3>
 
 {% if productos %}
@@ -37,7 +15,7 @@
        
         {{p.precio}}€ -
         {{p.talla}} -
-        vendedor: {{p.user.profile.nombre_tag}}
+        vendedor:<a  href="{% url 'inner_circle:profile_detail' pk=p.user.profile.pk %}"> {{p.user.profile.nombre_tag}} </a>
         
         
         {% if request.user.pk == p.user.pk  %}
@@ -46,8 +24,9 @@
         {% else %}
                 
                 {% if p.estado == 'DISP' %}
+                    <a href="{% url 'inner_circle:producto_detail' pk=p.pk %}">ver detalles</a>
                     <a href="{% url 'inner_circle:venta_crear' pk=p.pk %}">comprar</a>
-                    {% else %}
+                {% else %}
                     <p>No disponible</p>
                 {% endif %}
                     

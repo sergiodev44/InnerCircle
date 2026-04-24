@@ -19,26 +19,5 @@
         
     {% endif %}
 
-
-<h3>Compras</h3>
-
-    {% if compras %}
-        {% for c in compras  %}
-        <p>{{c.product.nombre}} - {{c.product.talla}} - {{c.importe}}€ - vendedor: {{c.comprador.profile.nombre_tag}}</p>
-        {% endfor %}
-    {% else %}
-            <p>no tienes compras</p>  
-    {% endif %}
-
-<h3>Ventas</h3>
-    {% if ventas %}
-        {% for v in ventas  %}
-        <p>{{v.product.nombre}} - {{v.product.talla}} - {{v.importe}}€</p>
-        {% endfor %}
-    {% else %}
-            <p>no tienes ventas</p>  
-    {% endif %}
-
-    <a href="{% url 'inner_circle:producto_list' %}">volver</a>
    
 {% endblock main %}

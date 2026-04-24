@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block main %}
+<h3>{{ producto.nombre}}</h3>
+<h4>Conversación con {{ otro_usuario.profile.nombre_tag }} </h4>
+
+<div>
+    
+    {% if mensajes %}
+        
+    {% for mensaje in mensajes  %}
+        
+        {% if mensaje.sender == request.user %}
+            <p><strong>{{mensaje.sender.profile.nombre_tag}}</strong></p>
+            <p>{{mensaje.contenido}}</p>
+            <p>{{mensaje.created_at}}</p>
+            
+        {% endif %}
+    {% endfor %}
+        {% else %}
+        <p> escribe un mensaje para uniciar la conversación</p>
+    {% endif %}
+        
+        
+</div>
+
+<form method="post" action="{% url 'inner_circle:mensaje_create' %}">
+    {% csrf_token %}
+    <input type="hidden" name="producto" value="{{ producto.pk}}">
+    <input type="hidden" name="receptor" value="{{ otro_usuario.pk}}">
+    <textarea name="contenido" required></textarea>
+    <button type="submit">enviar</button>
+
+</form>
+
+{% endblock main %}
