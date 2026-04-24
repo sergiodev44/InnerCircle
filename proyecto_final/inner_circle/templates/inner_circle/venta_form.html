@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block main %}
+<h3>Confirmar Compra de {{product.nombre.capitalize}} por {{product.precio}}€</h3>
+
+<p>Estás a punto de comprar este producto</p>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Confirmar compra</button>
+    <a href="{% url 'inner_circle:producto_list' %}">Cancelar</a>
+</form>
+
+{% endblock main %}

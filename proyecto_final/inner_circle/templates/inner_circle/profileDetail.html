@@ -22,6 +22,7 @@
 
 
 
+<a href="{% url 'inner_circle:profile_notis' pk=request.user.profile.pk %}">notificaciones</a><br>
 <a href="{% url 'inner_circle:frequest_create' pk=request.user.profile.pk %}">enviar peticion amistad</a><br>
 
 <a href="{% url 'inner_circle:profile_update' pk=request.user.profile.pk %}">actualizar perfil</a><br>

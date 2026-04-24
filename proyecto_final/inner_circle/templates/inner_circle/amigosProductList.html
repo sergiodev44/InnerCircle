@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 {% block main %}
-<a href="{% url 'inner_circle:producto_list' %}">productos global</a>
+<a href="{% url 'inner_circle:producto_list' %}"> volver productos global</a>
 <a href="{% url 'inner_circle:profile_detail' pk=request.user.profile.pk %}">perfil de usuario</a>
+
 <h3>Lista de Productos de Amigos</h3>
 {% if request.user.is_authenticated %}
     <p>>>{{user.profile.nombre_tag}}<<</p>
@@ -31,19 +32,8 @@
         
         <img src="{{p.img_prod.url}}" alt="" width=200 height=200>
         </p>
-     
         {% endfor %}
-    
+          
 {% endif %}
-    
 
-{% if productos %}
-    {% for p in productos  %}
-        {{p.name}}
-        {{p.precio}}
-        {{p.talla}}
-    {% endfor %}
-{% else %}
-    <p>no hay productos aún<p>
-{% endif %}
 {% endblock main %}

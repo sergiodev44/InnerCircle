@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 
 
 class User(AbstractUser):
@@ -36,14 +37,19 @@ class Product(models.Model):
     # los productos también tienen imagenes, 3. Cómo lo añado?
 
 class Venta(models.Model):
-    comprador = models.ForeignKey(User,on_delete=models.SET_NULL, null=True, related_name="comprador")
-    vendedor = models.ForeignKey(User,on_delete=models.SET_NULL, null=True, related_name="vendedor")
+    ESTADO_VENTA = [("pendiente","pendiente"),("cancelada","cancelada"),("completada","completada")]
+    comprador = models.ForeignKey(User,on_delete=models.CASCADE, related_name="comprador")
+    vendedor = models.ForeignKey(User,on_delete=models.CASCADE, related_name="vendedor")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="prods" )
     importe = models.DecimalField(max_digits=6, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
 
-    def save(self, *args, **kwargs):
+    
+
+    def clean(self):
         if self.comprador == self.vendedor:
-            raise ValueError("error")
-        super().save(*args,**kwargs)
+            raise ValidationError("error")
+     
 
 class Resena(models.Model):
     # NOTA = [("1", "1"),("2","2"),("3","3"),("4","4"),("5","5")]

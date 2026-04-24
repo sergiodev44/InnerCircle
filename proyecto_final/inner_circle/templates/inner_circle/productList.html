@@ -6,6 +6,7 @@
 {% if request.user.is_authenticated %}
     <h4>>>{{user.profile.nombre_tag}}<<</h4>
     <a href="{% url 'inner_circle:profile_detail' pk=request.user.profile.pk %}">ir a perfil de usuario</a><br>
+    <a href="{% url 'inner_circle:profile_notis' pk=request.user.profile.pk %}">notificaciones</a><br>
     <a href="{% url 'inner_circle:amigos_product_list' %}">productos de amigos</a><br>
     <a href="{% url 'inner_circle:product_create' %}">crear producto</a>
    
@@ -21,24 +22,35 @@
     </p>
 {% endif %}
 
-<h3>Lista de Productos</h3>
+<h3>General</h3>
 
 {% if productos %}
     {% for p in productos  %}
+    
     <p>
         
         {% if p.user.profile.img_perfil %}
             <img src="{{p.user.profile.img_perfil.url}}" alt="" width="20" height="20">
         {% endif %}
             
-        {{p.nombre}}
-        {{p.precio}}
-        {{p.talla}}
-        creador por: {{p.user.profile.nombre_tag}}
+        {{p.nombre.capitalize}}
+       
+        {{p.precio}}€ -
+        {{p.talla}} -
+        vendedor: {{p.user.profile.nombre_tag}}
+        
         
         {% if request.user.pk == p.user.pk  %}
         <a href='{% url "inner_circle:product_update" pk=p.pk %}'>editar</a>
         <a href='{% url "inner_circle:product_delete" pk=p.pk %}'>borrar</a>
+        {% else %}
+                
+                {% if p.estado == 'DISP' %}
+                    <a href="{% url 'inner_circle:venta_crear' pk=p.pk %}">comprar</a>
+                    {% else %}
+                    <p>No disponible</p>
+                {% endif %}
+                    
         {% endif %}
             
         <img src="{{p.img_prod.url}}" alt="" width=200 height=200>

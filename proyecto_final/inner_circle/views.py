@@ -4,7 +4,9 @@ from django.views.generic import ListView, DeleteView, UpdateView, DetailView, C
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .forms import ProfileForm, ProductForm, ResenaForm, UserForm, FriendRequestForm
 from django.views import View
+from django.views.generic import TemplateView
 from django.shortcuts import redirect
+from django.shortcuts import render
 
 # USER
 class userCreateView(CreateView,):
@@ -100,11 +102,69 @@ class productDeleteView(LoginRequiredMixin,UserPassesTestMixin,DeleteView):
 
 
 # VENTAS
+
+# REMEMBER #
+### Esta bien necesita revisión ###
+#V1
+# class ventaCreateView(LoginRequiredMixin, CreateView):
+#     model = Venta
+#     fields = []
+
+#     def form_valid(self, form):
+#         product = Product.objects.get(pk=self.kwargs['pk'])
+#         if product.estado == 'VEND':
+#             return self.form_invalid(form)
+#         form.instance.comprador = self.request.user
+#         form.instance.vendedor = product.user
+#         form.instance.product = product
+#         form.instance.importe = product.precio
+#         response = super().form_valid(form)
+#         product.estado = 'VEND'
+#         product.save()
+#         return response
+       
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+#         context['product'] = Product.objects.get(pk=self.kwargs['pk'])
+#         return context
+
+# v2
+class ventaCreateView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        product = Product.objects.get(pk = self.kwargs['pk'])
+        if product.estado == 'VEND':
+            return redirect('inner_circle:product_list')
+        
+        venta = Venta.objects.create(
+            comprador=request.user,
+            vendedor=product.user,
+            product=product,
+            importe=product.precio,
+        )
+
+        product.estado = 'VEND'
+        product.save()
+        return redirect('inner_circle:venta_detail', pk=venta.pk)
+    
+    def get(self, request, *args, **kwargs):
+        product = Product.objects.get(pk=self.kwargs['pk'])
+        context = {'product': product}
+        return render(request, 'inner_circle/venta_form.html', context)
+
+    
+
 class ventaDetailView(LoginRequiredMixin,UserPassesTestMixin,DetailView):
     model = Venta
     template_name = "ventaDetail.html"
+
     def test_func(self):
-        return self.request.user.pk == self.get_object().user.pk
+        venta = self.get_object()
+        return self.request.user in [venta.comprador, venta.vendedor]
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['product'] = Product.objects.get(pk=self.kwargs['pk'])
+        return context
 
 
 # RESEÑAS
@@ -184,3 +244,17 @@ class friendDeleteView(LoginRequiredMixin, View):
     
 
     
+# Notifications
+class profileNotis(LoginRequiredMixin, TemplateView):
+    template_name = "inner_circle/profile_notis.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['frequest'] = FriendRequest.objects.filter(
+            recibidor2=self.request.user,
+            status='pendiente'
+        )
+        context['ventas']= Venta.objects.filter(vendedor=self.request.user)
+        context['compras']= Venta.objects.filter(comprador=self.request.user)
+
+        return context

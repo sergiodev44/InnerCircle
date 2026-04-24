@@ -2,8 +2,9 @@
 from django.urls import path
 from .views import profileDetailView,profileUpdateView, profileDeleteView, userCreateView
 from .views import productListView, amigosProductListView, productCreateView, productUpdateView, productDeleteView
-from .views import ventaDetailView, resenaDetailView, resenaCreateView, resenaDeleteView
+from .views import ventaDetailView, ventaCreateView, resenaDetailView, resenaCreateView, resenaDeleteView
 from .views import frequestCreateView, frRequestResponseView, friendDeleteView
+from .views import profileNotis
 
 app_name = "inner_circle"
 
@@ -25,6 +26,7 @@ urlpatterns = [
     
 
     # Ventas
+    path('products/<int:pk>/comprar', ventaCreateView.as_view(), name="venta_crear"),
     path('venta/<int:pk>/', ventaDetailView.as_view(), name="venta_detail"),
 
     # Reseñas
@@ -36,5 +38,6 @@ urlpatterns = [
     path('perfil/<int:pk>/enviar-peticion', frequestCreateView.as_view(), name="frequest_create"),
     path('frequest/<int:pk>/respuesta/', frRequestResponseView.as_view(), name="frequest_respuesta"),
     path('perfil/<int:pk>/amigos-eliminar/', friendDeleteView.as_view(), name="friend_remove"),
+    path('notificaciones/<int:pk>/', profileNotis.as_view(), name="profile_notis" )
     
 ]

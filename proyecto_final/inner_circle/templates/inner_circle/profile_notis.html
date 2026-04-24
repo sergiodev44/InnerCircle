@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block main %}
+<h3>Notificaciones</h3>
+    
+<h3>Peticiones de Amistad</h3>
+    {% if frequest %}
+
+    {% for fr in frequest  %}
+        <p>{{fr.sender}} {{fr.status}} {{fr.sent_at}}</p>
+        <form method="post" action="{% url 'inner_circle:frequest_respuesta' pk=fr.pk %}">
+            {% csrf_token %}
+            <button type="submit" name="action" value="aceptar">Aceptar</button>
+            <button type="submit" name="action" value="rechazar">Rechazar</button>
+        </form>
+        {% endfor %}
+    {% else %}
+            <p>no tienes peticiones de amistad</p>
+        
+        
+    {% endif %}
+
+
+<h3>Compras</h3>
+
+    {% if compras %}
+        {% for c in compras  %}
+        <p>{{c.product.nombre}} - {{c.product.talla}} - {{c.importe}}€ - vendedor: {{c.comprador.profile.nombre_tag}}</p>
+        {% endfor %}
+    {% else %}
+            <p>no tienes compras</p>  
+    {% endif %}
+
+<h3>Ventas</h3>
+    {% if ventas %}
+        {% for v in ventas  %}
+        <p>{{v.product.nombre}} - {{v.product.talla}} - {{v.importe}}€</p>
+        {% endfor %}
+    {% else %}
+            <p>no tienes ventas</p>  
+    {% endif %}
+
+    <a href="{% url 'inner_circle:producto_list' %}">volver</a>
+   
+{% endblock main %}

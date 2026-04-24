@@ -51,6 +51,7 @@ class ResenaForm(forms.ModelForm):
              "contenido": forms.Textarea(attrs={'cols':30, 'rows':12}),
         }
 
+
 class FriendRequestForm(forms.ModelForm):
     class Meta:
         model = FriendRequest
@@ -58,3 +59,6 @@ class FriendRequestForm(forms.ModelForm):
         widgets = {
              "recibidor2" : forms.Select(attrs={}),
         }
+
+
+
