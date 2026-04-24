@@ -1,7 +1,5 @@
 {% extends "base.html" %}
 {% block main %}
-<a href="{% url 'inner_circle:producto_list' %}"> volver productos global</a>
-<a href="{% url 'inner_circle:profile_detail' pk=request.user.profile.pk %}">perfil de usuario</a>
 
 <h3>Lista de Productos de Amigos</h3>
 {% if request.user.is_authenticated %}
@@ -28,7 +26,7 @@
         {{p.nombre}}
         {{p.precio}}
         {{p.talla}}
-        creador por: {{p.user.profile.nombre_tag}}
+        vendedor: <a  href="{% url 'inner_circle:profile_detail' pk=p.user.profile.pk %}"> {{p.user.profile.nombre_tag}} </a>
         
         <img src="{{p.img_prod.url}}" alt="" width=200 height=200>
         </p>

@@ -1,12 +1,14 @@
-from .models import Profile, Product, Venta, Resena, User, FriendRequest
+from .models import Profile, Product, Venta, Resena, User, FriendRequest, Mensaje, Mensaje
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DeleteView, UpdateView, DetailView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from .forms import ProfileForm, ProductForm, ResenaForm, UserForm, FriendRequestForm
+from .forms import ProfileForm, ProductForm, ResenaForm, UserForm, FriendRequestForm, MensajeForm
 from django.views import View
 from django.views.generic import TemplateView
 from django.shortcuts import redirect
 from django.shortcuts import render
+from django.db.models import Q
+from django.db.models import Q
 
 # USER
 class userCreateView(CreateView,):
@@ -19,12 +21,13 @@ class userCreateView(CreateView,):
 class profileDetailView(DetailView):
     model = Profile
     template_name = "profileDetail.html"
-    context_object_name = "perfil"
+    context_object_name = "profile"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["frequest"] = self.get_object().user.recibe_solicitud.all()
         context["amigos"] = self.get_object().user.friends.all()
+        context["mis_resenas"] = Resena.objects.filter(recibidor=self.get_object().user)
         return context
     
 class profileUpdateView(LoginRequiredMixin,UserPassesTestMixin,UpdateView):
@@ -53,6 +56,8 @@ class productListView(ListView):
     model = Product
     template_name = "productList.html"
     context_object_name = "productos"
+    def get_queryset(self):
+        return Product.objects.exclude(user=self.request.user)
     
 class amigosProductListView(ListView, LoginRequiredMixin):
     model = Product
@@ -172,20 +177,50 @@ class ventaDetailView(LoginRequiredMixin,UserPassesTestMixin,DetailView):
         context = super().get_context_data(**kwargs)
         context['product'] = Product.objects.get(pk=self.kwargs['pk'])
         return context
+    
+
+class ventasList(LoginRequiredMixin, TemplateView):
+    template_name = "inner_circle/ventas_list.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['ventas']= Venta.objects.filter(vendedor=self.request.user)
+        context['compras']= Venta.objects.filter(comprador=self.request.user)
+        return context
 
 
 # RESEÑAS
+
 class resenaDetailView(LoginRequiredMixin,UserPassesTestMixin,DetailView):
     model = Resena
     template_name = "resenaDetail.html"
     def test_func(self):
         return self.request.user.pk == self.get_object().user.pk
     
-class resenaCreateView(LoginRequiredMixin,CreateView):
+class resenaCreateView(LoginRequiredMixin,UserPassesTestMixin,CreateView):
     model = Resena
     form_class = ResenaForm
     template_name = "resenaForm.html"
-    success_url = reverse_lazy("inner:producto_list")
+    
+    def get_success_url(self):
+        return reverse_lazy("inner_circle:venta_detail", kwargs={"pk": self.object.venta.pk})
+    
+    def test_func(self):
+        venta = Venta.objects.get(pk=self.kwargs['pk'])
+        return self.request.user == venta.comprador
+    
+    def form_valid(self, form):
+        venta = Venta.objects.get(pk=self.kwargs['pk'])
+        form.instance.escritor = self.request.user
+        form.instance.recibidor = venta.vendedor
+        form.instance.venta = venta
+        return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['venta'] = Venta.objects.get(pk=self.kwargs['pk'])
+        return context
+    
 
 # class resenaDetailView:
 #     pass
@@ -263,5 +298,67 @@ class profileNotis(LoginRequiredMixin, TemplateView):
         )
         context['ventas']= Venta.objects.filter(vendedor=self.request.user)
         context['compras']= Venta.objects.filter(comprador=self.request.user)
+        # context["resenas_recibidos"] = Resena.objects.filter(escritor=self.get_object().user)
 
+        return context
+    
+    
+# Mensajes
+# REMEMBER #
+### Esta bien necesita revisión ###
+
+class conversacionDetailView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = "inner_circle/conversacion.html"
+    
+    def test_func(self):
+        producto = Product.objects.get(pk=self.kwargs['product_pk'])
+        otro_user = User.objects.get(pk=self.kwargs['user_pk'])
+        
+        return (self.request.user == producto.user or otro_user == producto.user)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        producto = Product.objects.get(pk=self.kwargs['product_pk'])
+        otro_user = User.objects.get(pk=self.kwargs['user_pk'])
+        usuario_actual = self.request.user
+
+        mensajes = Mensaje.objects.filter(
+            Q(sender=usuario_actual, receptor=otro_user, producto=producto) |
+            Q(sender=otro_user, receptor=usuario_actual, producto=producto)
+        ).order_by('created_at')
+
+        context['mensajes'] = mensajes
+        context['producto'] = producto
+        context['otro_usuario'] = otro_user
+        context['vendedor'] = usuario_actual == producto.user
+        return context
+
+
+class mensajeCreateView(LoginRequiredMixin, CreateView):
+    model = Mensaje
+    form_class = MensajeForm
+    template_name = "inner_circle/mensajeForm.html"
+    
+    def get_success_url(self):
+        return reverse_lazy("inner_circle:conversacion_detail", 
+                          kwargs={"product_pk": self.object.producto.pk,
+                                 "user_pk": self.object.receptor.pk})
+    
+    def form_valid(self, form):
+        producto = Product.objects.get(pk=self.request.POST.get('producto'))
+        receptor = User.objects.get(pk=self.request.POST.get('receptor'))
+        
+        form.instance.sender = self.request.user
+        form.instance.receptor = receptor
+        form.instance.producto = producto
+        
+        return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        producto = Product.objects.get(pk=self.request.POST.get('producto'))
+        receptor = User.objects.get(pk=self.request.POST.get('receptor'))
+        context['producto'] = producto
+        context['receptor'] = receptor
         return context

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block main %}
+<h3>Notificaciones</h3>
+    
+<h3>Compras</h3>
+
+    {% if compras %}
+        {% for c in compras  %}
+        <p>{{c.product.nombre}} - {{c.product.talla}} - {{c.importe}}€ - vendedor: {{c.vendedor.profile.nombre_tag}}
+            <a href="{% url 'inner_circle:venta_detail' pk=c.pk  %}">detalles</a>
+            <a href="{% url 'inner_circle:resena_create' pk=c.pk %}">escribir reseña</a>
+        </p>
+        {% endfor %}
+    {% else %}
+            <p>no tienes compras</p>  
+    {% endif %}
+
+<h3>Ventas</h3>
+    {% if ventas %}
+        {% for v in ventas  %}
+        <p>{{v.product.nombre}} - {{v.product.talla}} - {{v.importe}}€</p>
+        {% endfor %}
+    {% else %}
+            <p>no tienes ventas</p>  
+    {% endif %}
+
+    <a href="{% url 'inner_circle:producto_list' %}">volver</a>
+   
+{% endblock main %}

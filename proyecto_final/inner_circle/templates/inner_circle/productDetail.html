@@ -1,4 +1,33 @@
 {% extends "base.html" %}
 {% block main %}
-<h3>Detalle del Producto</h3>
+<h3>{{ producto.nombre }}</h3>
+
+{% if producto.img_prod %}
+    <img src="{{ producto.img_prod.url }}" alt="{{ producto.nombre }}" width="200" height="200">
+{% endif %}
+
+<p><strong>Descripción:</strong> {{ producto.descripcion }}</p>
+<p><strong>Precio:</strong> {{ producto.precio }}€</p>
+<p><strong>Talla:</strong> {{ producto.get_talla_display }}</p>
+<p><strong>Estado:</strong> {{ producto.get_estado_display }}</p>
+<p><strong>Vendedor:</strong> {{ producto.user.profile.nombre_tag }}</p>
+
+{% if request.user.is_authenticated and request.user != producto.user %}
+    <a href="{% url 'inner_circle:conversacion_detail' product_pk=producto.pk user_pk=producto.user.pk %}">
+        <button>Contactar Vendedor</button>
+    </a>
+    <a href="{% url 'inner_circle:venta_crear' pk=producto.pk %}">
+        <button>Comprar Ahora</button>
+    </a>
+{% elif request.user == producto.user %}
+    <a href="{% url 'inner_circle:product_update' pk=producto.pk %}">
+        <button>Editar</button>
+    </a>
+    <a href="{% url 'inner_circle:product_delete' pk=producto.pk %}">
+        <button>Eliminar</button>
+    </a>
+{% else %}
+    <p><a href="{% url 'login' %}">Inicia sesión para contactar</a></p>
+{% endif %}
+
 {% endblock main %}
