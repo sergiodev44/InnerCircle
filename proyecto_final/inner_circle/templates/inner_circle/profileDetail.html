@@ -21,7 +21,7 @@
 {% endif %}
 
 
-
+<a href="{% url 'inner_circle:mis_productos' pk=request.user.profile.pk %}">mis productos</a><br>
 <a href="{% url 'inner_circle:profile_notis' pk=request.user.profile.pk %}">notificaciones</a><br>
 <a href="{% url 'inner_circle:frequest_create' pk=request.user.profile.pk %}">enviar peticion amistad</a><br>
 

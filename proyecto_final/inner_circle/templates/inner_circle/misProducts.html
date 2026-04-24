@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block main %}
+<h3>Mis productos</h3>
+
+{% if productos %}
+    {% for p in productos  %}
+    
+    <p>
+        
+        {% if p.user.profile.img_perfil %}
+            <img src="{{p.user.profile.img_perfil.url}}" alt="" width="20" height="20">
+        {% endif %}
+            
+        {{p.nombre.capitalize}}
+       
+        {{p.precio}}€ -
+        {{p.talla}} -
+        vendedor: {{p.user.profile.nombre_tag}}
+        
+    
+        <a href='{% url "inner_circle:product_update" pk=p.pk %}'>editar</a>
+        <a href='{% url "inner_circle:product_delete" pk=p.pk %}'>borrar</a>
+ 
+            
+        <img src="{{p.img_prod.url}}" alt="" width=200 height=200>
+    </p>
+    {% endfor %}
+{% else %}
+    <p>no hay productos aún<p>
+{% endif %}
+
+{% endblock main %}
