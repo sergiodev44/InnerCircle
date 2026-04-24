@@ -98,8 +98,15 @@ class productDeleteView(LoginRequiredMixin,UserPassesTestMixin,DeleteView):
     success_url = reverse_lazy("inner_circle:producto_list")
     def test_func(self):
         return self.request.user == self.get_object().user
+    
 
-
+class misProductosListView(LoginRequiredMixin, ListView):
+    model = Product
+    template_name = "misProducts.html"
+    context_object_name = "productos"
+    def get_queryset(self):
+        return Product.objects.filter(user=self.request.user)
+    
 
 # VENTAS
 

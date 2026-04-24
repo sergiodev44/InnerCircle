@@ -1,7 +1,7 @@
 
 from django.urls import path
 from .views import profileDetailView,profileUpdateView, profileDeleteView, userCreateView
-from .views import productListView, amigosProductListView, productCreateView, productUpdateView, productDeleteView
+from .views import productListView,misProductosListView, amigosProductListView, productCreateView, productUpdateView, productDeleteView
 from .views import ventaDetailView, ventaCreateView, resenaDetailView, resenaCreateView, resenaDeleteView
 from .views import frequestCreateView, frRequestResponseView, friendDeleteView
 from .views import profileNotis
@@ -19,6 +19,7 @@ urlpatterns = [
 
     # Products
     path('', productListView.as_view(), name="producto_list"),
+    path('mis-productos/<int:pk>/', misProductosListView.as_view(), name=("mis_productos") ),
     path('productos/amigos/', amigosProductListView.as_view(), name="amigos_product_list"),
     path('productos/crear/', productCreateView.as_view(), name="product_create"),
     path('productos/<int:pk>/actualizar/', productUpdateView.as_view(), name="product_update"),
