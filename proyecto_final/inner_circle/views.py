@@ -1,8 +1,8 @@
-from .models import Profile, Product, Venta, Resena, User, FriendRequest, Mensaje, Conversation
+from .models import Profile, Product, Venta, Resena, User, FriendRequest, Mensaje, Conversation, Notification
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DeleteView, UpdateView, DetailView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from .forms import ProfileForm, ProductForm, ResenaForm, UserForm, FriendRequestForm, MensajeForm
+from .forms import ProfileForm, ProductForm, ResenaForm, UserForm, FriendRequestForm, MensajeForm, ProductSearchForm
 from django.views import View
 from django.views.generic import TemplateView
 from django.shortcuts import redirect
@@ -55,15 +55,63 @@ class productListView(ListView):
     model = Product
     template_name = "productList.html"
     context_object_name = "productos"
-    def get_queryset(self):
-        return Product.objects.exclude(user=self.request.user)
     
-class amigosProductListView(ListView, LoginRequiredMixin):
+    def get_queryset(self):
+        queryset = Product.objects.exclude(user=self.request.user)
+        return self._apply_filters(queryset)
+    
+    def _apply_filters(self, queryset):
+        nombre = self.request.GET.get('nombre', '').strip()
+        precio_min = self.request.GET.get('precio_min', '')
+        precio_max = self.request.GET.get('precio_max', '')
+        talla = self.request.GET.get('talla', '')
+        
+        if nombre:
+            queryset = queryset.filter(nombre__icontains=nombre)
+        if precio_min:
+            queryset = queryset.filter(precio__gte=precio_min)
+        if precio_max:
+            queryset = queryset.filter(precio__lte=precio_max)
+        if talla:
+            queryset = queryset.filter(talla=talla)
+        
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search_form'] = ProductSearchForm(self.request.GET)
+        return context
+    
+class amigosProductListView(LoginRequiredMixin, ListView):
     model = Product
     template_name = "amigosProductList.html"
     context_object_name = "amigos_productos"
+    
     def get_queryset(self):
-        return Product.objects.filter(user__in=self.request.user.friends.all())
+        queryset = Product.objects.filter(user__in=self.request.user.friends.all())
+        return self._apply_filters(queryset)
+    
+    def _apply_filters(self, queryset):
+        nombre = self.request.GET.get('nombre', '').strip()
+        precio_min = self.request.GET.get('precio_min', '')
+        precio_max = self.request.GET.get('precio_max', '')
+        talla = self.request.GET.get('talla', '')
+        
+        if nombre:
+            queryset = queryset.filter(nombre__icontains=nombre)
+        if precio_min:
+            queryset = queryset.filter(precio__gte=precio_min)
+        if precio_max:
+            queryset = queryset.filter(precio__lte=precio_max)
+        if talla:
+            queryset = queryset.filter(talla=talla)
+        
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search_form'] = ProductSearchForm(self.request.GET)
+        return context
     
     
 class productDetailView(DetailView):
@@ -108,36 +156,38 @@ class misProductosListView(LoginRequiredMixin, ListView):
     model = Product
     template_name = "misProducts.html"
     context_object_name = "productos"
+    
     def get_queryset(self):
-        return Product.objects.filter(user=self.request.user)
+        queryset = Product.objects.filter(user=self.request.user)
+        return self._apply_filters(queryset)
+    
+    def _apply_filters(self, queryset):
+        nombre = self.request.GET.get('nombre', '').strip()
+        precio_min = self.request.GET.get('precio_min', '')
+        precio_max = self.request.GET.get('precio_max', '')
+        talla = self.request.GET.get('talla', '')
+        
+        if nombre:
+            queryset = queryset.filter(nombre__icontains=nombre)
+        if precio_min:
+            queryset = queryset.filter(precio__gte=precio_min)
+        if precio_max:
+            queryset = queryset.filter(precio__lte=precio_max)
+        if talla:
+            queryset = queryset.filter(talla=talla)
+        
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search_form'] = ProductSearchForm(self.request.GET)
+        return context
     
 
 # VENTAS
 
 # REMEMBER #
 ### Esta bien necesita revisión ###
-#V1
-# class ventaCreateView(LoginRequiredMixin, CreateView):
-#     model = Venta
-#     fields = []
-
-#     def form_valid(self, form):
-#         product = Product.objects.get(pk=self.kwargs['pk'])
-#         if product.estado == 'VEND':
-#             return self.form_invalid(form)
-#         form.instance.comprador = self.request.user
-#         form.instance.vendedor = product.user
-#         form.instance.product = product
-#         form.instance.importe = product.precio
-#         response = super().form_valid(form)
-#         product.estado = 'VEND'
-#         product.save()
-#         return response
-       
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-#         context['product'] = Product.objects.get(pk=self.kwargs['pk'])
-#         return context
 
 # v2
 class ventaCreateView(LoginRequiredMixin, View):
@@ -297,6 +347,7 @@ class profileNotis(LoginRequiredMixin, TemplateView):
         )
         context['ventas']= Venta.objects.filter(vendedor=self.request.user)
         context['compras']= Venta.objects.filter(comprador=self.request.user)
+        context['notificaciones'] = Notification.objects.filter(user=self.request.user)
         # context["resenas_recibidos"] = Resena.objects.filter(escritor=self.get_object().user)
 
         return context

@@ -1,12 +1,27 @@
 {% extends "base.html" %}
 {% block main %}
 <h3>Notificaciones</h3>
-    
+
+{% if notificaciones %}
+    {% for noti in notificaciones %}
+        <div>
+            <p>{{ noti.contenido }}</p>
+            <small>{{ noti.created_at }}</small>
+            {% if noti.tipo == 'mensaje' %}
+                <a href="{% url 'inner_circle:conversacion_detail' conversation_id=noti.object_id %}">Ver conversación</a>
+            {% endif %}
+        </div>
+    {% endfor %}
+{% else %}
+    <p>No hay nuevas notificaciones</p>
+{% endif %}
+
 <h3>Peticiones de Amistad</h3>
+
     {% if frequest %}
 
     {% for fr in frequest  %}
-        <p>{{fr.sender}} {{fr.status}} {{fr.sent_at}}</p>
+        <p>{{fr.sender.profile.nombre_tag}} - {{fr.status}} - {{fr.sent_at}}</p>
         <form method="post" action="{% url 'inner_circle:frequest_respuesta' pk=fr.pk %}">
             {% csrf_token %}
             <button type="submit" name="action" value="aceptar">Aceptar</button>

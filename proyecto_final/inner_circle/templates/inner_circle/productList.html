@@ -2,6 +2,13 @@
 {% block main %}
 <h3>General</h3>
 
+<form method="get" action="">
+    <h4>Buscar y Filtrar</h4>
+    {{ search_form.as_p }}
+    <button type="submit">Buscar</button>
+    <a href="{% url 'inner_circle:producto_list' %}">Limpiar</a>
+</form>
+
 {% if productos %}
     {% for p in productos  %}
     
