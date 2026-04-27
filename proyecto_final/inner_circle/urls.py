@@ -4,7 +4,7 @@ from .views import profileDetailView,profileUpdateView, profileDeleteView, userC
 from .views import productListView,misProductosListView, amigosProductListView, productDetailView, productCreateView, productUpdateView, productDeleteView
 from .views import ventaDetailView, ventaCreateView, ventasList, resenaDetailView, resenaCreateView, resenaDeleteView
 from .views import frequestCreateView, frRequestResponseView, friendDeleteView
-from .views import profileNotis, conversacionDetailView, mensajeCreateView
+from .views import profileNotis, conversacionDetailView, iniciarConversacionView, mensajesListView
 
 app_name = "inner_circle"
 
@@ -44,7 +44,8 @@ urlpatterns = [
     path('notificaciones/<int:pk>/', profileNotis.as_view(), name="profile_notis" ),
 
     # Mensajes
-    path('conversacion/<int:product_pk>/<int:user_pk>/', conversacionDetailView.as_view(), name="conversacion_detail"),
-    path('mensaje/crear/', mensajeCreateView.as_view(), name="mensaje_create"),
+    path('conversacion/<int:conversation_id>/', conversacionDetailView.as_view(), name="conversacion_detail"),
+    path('conversacion/iniciar/<int:product_pk>/<int:user_pk>/', iniciarConversacionView.as_view(), name="iniciar_conversacion"),
+    path('mensajes/', mensajesListView.as_view(), name="mensajes_list"),
     
 ]

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block main %}
+<h3>Mis Mensajes</h3>
+
+{% if conversaciones %}
+    <table>
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Usuario</th>
+                <th>Último Mensaje</th>
+                <th>Fecha</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for conv in conversaciones %}
+                {% if request.user == conv.usuario1 %}
+                    {% with otro_usuario=conv.usuario2 %}
+                <tr>
+                    <td>{{ conv.producto.nombre }}</td>
+                    <td>{{ otro_usuario.profile.nombre_tag }}</td>
+                    <td>{{ conv.mensajes.last.contenido|truncatewords:10 }}</td>
+                    <td>{{ conv.mensajes.last.created_at }}</td>
+                    <td>
+                        <a href="{% url 'inner_circle:conversacion_detail' conversation_id=conv.pk %}">
+                            Ver Conversación
+                        </a>
+                    </td>
+                </tr>
+                    {% endwith %}
+                {% else %}
+                    {% with otro_usuario=conv.usuario1 %}
+                <tr>
+                    <td>{{ conv.producto.nombre }}</td>
+                    <td>{{ otro_usuario.profile.nombre_tag }}</td>
+                    <td>{{ conv.mensajes.last.contenido|truncatewords:10 }}</td>
+                    <td>{{ conv.mensajes.last.created_at }}</td>
+                    <td>
+                        <a href="{% url 'inner_circle:conversacion_detail' conversation_id=conv.pk %}">
+                            Ver Conversación
+                        </a>
+                    </td>
+                </tr>
+                    {% endwith %}
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No tienes mensajes aún</p>
+{% endif %}
+
+{% endblock main %}

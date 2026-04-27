@@ -12,5 +12,5 @@
     <button type="submit">Enviar</button>
 </form>
 
-<a href="{% url 'inner_circle:conversacion_detail' product_pk=producto.pk user_pk=receptor.pk %}">Volver a conversación</a>
+<a href="{% url 'inner_circle:producto_detail' pk=producto.pk %}">Volver al producto</a>
 {% endblock main %}

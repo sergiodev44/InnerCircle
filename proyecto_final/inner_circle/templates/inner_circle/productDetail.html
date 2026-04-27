@@ -13,7 +13,7 @@
 <p><strong>Vendedor:</strong> {{ producto.user.profile.nombre_tag }}</p>
 
 {% if request.user.is_authenticated and request.user != producto.user %}
-    <a href="{% url 'inner_circle:conversacion_detail' product_pk=producto.pk user_pk=producto.user.pk %}">
+    <a href="{% url 'inner_circle:iniciar_conversacion' product_pk=producto.pk user_pk=producto.user.pk %}">
         <button>Contactar Vendedor</button>
     </a>
     <a href="{% url 'inner_circle:venta_crear' pk=producto.pk %}">
