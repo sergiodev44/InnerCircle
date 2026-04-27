@@ -1,4 +1,4 @@
-from .models import Profile, Product, Venta, Resena, User, FriendRequest, Mensaje, Conversation
+from .models import Profile, Product, Venta, Resena, User, FriendRequest, Mensaje, Conversation, Notification
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DeleteView, UpdateView, DetailView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -188,28 +188,6 @@ class misProductosListView(LoginRequiredMixin, ListView):
 
 # REMEMBER #
 ### Esta bien necesita revisión ###
-#V1
-# class ventaCreateView(LoginRequiredMixin, CreateView):
-#     model = Venta
-#     fields = []
-
-#     def form_valid(self, form):
-#         product = Product.objects.get(pk=self.kwargs['pk'])
-#         if product.estado == 'VEND':
-#             return self.form_invalid(form)
-#         form.instance.comprador = self.request.user
-#         form.instance.vendedor = product.user
-#         form.instance.product = product
-#         form.instance.importe = product.precio
-#         response = super().form_valid(form)
-#         product.estado = 'VEND'
-#         product.save()
-#         return response
-       
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-#         context['product'] = Product.objects.get(pk=self.kwargs['pk'])
-#         return context
 
 # v2
 class ventaCreateView(LoginRequiredMixin, View):
@@ -369,6 +347,7 @@ class profileNotis(LoginRequiredMixin, TemplateView):
         )
         context['ventas']= Venta.objects.filter(vendedor=self.request.user)
         context['compras']= Venta.objects.filter(comprador=self.request.user)
+        context['notificaciones'] = Notification.objects.filter(user=self.request.user)
         # context["resenas_recibidos"] = Resena.objects.filter(escritor=self.get_object().user)
 
         return context

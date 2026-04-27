@@ -104,3 +104,24 @@ class Mensaje(models.Model):
     def __str__(self):
         return f"{self.sender.username} - {self.created_at}"
 
+
+
+class Notification(models.Model):
+    TIPO_CHOICES = [
+        ('mensaje', 'Nuevo mensaje'),
+        ('venta', 'Nueva venta'),
+        ('resena', 'Nueva reseña'),
+        ('amistad', 'Solicitud de amistad')
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notificaciones')
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
+    contenido = models.TextField()
+    leido = models.BooleanField(default=False)
+    object_id = models.IntegerField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+
