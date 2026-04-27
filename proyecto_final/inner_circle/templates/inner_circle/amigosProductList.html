@@ -2,18 +2,13 @@
 {% block main %}
 
 <h3>Lista de Productos de Amigos</h3>
-{% if request.user.is_authenticated %}
-    <p>>>{{user.profile.nombre_tag}}<<</p>
-    <form method="post" action="{% url 'logout' %}">
-    {% csrf_token %}
-    {{form.as_p}}
-    <button type="submit">logout</button>
-    </form>
-{% else %}
-    <p>ve a la pantalla de login</p>
-    <a href="{% url 'login' %}">login</a>
-{% endif %}
 
+<form method="get" action="">
+    <h4>Buscar y Filtrar</h4>
+    {{ search_form.as_p }}
+    <button type="submit">Buscar</button>
+    <a href="{% url 'inner_circle:amigos_product_list' %}">Limpiar</a>
+</form>
 
 {% if amigos_productos %}  
         {% for p in amigos_productos %}
@@ -24,7 +19,7 @@
         {% endif %}
             
         {{p.nombre}}
-        {{p.precio}}
+        {{p.precio}}    
         {{p.talla}}
         vendedor: <a  href="{% url 'inner_circle:profile_detail' pk=p.user.profile.pk %}"> {{p.user.profile.nombre_tag}} </a>
         

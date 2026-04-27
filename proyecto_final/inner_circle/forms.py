@@ -67,3 +67,10 @@ class MensajeForm(forms.ModelForm):
             "contenido": forms.Textarea(attrs={'cols':50, 'rows':3}),
         }
 
+
+class ProductSearchForm(forms.Form):
+    nombre = forms.CharField(max_length=200, required=False, label="Nombre del producto")
+    precio_min = forms.DecimalField(min_value=0, required=False, label="Precio mínimo")
+    precio_max = forms.DecimalField(min_value=0, required=False, label="Precio máximo")
+    talla = forms.ChoiceField(choices=[('', '-- Todas las tallas --')] + list(Product.TALLAS), required=False, label="Talla")
+
