@@ -28,6 +28,13 @@
         {{p.talla}}
         vendedor: <a  href="{% url 'inner_circle:profile_detail' pk=p.user.profile.pk %}"> {{p.user.profile.nombre_tag}} </a>
         
+        
+        {% if p.estado == 'DISP' %}
+        <a href="{% url 'inner_circle:producto_detail' pk=p.pk %}">ver detalles</a>
+        <a href="{% url 'inner_circle:venta_crear' pk=p.pk %}">comprar</a>
+        {% else %}
+        <p>No disponible</p>
+        {% endif %}
         <img src="{{p.img_prod.url}}" alt="" width=200 height=200>
         </p>
         {% endfor %}

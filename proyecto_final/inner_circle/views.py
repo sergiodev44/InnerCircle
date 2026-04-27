@@ -1,4 +1,4 @@
-from .models import Profile, Product, Venta, Resena, User, FriendRequest, Mensaje, Mensaje
+from .models import Profile, Product, Venta, Resena, User, FriendRequest, Mensaje, Conversation
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DeleteView, UpdateView, DetailView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -7,7 +7,6 @@ from django.views import View
 from django.views.generic import TemplateView
 from django.shortcuts import redirect
 from django.shortcuts import render
-from django.db.models import Q
 from django.db.models import Q
 
 # USER
@@ -87,7 +86,7 @@ class productUpdateView(LoginRequiredMixin,UserPassesTestMixin,UpdateView,):
     model = Product
     form_class = ProductForm
     template_name = "productForm.html"
-    success_url = reverse_lazy("inner:producto_list")
+    success_url = reverse_lazy("inner_circle:producto_list")
     def test_func(self):
         return self.request.user.pk == self.get_object().user.pk
     
@@ -307,32 +306,59 @@ class profileNotis(LoginRequiredMixin, TemplateView):
 # REMEMBER #
 ### Esta bien necesita revisión ###
 
-class conversacionDetailView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
-    template_name = "inner_circle/conversacion.html"
+class conversacionDetailView(LoginRequiredMixin, UserPassesTestMixin, View):
     
     def test_func(self):
+        conversation = Conversation.objects.get(pk=self.kwargs['conversation_id'])
+        return self.request.user in [conversation.usuario1, conversation.usuario2]
+    
+    def get(self, request, *args, **kwargs):
+        conversation = Conversation.objects.get(pk=self.kwargs['conversation_id'])
+        usuario_actual = request.user
+        otro_user = conversation.usuario2 if usuario_actual == conversation.usuario1 else conversation.usuario1
+        
+        mensajes = conversation.mensajes.all()
+        
+        context = {
+            'mensajes': mensajes,
+            'conversation': conversation,
+            'producto': conversation.producto,
+            'otro_usuario': otro_user,
+            'form': MensajeForm()
+        }
+        return render(request, 'inner_circle/conversacion.html', context)
+    
+    def post(self, request, *args, **kwargs):
+        conversation = Conversation.objects.get(pk=self.kwargs['conversation_id'])
+        form = MensajeForm(request.POST)
+        
+        if form.is_valid():
+            mensaje = form.save(commit=False)
+            mensaje.sender = request.user
+            mensaje.conversation = conversation
+            mensaje.save()
+        
+        return redirect('inner_circle:conversacion_detail', conversation_id=conversation.pk)
+
+
+class iniciarConversacionView(LoginRequiredMixin, View):
+    
+    def get(self, request, *args, **kwargs):
         producto = Product.objects.get(pk=self.kwargs['product_pk'])
         otro_user = User.objects.get(pk=self.kwargs['user_pk'])
         
-        return (self.request.user == producto.user or otro_user == producto.user)
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        producto = Product.objects.get(pk=self.kwargs['product_pk'])
-        otro_user = User.objects.get(pk=self.kwargs['user_pk'])
-        usuario_actual = self.request.user
-
-        mensajes = Mensaje.objects.filter(
-            Q(sender=usuario_actual, receptor=otro_user, producto=producto) |
-            Q(sender=otro_user, receptor=usuario_actual, producto=producto)
-        ).order_by('created_at')
-
-        context['mensajes'] = mensajes
-        context['producto'] = producto
-        context['otro_usuario'] = otro_user
-        context['vendedor'] = usuario_actual == producto.user
-        return context
+        # Validar que no sea el mismo usuario
+        if request.user == otro_user:
+            return redirect('inner_circle:producto_detail', pk=producto.pk)
+        
+        # get_or_create conversation
+        conversation, created = Conversation.objects.get_or_create(
+            producto=producto,
+            usuario1=request.user,
+            usuario2=otro_user
+        )
+        
+        return redirect('inner_circle:conversacion_detail', conversation_id=conversation.pk)
 
 
 class mensajeCreateView(LoginRequiredMixin, CreateView):
@@ -342,23 +368,50 @@ class mensajeCreateView(LoginRequiredMixin, CreateView):
     
     def get_success_url(self):
         return reverse_lazy("inner_circle:conversacion_detail", 
-                          kwargs={"product_pk": self.object.producto.pk,
-                                 "user_pk": self.object.receptor.pk})
+                          kwargs={"conversation_id": self.object.conversation.pk})
     
     def form_valid(self, form):
         producto = Product.objects.get(pk=self.request.POST.get('producto'))
-        receptor = User.objects.get(pk=self.request.POST.get('receptor'))
+        otro_user = User.objects.get(pk=self.request.POST.get('receptor'))
+        
+        # Crear o obtener la conversation
+        conversation, created = Conversation.objects.get_or_create(
+            producto=producto,
+            usuario1=self.request.user,
+            usuario2=otro_user
+        )
         
         form.instance.sender = self.request.user
-        form.instance.receptor = receptor
-        form.instance.producto = producto
+        form.instance.conversation = conversation
         
         return super().form_valid(form)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        producto = Product.objects.get(pk=self.request.POST.get('producto'))
-        receptor = User.objects.get(pk=self.request.POST.get('receptor'))
-        context['producto'] = producto
-        context['receptor'] = receptor
+        producto_id = self.request.GET.get('producto') or self.request.POST.get('producto')
+        receptor_id = self.request.GET.get('receptor') or self.request.POST.get('receptor')
+        
+        if producto_id and receptor_id:
+            context['producto'] = Product.objects.get(pk=producto_id)
+            context['receptor'] = User.objects.get(pk=receptor_id)
         return context
+
+
+
+# REMEMBER #
+### Esta bien necesita revisión ###
+class mensajesListView(LoginRequiredMixin, TemplateView):
+    template_name = "inner_circle/mensajesList.html"
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        usuario = self.request.user
+        
+        conversaciones = Conversation.objects.filter(
+            Q(usuario1=usuario) | Q(usuario2=usuario)
+        ).prefetch_related('mensajes')
+        
+        context['conversaciones'] = conversaciones
+        return context
+
+

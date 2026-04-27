@@ -77,14 +77,30 @@ class FriendRequest(models.Model):
     class Meta:
         unique_together = ["sender", "recibidor2"]
 
+
+class Conversation(models.Model):
+    producto = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="conversaciones")
+    usuario1 = models.ForeignKey(User, on_delete=models.CASCADE, related_name="conv_usuario1")
+    usuario2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name="conv_usuario2")
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = [("producto", "usuario1", "usuario2")]
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.producto.nombre} - {self.usuario1.username} & {self.usuario2.username}"
+
+
 class Mensaje(models.Model):
+    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, null=True, blank=True, related_name="mensajes")
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="m_enviados")
-    receptor = models.ForeignKey(User, on_delete=models.CASCADE, related_name="m_recibidos")
-    producto = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="mensajes")
     contenido = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['created_at']
     
+    def __str__(self):
+        return f"{self.sender.username} - {self.created_at}"
 
