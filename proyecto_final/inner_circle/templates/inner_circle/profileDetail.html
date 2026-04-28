@@ -19,6 +19,9 @@
     <p>Cuéntanos quién eres</p>
 {% endif %}
 
+{% if profile.user.promedio_rating %}
+    <p><strong>Calificación:</strong> ⭐ {{profile.user.promedio_rating}}/5.0</p>
+{% endif %}
 
 {% if profile.user.pk == request.user.pk %}
 <a href="{% url 'inner_circle:frequest_create' pk=request.user.profile.pk %}">enviar peticion amistad</a><br>
