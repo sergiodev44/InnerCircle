@@ -4,7 +4,7 @@ from .views import productListView,misProductosListView, amigosProductListView, 
 from .views import ventaDetailView, ventaCreateView, ventasList, resenaDetailView, resenaCreateView, resenaDeleteView
 from .views import frequestCreateView, frRequestResponseView, friendDeleteView
 from .views import profileNotis, conversacionDetailView, iniciarConversacionView, mensajesListView
-from .views import BlockUserView, UnblockUserView, ReportUserView
+from .views import BlockUserView, UnblockUserView, ReportUserView, BannedView
 
 app_name = "inner_circle"
 
@@ -52,4 +52,5 @@ urlpatterns = [
     path('perfil/<int:pk>/bloquear/', BlockUserView.as_view(), name="block_user"),
     path('perfil/<int:pk>/desbloquear/', UnblockUserView.as_view(), name="unblock_user"),
     path('perfil/<int:pk>/reportar/', ReportUserView.as_view(), name="report_user"),
+    path('banned/', BannedView.as_view(), name="banned"),
 ]

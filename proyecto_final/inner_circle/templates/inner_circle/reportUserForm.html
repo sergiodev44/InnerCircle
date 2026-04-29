@@ -1,6 +1,6 @@
 {% extends "inner_circle/base.html" %}
 
-{% block content %}
+{% block main %}
 <h2>Reportar Usuario</h2>
 
 {% if form.non_field_errors %}
@@ -39,5 +39,5 @@
         <a href="{% url 'inner_circle:profile_detail' reported_user.profile.pk %}"><button type="button">Cancelar</button></a>
     </div>
 </form>
-{% endblock %}
+{% endblock main %}
 
