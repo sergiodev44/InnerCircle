@@ -7,7 +7,7 @@
         <div>
             <p>{{ noti.contenido }}</p>
             <small>{{ noti.created_at }}</small>
-            {% if noti.tipo == 'mensaje' %}
+            {% if noti.tipo == 'mensaje' and noti.object_id %}
                 <a href="{% url 'inner_circle:conversacion_detail' conversation_id=noti.object_id %}">Ver conversación</a>
             {% endif %}
         </div>

@@ -5,6 +5,7 @@ from .views import ventaDetailView, ventaCreateView, ventasList, resenaDetailVie
 from .views import frequestCreateView, frRequestResponseView, friendDeleteView
 from .views import profileNotis, conversacionDetailView, iniciarConversacionView, mensajesListView
 from .views import BlockUserView, UnblockUserView, ReportUserView, BannedView
+from .views import stripeCheckoutView, stripeWebhookView, stripePaymentStatusView
 
 app_name = "inner_circle"
 
@@ -29,8 +30,11 @@ urlpatterns = [
 
     # Ventas
     path('products/<int:pk>/comprar', ventaCreateView.as_view(), name="venta_crear"),
+    path('venta/<int:pk>/checkout', stripeCheckoutView.as_view(), name="checkout"),
+    path('venta/<int:pk>/payment-status/', stripePaymentStatusView.as_view(), name="payment_status"),
     path('venta/<int:pk>/', ventaDetailView.as_view(), name="venta_detail"),
     path('ventas-list/<int:pk>/', ventasList.as_view(), name="ventas_list"),
+    path('stripe/webhook/', stripeWebhookView.as_view(), name="stripe_webhook"),
 
     # Reseñas
     path('resena/<int:pk>', resenaCreateView.as_view(), name="resena_create"),
