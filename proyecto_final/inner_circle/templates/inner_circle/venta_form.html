@@ -1,13 +1,22 @@
 {% extends "base.html" %}
 {% block main %}
-<h3>Confirmar Compra de {{product.nombre.capitalize}} por {{product.precio}}€</h3>
+<h3>Confirmar Compra de {{product.nombre|title}}</h3>
 
-<p>Estás a punto de comprar este producto</p>
+<p>Estás a punto de comprar este producto. Revisa los detalles y el precio total a continuación:</p>
+
+<div style="border: 1px solid #ccc; padding: 20px; margin: 20px 0; background-color: #f9f9f9;">
+    <h4>Desglose de precios:</h4>
+    <p><strong>Precio base:</strong> €{{venta.precio_base|floatformat:2}}</p>
+    <p><strong>Impuesto (10%):</strong> €{{venta.impuesto|floatformat:2}}</p>
+    <p><strong>Tarifa de servicio (5%):</strong> €{{venta.tarifa_servicio|floatformat:2}}</p>
+    <hr>
+    <h4 style="color: #2c5aa0;"><strong>TOTAL A PAGAR: €{{venta.importe_total|floatformat:2}}</strong></h4>
+</div>
 
 <form method="post">
     {% csrf_token %}
-    <button type="submit">Confirmar compra</button>
-    <a href="{% url 'inner_circle:producto_list' %}">Cancelar</a>
+    <button type="submit" style="background-color: #28a745; color: white; padding: 10px 20px; border: none; cursor: pointer;">Continuar al pago</button>
+    <a href="{% url 'inner_circle:producto_list' %}" style="padding: 10px 20px;">Cancelar</a>
 </form>
 
 {% endblock main %}

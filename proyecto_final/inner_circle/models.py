@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
+from decimal import Decimal
 
 
 class User(AbstractUser):
@@ -39,6 +40,9 @@ class Category(models.Model):
     nombre = models.CharField(choices=CATEGORIAS, default='Camisetas')
     descripcion = models.TextField(blank=True)
     icono = models.CharField(max_length=50, blank=True)
+    
+    def __str__(self):
+        return self.nombre
 
 class Product(models.Model):
     """
@@ -66,10 +70,17 @@ class Product(models.Model):
 
 class Venta(models.Model):
     ESTADO_VENTA = [("pendiente","pendiente"),("cancelada","cancelada"),("completada","completada")]
+    ESTADO_PAGO = [("no_pagado","no pagado"), ("pagado","pagado"), ("fallido","fallido")]
+    
     comprador = models.ForeignKey(User,on_delete=models.CASCADE, related_name="comprador")
     vendedor = models.ForeignKey(User,on_delete=models.CASCADE, related_name="vendedor")
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="prods" )
-    importe = models.DecimalField(max_digits=6, decimal_places=2)
+    precio_base = models.DecimalField(max_digits=6, decimal_places=2)  # Product price
+    impuesto = models.DecimalField(max_digits=6, decimal_places=2, default=0)  # Tax (10% by default)
+    tarifa_servicio = models.DecimalField(max_digits=6, decimal_places=2, default=0)  # Service fee (5% by default)
+    importe_total = models.DecimalField(max_digits=6, decimal_places=2)  # Total charged
+    estado_pago = models.CharField(choices=ESTADO_PAGO, default="no_pagado")
+    stripe_payment_intent = models.CharField(max_length=255, blank=True, null=True)  # Stripe payment ID
     created_at = models.DateTimeField(auto_now_add=True)
 
     
@@ -77,6 +88,23 @@ class Venta(models.Model):
     def clean(self):
         if self.comprador == self.vendedor:
             raise ValidationError("error")
+    
+    @property
+    def TAX_RATE(self):
+        """Tax rate: 10%"""
+        return Decimal('0.10')
+    
+    @property
+    def SERVICE_FEE_RATE(self):
+        """Service fee rate: 5%"""
+        return Decimal('0.05')
+    
+    def calculate_totals(self):
+        """Calculate tax, service fee, and total"""
+        self.impuesto = (self.precio_base * self.TAX_RATE).quantize(Decimal('0.01'))
+        self.tarifa_servicio = (self.precio_base * self.SERVICE_FEE_RATE).quantize(Decimal('0.01'))
+        self.importe_total = self.precio_base + self.impuesto + self.tarifa_servicio
+        return self.importe_total
      
 
 class Resena(models.Model):

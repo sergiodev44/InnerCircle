@@ -1,14 +1,22 @@
 {% extends "base.html" %}
 {% block main %}
-<h3>Detallas de la venta</h3>
+<h3>Detalles de la venta</h3>
     
-       <p> Vendedor: {{venta.vendedor.profile.nombre_tag}} </p>
-       <p> Comprador: {{venta.comprador.profile.nombre_tag}} </p>
-       <p> Product: {{product.nombre}} </p>
-        <p>Talla: {{product.talla}} </p>
-        <p>Precio: {{producto.precio}}€ </p>
-        <p>Importe Total: {{venta.precio}}€ </p>
+<p><strong>Vendedor:</strong> {{venta.vendedor.profile.nombre_tag}}</p>
+<p><strong>Comprador:</strong> {{venta.comprador.profile.nombre_tag}}</p>
+<p><strong>Producto:</strong> {{product.nombre}}</p>
+<p><strong>Talla:</strong> {{product.talla}}</p>
 
-<a href="{% url 'inner_circle:profile_detail' pk=venta.comprador.pk %}">volver perfil</a>
+<hr>
+<h4>Desglose de precios:</h4>
+<p><strong>Precio base:</strong> €{{venta.precio_base|floatformat:2}}</p>
+<p><strong>Impuesto (10%):</strong> €{{venta.impuesto|floatformat:2}}</p>
+<p><strong>Tarifa de servicio (5%):</strong> €{{venta.tarifa_servicio|floatformat:2}}</p>
+<hr>
+<p><strong>IMPORTE TOTAL:</strong> €{{venta.importe_total|floatformat:2}}</p>
+
+<p><strong>Estado de pago:</strong> {{venta.get_estado_pago_display}}</p>
+
+<a href="{% url 'inner_circle:profile_detail' pk=venta.comprador.profile.pk %}">Volver al perfil</a>
    
 {% endblock main %}

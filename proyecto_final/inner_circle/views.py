@@ -8,6 +8,15 @@ from django.views.generic import TemplateView
 from django.shortcuts import redirect
 from django.shortcuts import render
 from django.db.models import Q
+import stripe
+import json
+import os
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.conf import settings
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
 # USER
 class userCreateView(CreateView,):
@@ -254,20 +263,29 @@ class ventaCreateView(LoginRequiredMixin, View):
         if product.estado == 'VEND':
             return redirect('inner_circle:product_list')
         
-        venta = Venta.objects.create(
+        venta = Venta(
             comprador=request.user,
             vendedor=product.user,
             product=product,
-            importe=product.precio,
+            precio_base=product.precio,
         )
+        # Calculate tax, fee, and total
+        venta.calculate_totals()
+        venta.save()
 
         product.estado = 'VEND'
         product.save()
-        return redirect('inner_circle:venta_detail', pk=venta.pk)
+        # Redirect to Stripe checkout instead of detail
+        return redirect('inner_circle:checkout', pk=venta.pk)
     
     def get(self, request, *args, **kwargs):
         product = Product.objects.get(pk=self.kwargs['pk'])
-        context = {'product': product}
+        # Create a temporary venta to show the breakdown
+        venta = Venta(
+            precio_base=product.precio,
+        )
+        venta.calculate_totals()
+        context = {'product': product, 'venta': venta}
         return render(request, 'inner_circle/venta_form.html', context)
 
     
@@ -282,7 +300,47 @@ class ventaDetailView(LoginRequiredMixin,UserPassesTestMixin,DetailView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['product'] = Product.objects.get(pk=self.kwargs['pk'])
+        context['product'] = self.get_object().product
+        return context
+    
+
+class stripeCheckoutView(LoginRequiredMixin, DetailView):
+    """Stripe checkout page - creates PaymentIntent and displays payment form"""
+    model = Venta
+    template_name = "inner_circle/checkout.html"
+    context_object_name = "venta"
+    
+    def get_object(self):
+        return Venta.objects.get(pk=self.kwargs['pk'])
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        venta = self.get_object()
+        
+        # Only the buyer can access checkout
+        if self.request.user != venta.comprador:
+            raise PermissionError("Only the buyer can access checkout")
+        
+        # Create Stripe Payment Intent
+        try:
+            intent = stripe.PaymentIntent.create(
+                amount=int(venta.importe_total * 100),  # Convert to cents
+                currency='eur',
+                metadata={
+                    'venta_id': venta.pk,
+                    'buyer_id': venta.comprador.id,
+                    'product_id': venta.product.id,
+                }
+            )
+            venta.stripe_payment_intent = intent.id
+            venta.save()
+            
+            context['client_secret'] = intent.client_secret
+            context['stripe_public_key'] = settings.STRIPE_PUBLIC_KEY
+            context['product'] = venta.product
+        except stripe.error.StripeError as e:
+            context['error'] = str(e)
+        
         return context
     
 
@@ -294,6 +352,93 @@ class ventasList(LoginRequiredMixin, TemplateView):
         context['ventas']= Venta.objects.filter(vendedor=self.request.user)
         context['compras']= Venta.objects.filter(comprador=self.request.user)
         return context
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class stripeWebhookView(View):
+    """Handle Stripe webhooks for payment confirmation"""
+    def post(self, request):
+        payload = request.body
+        sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+        
+        try:
+            event = stripe.Webhook.construct_event(
+                payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+            )
+        except ValueError:
+            return JsonResponse({'error': 'Invalid payload'}, status=400)
+        except stripe.error.SignatureVerificationError:
+            return JsonResponse({'error': 'Invalid signature'}, status=400)
+        
+        # Handle payment_intent.succeeded event
+        if event['type'] == 'payment_intent.succeeded':
+            try:
+                payment_intent = event['data']['object']
+                
+                # Access Stripe object using bracket notation
+                venta_id = None
+                if 'metadata' in payment_intent and 'venta_id' in payment_intent['metadata']:
+                    venta_id = payment_intent['metadata']['venta_id']
+                
+                print(f"🔔 Webhook received payment_intent.succeeded")
+                print(f"   Payment Intent ID: {payment_intent['id']}")
+                print(f"   Venta ID from metadata: {venta_id}")
+                
+                if venta_id:
+                    try:
+                        venta_id_int = int(venta_id)
+                        venta = Venta.objects.get(pk=venta_id_int)
+                        print(f"   ✅ Found venta: {venta.pk}")
+                        print(f"   Current estado_pago: {venta.estado_pago}")
+                        venta.estado_pago = 'pagado'
+                        venta.save()
+                        print(f"   ✅ Updated venta.estado_pago to 'pagado'")
+                    except Venta.DoesNotExist:
+                        print(f"   ❌ Venta not found with id: {venta_id_int}")
+                    except ValueError:
+                        print(f"   ❌ Invalid venta_id format: {venta_id}")
+                else:
+                    print(f"   ⚠️  No venta_id in metadata")
+                    
+            except Exception as e:
+                print(f"❌ Error processing payment_intent.succeeded: {str(e)}")
+                import traceback
+                traceback.print_exc()
+        
+        return JsonResponse({'success': True})
+
+
+class stripePaymentStatusView(LoginRequiredMixin, View):
+    """Check payment status and update venta"""
+    def post(self, request, pk):
+        try:
+            venta = Venta.objects.get(pk=pk)
+            
+            # Only buyer can check status
+            if request.user != venta.comprador:
+                return JsonResponse({'error': 'Unauthorized'}, status=403)
+            
+            # Check payment intent status
+            if venta.stripe_payment_intent:
+                intent = stripe.PaymentIntent.retrieve(venta.stripe_payment_intent)
+                
+                if intent.status == 'succeeded':
+                    venta.estado_pago = 'pagado'
+                    venta.save()
+                    return JsonResponse({
+                        'success': True,
+                        'status': 'pagado',
+                        'redirect_url': f'/inner/venta/{venta.pk}/'
+                    })
+                elif intent.status == 'processing':
+                    return JsonResponse({'success': True, 'status': 'processing'})
+                else:
+                    return JsonResponse({'success': False, 'status': intent.status})
+            
+            return JsonResponse({'error': 'No payment intent found'}, status=400)
+        
+        except Venta.DoesNotExist:
+            return JsonResponse({'error': 'Venta not found'}, status=404)
 
 
 # RESEÑAS

@@ -37,8 +37,9 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Venta)
 class VentaAdmin(admin.ModelAdmin):
-    list_display = ('id', 'comprador', 'vendedor', 'product', 'importe', 'created_at')
+    list_display = ('id', 'comprador', 'vendedor', 'product', 'importe_total', 'estado_pago', 'created_at')
     search_fields = ('comprador__username', 'vendedor__username', 'product__nombre')
+    list_filter = ('estado_pago', 'created_at')
 
 @admin.register(Resena)
 class ResenaAdmin(admin.ModelAdmin):

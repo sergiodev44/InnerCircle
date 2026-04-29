@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block main %}
+<div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <h3>Completar pago - {{product.nombre}}</h3>
+    
+    {% if error %}
+    <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; margin: 20px 0; border-radius: 4px; color: #721c24;">
+        <strong>Error:</strong> {{error}}
+    </div>
+    {% else %}
+    
+    <div style="border: 1px solid #ddd; padding: 20px; margin: 20px 0; background-color: #f9f9f9; border-radius: 4px;">
+        <h4>Resumen del pedido</h4>
+        <p><strong>Producto:</strong> {{product.nombre}}</p>
+        <p><strong>Precio base:</strong> €{{venta.precio_base|floatformat:2}}</p>
+        <p><strong>Impuesto (10%):</strong> €{{venta.impuesto|floatformat:2}}</p>
+        <p><strong>Tarifa de servicio (5%):</strong> €{{venta.tarifa_servicio|floatformat:2}}</p>
+        <hr>
+        <h3 style="color: #2c5aa0;"><strong>Total a pagar: €{{venta.importe_total|floatformat:2}}</strong></h3>
+    </div>
+
+    <form id="payment-form" style="margin: 20px 0;">
+        <div id="payment-element"></div>
+        <button id="submit" type="submit" style="width: 100%; padding: 12px; background-color: #28a745; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; margin-top: 20px;">
+            <span id="button-text">Pagar €{{venta.importe_total|floatformat:2}}</span>
+        </button>
+        <div id="payment-message" class="hidden" style="margin-top: 10px; color: #721c24;"></div>
+    </form>
+
+    {% endif %}
+</div>
+
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    const stripe = Stripe('{{ stripe_public_key }}');
+    const clientSecret = '{{ client_secret }}';
+    const ventaId = {{ venta.pk }};
+
+    // Initialize Stripe Elements
+    const elements = stripe.elements({clientSecret: clientSecret});
+    const paymentElement = elements.create('payment');
+    paymentElement.mount('#payment-element');
+
+    const form = document.getElementById('payment-form');
+    const submitButton = document.getElementById('submit');
+    const paymentMessage = document.getElementById('payment-message');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        submitButton.disabled = true;
+        document.getElementById('button-text').textContent = 'Procesando...';
+
+        // Call confirmPayment WITHOUT return_url - we'll handle redirect manually
+        const {error, paymentIntent} = await stripe.confirmPayment({
+            elements,
+            redirect: 'if_required'  // Don't auto-redirect
+        });
+
+        if (error) {
+            // Show error to customer
+            paymentMessage.textContent = error.message;
+            paymentMessage.classList.remove('hidden');
+            submitButton.disabled = false;
+            document.getElementById('button-text').textContent = 'Pagar €{{ venta.importe_total|floatformat:2 }}';
+        } else if (paymentIntent) {
+            document.getElementById('button-text').textContent = 'Pago procesando, espera...';
+            
+            // Poll for payment status with delays
+            let attempts = 0;
+            const maxAttempts = 10;
+            const pollStatus = setInterval(async () => {
+                const response = await fetch(`/inner/venta/${ventaId}/payment-status/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+
+                if (data.status === 'pagado') {
+                    clearInterval(pollStatus);
+                    document.getElementById('button-text').textContent = 'Pago completado, redirigiendo...';
+                    setTimeout(() => {
+                        window.location.href = `${window.location.origin}/inner/venta/${ventaId}/`;
+                    }, 1000);
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(pollStatus);
+                    // After max attempts, redirect anyway
+                    window.location.href = `${window.location.origin}/inner/venta/${ventaId}/`;
+                }
+                attempts++;
+            }, 800); // Check every 800ms
+        }
+    });
+
+    function checkPaymentStatus() {
+        // Poll for payment status
+        const checkInterval = setInterval(async () => {
+            const response = await fetch(`/inner/venta/${ventaId}/payment-status/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                }
+            });
+            const data = await response.json();
+
+            if (data.status === 'pagado') {
+                clearInterval(checkInterval);
+                window.location.href = data.redirect_url;
+            } else if (data.status === 'processing') {
+                // Still processing, keep checking
+            } else if (data.error) {
+                clearInterval(checkInterval);
+                paymentMessage.textContent = 'Error al procesar el pago';
+                paymentMessage.classList.remove('hidden');
+                submitButton.disabled = false;
+                document.getElementById('button-text').textContent = 'Pagar €{{ venta.importe_total|floatformat:2 }}';
+            }
+        }, 1000); // Check every second
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+
+{% endblock main %}
