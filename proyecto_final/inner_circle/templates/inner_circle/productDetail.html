@@ -19,6 +19,25 @@
     <a href="{% url 'inner_circle:venta_crear' pk=producto.pk %}">
         <button>Comprar Ahora</button>
     </a>
+    
+    <!-- Report/Block seller -->
+    <div>
+        <a href="{% url 'inner_circle:report_user' pk=producto.user.pk %}">
+            <button>Reportar Vendedor</button>
+        </a>
+        
+        {% if producto.user in request.user.bloqueados.all %}
+            <form method="post" action="{% url 'inner_circle:unblock_user' pk=producto.user.pk %}">
+                {% csrf_token %}
+                <button type="submit">Desbloquear Vendedor</button>
+            </form>
+        {% else %}
+            <form method="post" action="{% url 'inner_circle:block_user' pk=producto.user.pk %}">
+                {% csrf_token %}
+                <button type="submit">Bloquear Vendedor</button>
+            </form>
+        {% endif %}
+    </div>
 {% elif request.user == producto.user %}
     <a href="{% url 'inner_circle:product_update' pk=producto.pk %}">
         <button>Editar</button>

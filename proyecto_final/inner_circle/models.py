@@ -152,6 +152,51 @@ class Notification(models.Model):
         ordering = ['-created_at']
 
 
+class BlockedUser(models.Model):
+    """User A blocks User B - local/personal blocking"""
+    blocker = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bloqueados")
+    blocked = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bloqueado_por")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ["blocker", "blocked"]
+    
+    def __str__(self):
+        return f"{self.blocker.username} bloqueó a {self.blocked.username}"
+
+
+class Report(models.Model):
+    REASON_CHOICES = [
+        ('scam', 'Estafa/Fraude'),
+        ('harassment', 'Acoso/Insultos'),
+        ('inappropriate_content', 'Contenido inapropiado'),
+        ('fake_product', 'Producto falso'),
+        ('other', 'Otro')
+    ]
+    
+    STATUS_CHOICES = [
+        ('pending', 'Pendiente'),
+        ('reviewing', 'En revisión'),
+        ('resolved', 'Resuelto'),
+        ('dismissed', 'Desestimado')
+    ]
+
+    reporter = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reportes_hechos")
+    reported_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reportes_recibidos")
+    reason = models.CharField(max_length=30, choices=REASON_CHOICES)
+    description = models.TextField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ["reporter", "reported_user"]
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Reporte: {self.reporter.username} → {self.reported_user.username} ({self.reason})"
+
+
 
 
 

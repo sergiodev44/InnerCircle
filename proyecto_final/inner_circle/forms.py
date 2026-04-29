@@ -1,6 +1,6 @@
 from django import forms
 from django.forms import ModelForm
-from .models import Profile, Product, Venta, Resena, User, FriendRequest, Mensaje, Category
+from .models import Profile, Product, Venta, Resena, User, FriendRequest, Mensaje, Category, Report
 from django.contrib.auth.forms import UserCreationForm
 
 class UserForm(UserCreationForm):
@@ -82,4 +82,23 @@ class ProductSearchForm(forms.Form):
     talla = forms.ChoiceField(choices=[('', '-- Todas las tallas --')] + list(Product.TALLAS), required=False, label="Talla")
     category = forms.ChoiceField(choices=[('', '-- Todas las categorías --')] + list(Category.CATEGORIAS), required=False, label="Categoría")
     sort = forms.ChoiceField(choices=SORT_CHOICES, required=False, label="Ordenar por")
+
+
+class ReportForm(forms.ModelForm):
+    class Meta:
+        model = Report
+        fields = ["reason", "description"]
+        widgets = {
+            "reason": forms.Select(attrs={"class": "form-control"}),
+            "description": forms.Textarea(attrs={
+                "cols": 50, 
+                "rows": 5,
+                "class": "form-control",
+                "placeholder": "Describa por favor por qué está reporting a este usuario"
+            }),
+        }
+        labels = {
+            "reason": "Razón del reporte",
+            "description": "Descripción detallada"
+        }
 
