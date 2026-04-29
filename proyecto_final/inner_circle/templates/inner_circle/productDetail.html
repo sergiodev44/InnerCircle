@@ -26,7 +26,7 @@
             <button>Reportar Vendedor</button>
         </a>
         
-        {% if producto.user in request.user.bloqueados.all %}
+        {% if producto.user.id in blocked_user_ids %}
             <form method="post" action="{% url 'inner_circle:unblock_user' pk=producto.user.pk %}">
                 {% csrf_token %}
                 <button type="submit">Desbloquear Vendedor</button>

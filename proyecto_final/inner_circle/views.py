@@ -27,6 +27,10 @@ class profileDetailView(DetailView):
         context["frequest"] = self.get_object().user.recibe_solicitud.all()
         context["amigos"] = self.get_object().user.friends.all()
         context["mis_resenas"] = Resena.objects.filter(recibidor=self.get_object().user)
+        context["bloqueados"] = BlockedUser.objects.filter(blocker=self.get_object().user)
+        # Pass list of blocked user IDs for template checks
+        if self.request.user.is_authenticated:
+            context["blocked_user_ids"] = list(self.request.user.bloqueados.values_list('blocked__id', flat=True))
         return context
     
 class profileUpdateView(LoginRequiredMixin,UserPassesTestMixin,UpdateView):
@@ -158,6 +162,11 @@ class productDetailView(DetailView):
     template_name = "productDetail.html"
     context_object_name = "producto"
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.user.is_authenticated:
+            context["blocked_user_ids"] = list(self.request.user.bloqueados.values_list('blocked__id', flat=True))
+        return context
 
 class productCreateView(LoginRequiredMixin,CreateView):
     model = Product
@@ -587,3 +596,8 @@ class ReportUserView(LoginRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context['reported_user'] = User.objects.get(pk=self.kwargs['pk'])
         return context
+
+
+class BannedView(TemplateView):
+    """View shown to banned users"""
+    template_name = "inner_circle/banned.html"

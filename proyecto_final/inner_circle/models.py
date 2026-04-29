@@ -7,6 +7,7 @@ class User(AbstractUser):
     mobile = models.IntegerField()
     #Atributo para el tema de la amistad
     friends = models.ManyToManyField('self', symmetrical=True, blank=True)
+    is_banned = models.BooleanField(default=False)
     
     @property
     def promedio_rating(self):

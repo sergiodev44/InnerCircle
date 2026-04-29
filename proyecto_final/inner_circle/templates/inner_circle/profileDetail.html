@@ -30,7 +30,7 @@
             <button>Reportar Usuario</button>
         </a>
         
-        {% if profile.user in request.user.bloqueados.all %}
+        {% if profile.user.id in blocked_user_ids %}
             <form method="post" action="{% url 'inner_circle:unblock_user' pk=profile.user.pk %}">
                 {% csrf_token %}
                 <button type="submit">Desbloquear</button>
@@ -103,6 +103,23 @@
             
     {% else %} 
     <p>no tienes amigos<p>
+    {% endif %}
+
+<h3> Usuarios Bloqueados </h3>
+
+    {% if bloqueados %}
+        
+        {% for bloqueado in bloqueados  %}
+        <form method="post" action="{% url 'inner_circle:unblock_user' pk=bloqueado.blocked.pk %}">
+            {% csrf_token %}
+        <a href="{% url 'inner_circle:profile_detail' pk=bloqueado.blocked.profile.pk %}"> {{bloqueado.blocked.profile.nombre_tag}} </a>
+        <button type="submit" name="action" value="unblock">Desbloquear</button>
+        </form>
+            
+        {% endfor %}
+            
+    {% else %} 
+    <p>No tienes usuarios bloqueados</p>
     {% endif %}
 {% endif %}
     

@@ -5,8 +5,20 @@ from .models import User, Profile, Product, Category, Venta, Resena, FriendReque
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ('username', 'email', 'mobile')
+    list_display = ('username', 'email', 'mobile', 'is_banned')
     search_fields = ('username', 'email')
+    list_filter = ('is_banned',)
+    actions = ['ban_user', 'unban_user']
+    
+    def ban_user(self, request, queryset):
+        updated = queryset.update(is_banned=True)
+        self.message_user(request, f"{updated} usuario(s) baneado(s)")
+    ban_user.short_description = "Banear usuario seleccionado"
+    
+    def unban_user(self, request, queryset):
+        updated = queryset.update(is_banned=False)
+        self.message_user(request, f"{updated} usuario(s) desbaneado(s)")
+    unban_user.short_description = "Desbanear usuario seleccionado"
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
