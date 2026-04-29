@@ -16,6 +16,21 @@ class Profile(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     img_perfil = models.ImageField(upload_to="profiles/")
 
+class Category(models.Model):
+    CATEGORIAS = [
+        ('Camisas','Camisas'),
+        ('Camisetas', 'Camisetas'),
+        ('Polos','Polos'),
+        ('Pantalones','Pantalones'),
+        ('Jeans','Jeans'),
+        ('Sudaderas','Sudaderas'),
+        ('Jerseis','Jerseis'),
+        ('Chaquetones','Chaquetones'),
+    ]
+    nombre = models.CharField(choices=CATEGORIAS, default='Camisetas')
+    descripcion = models.TextField(blank=True)
+    icono = models.CharField(max_length=50, blank=True)
+
 class Product(models.Model):
     """
     no incluir zapatos porque no van por tallas
@@ -26,6 +41,7 @@ class Product(models.Model):
     TALLAS = [("S", "pequeña"), ("M", "mediana"), ("L", "grande"), ("XL", "muy grande")]
 
     user = models.ForeignKey(User,on_delete=models.CASCADE)
+    category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="productos")
     nombre = models.CharField(max_length=200)
     descripcion = models.TextField()
     estado = models.CharField(choices=ESTADO_PRODUCTO)
@@ -35,6 +51,9 @@ class Product(models.Model):
     update_at = models.DateField(auto_now=True)
     img_prod = models.ImageField(upload_to="products/")
     # los productos también tienen imagenes, 3. Cómo lo añado?
+
+    class Meta:
+        ordering = ['-created_at']
 
 class Venta(models.Model):
     ESTADO_VENTA = [("pendiente","pendiente"),("cancelada","cancelada"),("completada","completada")]
@@ -123,5 +142,9 @@ class Notification(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+
+
+
 
 

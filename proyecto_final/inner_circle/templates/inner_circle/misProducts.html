@@ -2,12 +2,14 @@
 {% block main %}
 <h3>Mis productos</h3>
 
-<form method="get" action="">
-    <h4>Buscar y Filtrar</h4>
-    {{ search_form.as_p }}
-    <button type="submit">Buscar</button>
-    <a href="{% url 'inner_circle:mis_productos' pk=request.user.profile.pk %}">Limpiar</a>
-</form>
+<details>
+    <summary style="cursor: pointer; font-weight: bold; padding: 10px; background-color: #f5f5f5; border-radius: 4px;">Buscar y Filtrar</summary>
+    <form method="get" action="" style="margin-top: 10px; padding: 10px; background-color: #fafafa; border-radius: 4px;">
+        {{ search_form.as_p }}
+        <button type="submit">Buscar</button>
+        <a href="{% url 'inner_circle:mis_productos' pk=request.user.profile.pk %}">Limpiar</a>
+    </form>
+</details>
 
 {% if productos %}
     {% for p in productos  %}

@@ -65,6 +65,8 @@ class productListView(ListView):
         precio_min = self.request.GET.get('precio_min', '')
         precio_max = self.request.GET.get('precio_max', '')
         talla = self.request.GET.get('talla', '')
+        category = self.request.GET.get('category', '')
+        sort = self.request.GET.get('sort', '')
         
         if nombre:
             queryset = queryset.filter(nombre__icontains=nombre)
@@ -74,6 +76,14 @@ class productListView(ListView):
             queryset = queryset.filter(precio__lte=precio_max)
         if talla:
             queryset = queryset.filter(talla=talla)
+        if category:
+            queryset = queryset.filter(category__nombre=category)
+        
+        # Apply sorting
+        if sort == 'precio_asc':
+            queryset = queryset.order_by('precio')
+        elif sort == 'precio_desc':
+            queryset = queryset.order_by('-precio')
         
         return queryset
     
@@ -96,6 +106,8 @@ class amigosProductListView(LoginRequiredMixin, ListView):
         precio_min = self.request.GET.get('precio_min', '')
         precio_max = self.request.GET.get('precio_max', '')
         talla = self.request.GET.get('talla', '')
+        category = self.request.GET.get('category', '')
+        sort = self.request.GET.get('sort', '')
         
         if nombre:
             queryset = queryset.filter(nombre__icontains=nombre)
@@ -105,6 +117,14 @@ class amigosProductListView(LoginRequiredMixin, ListView):
             queryset = queryset.filter(precio__lte=precio_max)
         if talla:
             queryset = queryset.filter(talla=talla)
+        if category:
+            queryset = queryset.filter(category__nombre=category)
+        
+        # Apply sorting
+        if sort == 'precio_asc':
+            queryset = queryset.order_by('precio')
+        elif sort == 'precio_desc':
+            queryset = queryset.order_by('-precio')
         
         return queryset
     
@@ -166,6 +186,8 @@ class misProductosListView(LoginRequiredMixin, ListView):
         precio_min = self.request.GET.get('precio_min', '')
         precio_max = self.request.GET.get('precio_max', '')
         talla = self.request.GET.get('talla', '')
+        category = self.request.GET.get('category', '')
+        sort = self.request.GET.get('sort', '')
         
         if nombre:
             queryset = queryset.filter(nombre__icontains=nombre)
@@ -175,6 +197,14 @@ class misProductosListView(LoginRequiredMixin, ListView):
             queryset = queryset.filter(precio__lte=precio_max)
         if talla:
             queryset = queryset.filter(talla=talla)
+        if category:
+            queryset = queryset.filter(category__nombre=category)
+        
+        # Apply sorting
+        if sort == 'precio_asc':
+            queryset = queryset.order_by('precio')
+        elif sort == 'precio_desc':
+            queryset = queryset.order_by('-precio')
         
         return queryset
     

@@ -3,12 +3,14 @@
 
 <h3>Lista de Productos de Amigos</h3>
 
-<form method="get" action="">
-    <h4>Buscar y Filtrar</h4>
-    {{ search_form.as_p }}
-    <button type="submit">Buscar</button>
-    <a href="{% url 'inner_circle:amigos_product_list' %}">Limpiar</a>
-</form>
+<details>
+    <summary style="cursor: pointer; font-weight: bold; padding: 10px; background-color: #f5f5f5; border-radius: 4px;">Buscar y Filtrar</summary>
+    <form method="get" action="" style="margin-top: 10px; padding: 10px; background-color: #fafafa; border-radius: 4px;">
+        {{ search_form.as_p }}
+        <button type="submit">Buscar</button>
+        <a href="{% url 'inner_circle:amigos_product_list' %}">Limpiar</a>
+    </form>
+</details>
 
 {% if amigos_productos %}  
         {% for p in amigos_productos %}

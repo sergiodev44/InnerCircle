@@ -9,7 +9,13 @@
   </title>
 
 </head>
-<h1>InnerCircle</h1>
+<body>
+   {% if user.is_authenticated %}
+   <a href="{% url 'inner_circle:producto_list' %}"><h1>InnerCircle</h1></a>
+   {% else %}
+   <h1>InnerCircle</h1>
+   {% endif %}
+
 <nav>
   
   {% if user.is_authenticated %}
@@ -44,7 +50,7 @@
   {% endif %}
     
 </nav>
-<body>
+
     {% block main %}
     {% endblock  %}
 </body>

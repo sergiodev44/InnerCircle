@@ -1,6 +1,6 @@
 from django import forms
 from django.forms import ModelForm
-from .models import Profile, Product, Venta, Resena, User, FriendRequest, Mensaje
+from .models import Profile, Product, Venta, Resena, User, FriendRequest, Mensaje, Category
 from django.contrib.auth.forms import UserCreationForm
 
 class UserForm(UserCreationForm):
@@ -29,12 +29,13 @@ class ProfileForm(forms.ModelForm):
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        fields = ["nombre","descripcion","estado","precio","talla","img_prod"]
+        fields = ["nombre","descripcion","estado","precio","talla","category","img_prod"]
         widgets = {
             "nombre": forms.TextInput(attrs={}),
             "descripcion": forms.Textarea(attrs={'cols':30, 'rows':3}),
             "estado": forms.Select(attrs={}),
             "talla": forms.Select(attrs={}),
+            "category": forms.Select(attrs={}),
             "img_prod": forms.ClearableFileInput(attrs={}),
 
         }
@@ -69,8 +70,16 @@ class MensajeForm(forms.ModelForm):
 
 
 class ProductSearchForm(forms.Form):
+    SORT_CHOICES = [
+        ('', '-- Más recientes primero --'),
+        ('precio_asc', 'Precio: menor a mayor'),
+        ('precio_desc', 'Precio: mayor a menor'),
+    ]
+    
     nombre = forms.CharField(max_length=200, required=False, label="Nombre del producto")
     precio_min = forms.DecimalField(min_value=0, required=False, label="Precio mínimo")
     precio_max = forms.DecimalField(min_value=0, required=False, label="Precio máximo")
     talla = forms.ChoiceField(choices=[('', '-- Todas las tallas --')] + list(Product.TALLAS), required=False, label="Talla")
+    category = forms.ChoiceField(choices=[('', '-- Todas las categorías --')] + list(Category.CATEGORIAS), required=False, label="Categoría")
+    sort = forms.ChoiceField(choices=SORT_CHOICES, required=False, label="Ordenar por")
 
