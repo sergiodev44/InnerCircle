@@ -46,6 +46,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'inner_circle.middleware.BannedUserMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -125,3 +126,7 @@ LOGIN_REDIRECT_URL = "/inner/"
 LOGOUT_REDIRECT_URL = "login"
 
 AUTH_USER_MODEL = "inner_circle.User"
+
+AUTHENTICATION_BACKENDS = [
+    'inner_circle.backends.BannedUserBackend',
+]

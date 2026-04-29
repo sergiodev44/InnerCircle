@@ -1,8 +1,8 @@
-from .models import Profile, Product, Venta, Resena, User, FriendRequest, Mensaje, Conversation, Notification
+from .models import Profile, Product, Venta, Resena, User, FriendRequest, Mensaje, Conversation, Notification, BlockedUser, Report
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DeleteView, UpdateView, DetailView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from .forms import ProfileForm, ProductForm, ResenaForm, UserForm, FriendRequestForm, MensajeForm, ProductSearchForm
+from .forms import ProfileForm, ProductForm, ResenaForm, UserForm, FriendRequestForm, MensajeForm, ProductSearchForm, ReportForm
 from django.views import View
 from django.views.generic import TemplateView
 from django.shortcuts import redirect
@@ -58,6 +58,16 @@ class productListView(ListView):
     
     def get_queryset(self):
         queryset = Product.objects.exclude(user=self.request.user)
+        
+        # Exclude blocked users from showing their products
+        if self.request.user.is_authenticated:
+            blocked_users = self.request.user.bloqueados.values_list('blocked', flat=True)
+            queryset = queryset.exclude(user__in=blocked_users)
+            
+            # Also exclude users who have blocked the current user
+            blocking_users = BlockedUser.objects.filter(blocked=self.request.user).values_list('blocker', flat=True)
+            queryset = queryset.exclude(user__in=blocking_users)
+        
         return self._apply_filters(queryset)
     
     def _apply_filters(self, queryset):
@@ -99,6 +109,15 @@ class amigosProductListView(LoginRequiredMixin, ListView):
     
     def get_queryset(self):
         queryset = Product.objects.filter(user__in=self.request.user.friends.all())
+        
+        # Exclude blocked users
+        blocked_users = self.request.user.bloqueados.values_list('blocked', flat=True)
+        queryset = queryset.exclude(user__in=blocked_users)
+        
+        # Also exclude users who have blocked the current user
+        blocking_users = BlockedUser.objects.filter(blocked=self.request.user).values_list('blocker', flat=True)
+        queryset = queryset.exclude(user__in=blocking_users)
+        
         return self._apply_filters(queryset)
     
     def _apply_filters(self, queryset):
@@ -391,7 +410,16 @@ class conversacionDetailView(LoginRequiredMixin, UserPassesTestMixin, View):
     
     def test_func(self):
         conversation = Conversation.objects.get(pk=self.kwargs['conversation_id'])
-        return self.request.user in [conversation.usuario1, conversation.usuario2]
+        user_in_conversation = self.request.user in [conversation.usuario1, conversation.usuario2]
+        
+        # Check if either user is blocked
+        otro_user = conversation.usuario2 if self.request.user == conversation.usuario1 else conversation.usuario1
+        is_blocked = BlockedUser.objects.filter(
+            Q(blocker=self.request.user, blocked=otro_user) |
+            Q(blocker=otro_user, blocked=self.request.user)
+        ).exists()
+        
+        return user_in_conversation and not is_blocked
     
     def get(self, request, *args, **kwargs):
         conversation = Conversation.objects.get(pk=self.kwargs['conversation_id'])
@@ -430,6 +458,15 @@ class iniciarConversacionView(LoginRequiredMixin, View):
         
         # Validar que no sea el mismo usuario
         if request.user == otro_user:
+            return redirect('inner_circle:producto_detail', pk=producto.pk)
+        
+        # Check if blocked
+        is_blocked = BlockedUser.objects.filter(
+            Q(blocker=request.user, blocked=otro_user) |
+            Q(blocker=otro_user, blocked=request.user)
+        ).exists()
+        
+        if is_blocked:
             return redirect('inner_circle:producto_detail', pk=producto.pk)
         
         # get_or_create conversation
@@ -496,3 +533,57 @@ class mensajesListView(LoginRequiredMixin, TemplateView):
         return context
 
 
+# REPORT & BLOCK
+
+class BlockUserView(LoginRequiredMixin, View):
+    """Block a user - local block, doesn't go to admin"""
+    def post(self, request, *args, **kwargs):
+        user_to_block = User.objects.get(pk=self.kwargs['pk'])
+        
+        # Check if already blocked
+        if BlockedUser.objects.filter(blocker=request.user, blocked=user_to_block).exists():
+            return redirect('inner_circle:profile_detail', pk=user_to_block.profile.pk)
+        
+        # Create the block
+        BlockedUser.objects.create(blocker=request.user, blocked=user_to_block)
+        
+        return redirect('inner_circle:profile_detail', pk=user_to_block.profile.pk)
+
+
+class UnblockUserView(LoginRequiredMixin, View):
+    """Unblock a user"""
+    def post(self, request, *args, **kwargs):
+        user_to_unblock = User.objects.get(pk=self.kwargs['pk'])
+        
+        BlockedUser.objects.filter(blocker=request.user, blocked=user_to_unblock).delete()
+        
+        return redirect('inner_circle:profile_detail', pk=user_to_unblock.profile.pk)
+
+
+class ReportUserView(LoginRequiredMixin, CreateView):
+    """Report a user - goes to admin for review"""
+    model = Report
+    form_class = ReportForm
+    template_name = "inner_circle/reportUserForm.html"
+    
+    def form_valid(self, form):
+        reported_user = User.objects.get(pk=self.kwargs['pk'])
+        
+        # Check if already reported by this user
+        if Report.objects.filter(reporter=self.request.user, reported_user=reported_user).exists():
+            form.add_error(None, "Ya has reportado a este usuario")
+            return self.form_invalid(form)
+        
+        form.instance.reporter = self.request.user
+        form.instance.reported_user = reported_user
+        
+        return super().form_valid(form)
+    
+    def get_success_url(self):
+        return reverse_lazy("inner_circle:profile_detail", 
+                          kwargs={"pk": User.objects.get(pk=self.kwargs['pk']).profile.pk})
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['reported_user'] = User.objects.get(pk=self.kwargs['pk'])
+        return context

@@ -1,10 +1,10 @@
-
 from django.urls import path
 from .views import profileDetailView,profileUpdateView, profileDeleteView, userCreateView
 from .views import productListView,misProductosListView, amigosProductListView, productDetailView, productCreateView, productUpdateView, productDeleteView
 from .views import ventaDetailView, ventaCreateView, ventasList, resenaDetailView, resenaCreateView, resenaDeleteView
 from .views import frequestCreateView, frRequestResponseView, friendDeleteView
 from .views import profileNotis, conversacionDetailView, iniciarConversacionView, mensajesListView
+from .views import BlockUserView, UnblockUserView, ReportUserView
 
 app_name = "inner_circle"
 
@@ -48,4 +48,8 @@ urlpatterns = [
     path('conversacion/iniciar/<int:product_pk>/<int:user_pk>/', iniciarConversacionView.as_view(), name="iniciar_conversacion"),
     path('mensajes/', mensajesListView.as_view(), name="mensajes_list"),
     
+    # Block & Report
+    path('perfil/<int:pk>/bloquear/', BlockUserView.as_view(), name="block_user"),
+    path('perfil/<int:pk>/desbloquear/', UnblockUserView.as_view(), name="unblock_user"),
+    path('perfil/<int:pk>/reportar/', ReportUserView.as_view(), name="report_user"),
 ]
