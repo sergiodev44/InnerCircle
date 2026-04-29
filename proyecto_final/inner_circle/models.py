@@ -7,6 +7,14 @@ class User(AbstractUser):
     mobile = models.IntegerField()
     #Atributo para el tema de la amistad
     friends = models.ManyToManyField('self', symmetrical=True, blank=True)
+    
+    @property
+    def promedio_rating(self):
+        """Calcula el promedio de calificaciones recibidas"""
+        ratings = self.recibidor.all()
+        if ratings.exists():
+            return round(ratings.aggregate(prom=models.Avg('puntuacion'))['prom'], 1)
+        return None
 
 class Profile(models.Model):
     user = models.OneToOneField(User,on_delete=models.CASCADE)

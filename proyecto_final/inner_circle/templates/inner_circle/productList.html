@@ -25,6 +25,9 @@
         {{p.precio}}€ -
         {{p.talla}} -
         vendedor:<a  href="{% url 'inner_circle:profile_detail' pk=p.user.profile.pk %}"> {{p.user.profile.nombre_tag}} </a>
+        {% if p.user.promedio_rating %}
+            <span>⭐ {{p.user.promedio_rating}}</span>
+        {% endif %}
         
         
         {% if request.user.pk == p.user.pk  %}
