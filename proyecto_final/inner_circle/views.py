@@ -10,6 +10,8 @@ from django.shortcuts import render
 from django.db.models import Q
 from django.core.mail import send_mail
 from django.conf import settings
+from django.db import transaction
+from django.core.exceptions import ObjectDoesNotExist
 import uuid
 import stripe
 import json
@@ -310,9 +312,14 @@ class misProductosListView(LoginRequiredMixin, ListView):
 
 # v2
 class ventaCreateView(LoginRequiredMixin, View):
+    @transaction.atomic
     def post(self, request, *args, **kwargs):
-        product = Product.objects.get(pk = self.kwargs['pk'])
-        if product.estado == 'VEND':
+        """Create venta with row-level locking to prevent double-selling"""
+        # Lock product row to prevent race conditions
+        product = Product.objects.select_for_update().get(pk=self.kwargs['pk'])
+        
+        # Double-check product status after acquiring lock
+        if product.estado != 'DISP':
             return redirect('inner_circle:product_list')
         
         venta = Venta(
@@ -325,7 +332,8 @@ class ventaCreateView(LoginRequiredMixin, View):
         venta.calculate_totals()
         venta.save()
 
-        product.estado = 'VEND'
+        # Mark product as reserved (NOT sold yet - that happens after payment succeeds)
+        product.estado = 'RESV'
         product.save()
         # Redirect to Stripe checkout instead of detail
         return redirect('inner_circle:checkout', pk=venta.pk)
@@ -422,8 +430,37 @@ class stripeWebhookView(View):
         except stripe.error.SignatureVerificationError:
             return JsonResponse({'error': 'Invalid signature'}, status=400)
         
+        # Handle payment_intent.payment_failed event - release product back to DISP
+        if event['type'] == 'payment_intent.payment_failed':
+            try:
+                payment_intent = event['data']['object']
+                venta_id = None
+                if 'metadata' in payment_intent and 'venta_id' in payment_intent['metadata']:
+                    venta_id = payment_intent['metadata']['venta_id']
+                
+                print(f"❌ Webhook received payment_intent.payment_failed")
+                print(f"   Payment Intent ID: {payment_intent['id']}")
+                print(f"   Venta ID from metadata: {venta_id}")
+                
+                if venta_id:
+                    try:
+                        venta_id_int = int(venta_id)
+                        with transaction.atomic():
+                            product = Product.objects.select_for_update().get(prods=venta_id_int)
+                            # Release product back to available if payment fails
+                            if product.estado == 'RESV':
+                                product.estado = 'DISP'
+                                product.save()
+                                print(f"   ✅ Released product {product.pk} back to DISP")
+                    except Product.DoesNotExist:
+                        print(f"   ⚠️  Product not found for venta: {venta_id_int}")
+                    except ValueError:
+                        print(f"   ❌ Invalid venta_id format: {venta_id}")
+            except Exception as e:
+                print(f"❌ Error processing payment_intent.payment_failed: {str(e)}")
+        
         # Handle payment_intent.succeeded event
-        if event['type'] == 'payment_intent.succeeded':
+        elif event['type'] == 'payment_intent.succeeded':
             try:
                 payment_intent = event['data']['object']
                 
@@ -439,12 +476,20 @@ class stripeWebhookView(View):
                 if venta_id:
                     try:
                         venta_id_int = int(venta_id)
-                        venta = Venta.objects.get(pk=venta_id_int)
-                        print(f"   ✅ Found venta: {venta.pk}")
-                        print(f"   Current estado_pago: {venta.estado_pago}")
-                        venta.estado_pago = 'pagado'
-                        venta.save()
-                        print(f"   ✅ Updated venta.estado_pago to 'pagado'")
+                        # Use atomic transaction to ensure product status updates consistently with payment
+                        with transaction.atomic():
+                            venta = Venta.objects.select_for_update().get(pk=venta_id_int)
+                            print(f"   ✅ Found venta: {venta.pk}")
+                            print(f"   Current estado_pago: {venta.estado_pago}")
+                            venta.estado_pago = 'pagado'
+                            venta.save()
+                            
+                            # Mark product as SOLD (finalize the sale)
+                            product = venta.product
+                            product.estado = 'VEND'
+                            product.save()
+                            print(f"   ✅ Updated venta.estado_pago to 'pagado'")
+                            print(f"   ✅ Updated product {product.pk} estado to 'VEND'")
                     except Venta.DoesNotExist:
                         print(f"   ❌ Venta not found with id: {venta_id_int}")
                     except ValueError:
