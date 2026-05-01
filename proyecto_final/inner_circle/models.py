@@ -2,6 +2,21 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from decimal import Decimal
+from django.core.validators import FileExtensionValidator
+
+
+# Image Validation Constants
+MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5MB
+ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'avif']
+
+
+def validate_image_size(file):
+    """Validate image file size (prevent large uploads)"""
+    if file.size > MAX_IMAGE_SIZE:
+        raise ValidationError(
+            f'Imagen muy grande. Máximo {MAX_IMAGE_SIZE // (1024*1024)}MB. '
+            f'Tu archivo: {file.size / (1024*1024):.1f}MB'
+        )
 
 
 class User(AbstractUser):
@@ -26,7 +41,13 @@ class Profile(models.Model):
     # max length?
     bio = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-    img_perfil = models.ImageField(upload_to="profiles/")
+    img_perfil = models.ImageField(
+        upload_to="profiles/",
+        validators=[
+            FileExtensionValidator(allowed_extensions=ALLOWED_IMAGE_EXTENSIONS),
+            validate_image_size,
+        ]
+    )
 
 class Category(models.Model):
     CATEGORIAS = [
@@ -64,7 +85,13 @@ class Product(models.Model):
     talla = models.CharField(choices=TALLAS)
     created_at = models.DateTimeField(auto_now_add=True)
     update_at = models.DateField(auto_now=True)
-    img_prod = models.ImageField(upload_to="products/")
+    img_prod = models.ImageField(
+        upload_to="products/",
+        validators=[
+            FileExtensionValidator(allowed_extensions=ALLOWED_IMAGE_EXTENSIONS),
+            validate_image_size,
+        ]
+    )
     # los productos también tienen imagenes, 3. Cómo lo añado?
 
     class Meta:

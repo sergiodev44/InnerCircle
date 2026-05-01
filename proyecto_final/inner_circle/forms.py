@@ -2,6 +2,7 @@ from django import forms
 from django.forms import ModelForm
 from .models import Profile, Product, Venta, Resena, User, FriendRequest, Mensaje, Category, Report
 from django.contrib.auth.forms import UserCreationForm
+from django.core.exceptions import ValidationError
 
 class UserForm(UserCreationForm):
      class Meta:
@@ -23,7 +24,6 @@ class ProfileForm(forms.ModelForm):
             "nombre_tag": forms.TextInput(attrs={}),
             "bio": forms.Textarea(attrs={'cols':30,'rows':2}),
             "img_perfil": forms.ClearableFileInput(attrs={}),
-            
         }
 
 
@@ -38,7 +38,6 @@ class ProductForm(forms.ModelForm):
             "talla": forms.Select(attrs={}),
             "category": forms.Select(attrs={}),
             "img_prod": forms.ClearableFileInput(attrs={}),
-
         }
 
 
