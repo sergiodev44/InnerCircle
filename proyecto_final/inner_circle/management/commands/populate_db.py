@@ -10,6 +10,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # Clear existing data
+        Product.objects.all().delete()
         Profile.objects.all().delete()
         Category.objects.all().delete()
         User.objects.all().delete()
@@ -216,23 +217,33 @@ class Command(BaseCommand):
         )
 
         # Create sales (ventas)
+        from decimal import Decimal
         venta1 = Venta.objects.create(
             comprador=users['vegeta'],
             vendedor=users['goku'],
             product=products[0],
-            importe=12.99
+            precio_base=Decimal('12.99'),
+            impuesto=Decimal('1.30'),
+            tarifa_servicio=Decimal('0.65'),
+            importe_total=Decimal('14.94')
         )
         venta2 = Venta.objects.create(
             comprador=users['boo'],
             vendedor=users['broly'],
             product=products[4],
-            importe=35.00
+            precio_base=Decimal('35.00'),
+            impuesto=Decimal('3.50'),
+            tarifa_servicio=Decimal('1.75'),
+            importe_total=Decimal('40.25')
         )
         venta3 = Venta.objects.create(
             comprador=users['bardock'],
             vendedor=users['vegeta'],
             product=products[2],
-            importe=45.00
+            precio_base=Decimal('45.00'),
+            impuesto=Decimal('4.50'),
+            tarifa_servicio=Decimal('2.25'),
+            importe_total=Decimal('51.75')
         )
 
         # Create reviews (reseñas)
