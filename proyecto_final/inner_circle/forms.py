@@ -6,9 +6,10 @@ from django.contrib.auth.forms import UserCreationForm
 class UserForm(UserCreationForm):
      class Meta:
         model = User
-        fields = ["username", "mobile"]
+        fields = ["username", "email", "mobile"]
         widgets = {
              "username" : forms.TextInput(attrs={}),
+             "email" : forms.EmailInput(attrs={}),
              "mobile" : forms.NumberInput(attrs={}),
         }
 

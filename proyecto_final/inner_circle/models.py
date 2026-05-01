@@ -9,6 +9,8 @@ class User(AbstractUser):
     #Atributo para el tema de la amistad
     friends = models.ManyToManyField('self', symmetrical=True, blank=True)
     is_banned = models.BooleanField(default=False)
+    email_verified = models.BooleanField(default=False)
+    email_verification_token = models.CharField(max_length=32, blank=True, null=True)
     
     @property
     def promedio_rating(self):

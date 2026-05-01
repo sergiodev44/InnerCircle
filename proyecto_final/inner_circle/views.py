@@ -25,6 +25,30 @@ class userCreateView(CreateView,):
     template_name = "UserForm.html"
     success_url = reverse_lazy("login")
 
+
+class VerifyEmailView(View):
+    """Simple email verification view"""
+    def get(self, request):
+        uid = request.GET.get('uid')
+        token = request.GET.get('token')
+        
+        if not uid or not token:
+            return render(request, 'inner_circle/email_verification_failed.html')
+        
+        try:
+            user = User.objects.get(pk=uid)
+        except User.DoesNotExist:
+            return render(request, 'inner_circle/email_verification_failed.html')
+        
+        # Check if token matches
+        if user.email_verification_token == token:
+            user.email_verified = True
+            user.email_verification_token = None  # Clear token after use
+            user.save()
+            return render(request, 'inner_circle/email_verified.html', {'user': user})
+        
+        return render(request, 'inner_circle/email_verification_failed.html')
+
 # PROFILE
 class profileDetailView(DetailView):
     model = Profile
