@@ -8,6 +8,9 @@ from django.views.generic import TemplateView
 from django.shortcuts import redirect
 from django.shortcuts import render
 from django.db.models import Q
+from django.core.mail import send_mail
+from django.conf import settings
+import uuid
 import stripe
 import json
 import os
@@ -48,6 +51,31 @@ class VerifyEmailView(View):
             return render(request, 'inner_circle/email_verified.html', {'user': user})
         
         return render(request, 'inner_circle/email_verification_failed.html')
+
+class ResendVerificationEmailView(LoginRequiredMixin, View):
+    """Resend verification email to user"""
+    def get(self, request, pk):
+        try:
+            user = User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            return redirect('inner_circle:profile_detail', pk=request.user.profile.pk)
+        
+        # Generate new token
+        token = str(uuid.uuid4())
+        user.email_verification_token = token
+        user.save()
+        
+        # Send email
+        verification_link = f"http://localhost:8000/inner/verify-email/?uid={user.pk}&token={token}"
+        subject = 'Verify your email - InnerCircle'
+        message = f"Hi {user.username},\n\nVerify your email:\n{verification_link}\n\nExpires in 24 hours."
+        
+        try:
+            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email])
+        except Exception as e:
+            print(f"Failed to send email: {e}")
+        
+        return redirect('inner_circle:profile_detail', pk=pk)
 
 # PROFILE
 class profileDetailView(DetailView):

@@ -7,6 +7,12 @@
         <img src="https://img.freepik.com/premium-vector/vector-flat-illustration-grayscale-avatar-user-profile-person-icon-gender-neutral-silhouette-profile-picture-suitable-social-media-profiles-icons-screensavers-as-templatex9xa_719432-2210.jpg?semt=ais_hybrid&w=740&q=80" width="40" height="40">
     {% endif %}
 
+{% if profile.user.email_verified %}
+    <p><small>Email verificado</small></p>
+{% else %}
+    <p><small>Sin verificar - <a href="{% url 'inner_circle:resend_verification_email' pk=profile.user.pk %}">protege tu cuenta aquí</a></small></p>
+{% endif %}
+
 {% if profile.nombre_tag  %}
     <p>{{profile.nombre_tag}} #{{profile.user.username}}</p>
 {% else %}

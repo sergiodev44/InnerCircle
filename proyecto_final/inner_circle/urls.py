@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import profileDetailView,profileUpdateView, profileDeleteView, userCreateView, VerifyEmailView
+from .views import profileDetailView,profileUpdateView, profileDeleteView, userCreateView, VerifyEmailView, ResendVerificationEmailView
 from .views import productListView,misProductosListView, amigosProductListView, productDetailView, productCreateView, productUpdateView, productDeleteView
 from .views import ventaDetailView, ventaCreateView, ventasList, resenaDetailView, resenaCreateView, resenaDeleteView
 from .views import frequestCreateView, frRequestResponseView, friendDeleteView
@@ -14,6 +14,7 @@ urlpatterns = [
     # User
     path('user/create', userCreateView.as_view(), name="user_create"),
     path('verify-email/', VerifyEmailView.as_view(), name="verify_email"),
+    path('resend-verification/<int:pk>/', ResendVerificationEmailView.as_view(), name="resend_verification_email"),
     
     # Password Reset (Django built-in)
     path('password-reset/', PasswordResetView.as_view(template_name='inner_circle/password_reset_form.html'), name="password_reset"),
