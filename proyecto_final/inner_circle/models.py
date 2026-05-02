@@ -26,6 +26,7 @@ class User(AbstractUser):
     is_banned = models.BooleanField(default=False)
     email_verified = models.BooleanField(default=False)
     email_verification_token = models.CharField(max_length=32, blank=True, null=True)
+    last_rate_limit_warning = models.DateTimeField(blank=True, null=True)  # Track rate limit violations
     
     @property
     def promedio_rating(self):

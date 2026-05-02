@@ -12,6 +12,9 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils import timezone
+from datetime import timedelta
+from django.http import HttpResponse
 import uuid
 import stripe
 import json
@@ -22,6 +25,75 @@ from django.utils.decorators import method_decorator
 from django.conf import settings
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
+
+def can_report_user(user):
+    """Check if user can report (max 3 per hour)"""
+    one_hour_ago = timezone.now() - timedelta(hours=1)
+    recent_reports = Report.objects.filter(
+        reporter=user,
+        created_at__gte=one_hour_ago
+    ).count()
+    return recent_reports < 3
+
+
+def can_send_message(user):
+    """Check if user can send message (max 3 per 1 minute for testing)"""
+    one_min_ago = timezone.now() - timedelta(minutes=1)
+    recent_messages = Mensaje.objects.filter(
+        sender=user,
+        created_at__gte=one_min_ago
+    ).count()
+    print(f"DEBUG: User {user.username} has {recent_messages} messages in last min. Can send: {recent_messages < 3}")
+    return recent_messages < 15
+
+
+def get_rate_limit_timeout(user):
+    """Get minutes until user can send next message (0 if ok to send)"""
+    one_min_ago = timezone.now() - timedelta(minutes=1)
+    oldest_msg = Mensaje.objects.filter(
+        sender=user,
+        created_at__gte=one_min_ago
+    ).order_by('created_at').first()
+    
+    if not oldest_msg or oldest_msg.created_at < one_min_ago:
+        return 0
+    
+    # Seconds until oldest message leaves the 1-minute window
+    time_left = oldest_msg.created_at + timedelta(minutes=1) - timezone.now()
+    seconds = int(time_left.total_seconds()) + 1
+    return max(1, seconds)
+
+
+def check_and_ban_spammer(user, action_type):
+    """Auto-ban user if they violate rate limit TWICE in same 1 minute"""
+    # Refresh user from DB to get latest last_rate_limit_warning
+    user.refresh_from_db()
+    
+    one_min_ago = timezone.now() - timedelta(minutes=1)
+    
+    print(f"DEBUG: Checking ban status for {user.username}. last_rate_limit_warning={user.last_rate_limit_warning}")
+    
+    # Check if user already has a recent violation (stored in last_rate_limit_warning)
+    if user.last_rate_limit_warning:
+        time_since_warning = timezone.now() - user.last_rate_limit_warning
+        print(f"DEBUG: Time since warning: {time_since_warning}. Is < 1 min? {time_since_warning < timedelta(minutes=1)}")
+        if time_since_warning < timedelta(minutes=1):
+            # Second violation within a minute = permanent ban
+            user.is_banned = True
+            user.save()
+            from django.db import connection
+            connection.commit()
+            print(f"DEBUG: PERMANENTLY BANNED {user.username} for second rate limit violation")
+            return True
+    
+    # First violation: mark the timestamp
+    print(f"DEBUG: Setting first violation warning for {user.username}")
+    user.last_rate_limit_warning = timezone.now()
+    user.save()
+    from django.db import connection
+    connection.commit()
+    print(f"DEBUG: First violation for {user.username}. Warning issued. last_rate_limit_warning={user.last_rate_limit_warning}")
+    return False
 
 # USER
 class userCreateView(CreateView,):
@@ -679,16 +751,69 @@ class conversacionDetailView(LoginRequiredMixin, UserPassesTestMixin, View):
         
         mensajes = conversation.mensajes.all()
         
+        # Check rate limit status
+        rate_limited = not can_send_message(request.user)
+        timeout_minutes = get_rate_limit_timeout(request.user) if rate_limited else 0
+        
+        if rate_limited:
+            request.user.refresh_from_db()
+            if request.user.last_rate_limit_warning:
+                time_since = timezone.now() - request.user.last_rate_limit_warning
+                print(f"DEBUG: GET rate limited - warning was {int(time_since.total_seconds())}s ago")
+                if time_since < timedelta(hours=1):
+                    # Second timeout within 1 hour = permanent ban
+                    print(f"DEBUG: BANNING {request.user.username}")
+                    request.user.is_banned = True
+                    request.user.save()
+                    # Middleware will catch next request, but redirect now
+                    from django.contrib.auth import logout
+                    logout(request)
+                    return redirect('inner_circle:banned')
+            else:
+                # First timeout: record warning
+                print(f"DEBUG: First timeout for {request.user.username} - saving warning")
+                request.user.last_rate_limit_warning = timezone.now()
+                request.user.save()
+        
         context = {
             'mensajes': mensajes,
             'conversation': conversation,
             'producto': conversation.producto,
             'otro_usuario': otro_user,
-            'form': MensajeForm()
+            'form': MensajeForm(),
+            'rate_limited': rate_limited,
+            'timeout_minutes': timeout_minutes,
         }
         return render(request, 'inner_circle/conversacion.html', context)
     
     def post(self, request, *args, **kwargs):
+        request.user.refresh_from_db()
+        
+        if not can_send_message(request.user):
+            # Rate limit exceeded - check if this is a second violation
+            if request.user.last_rate_limit_warning:
+                time_since = timezone.now() - request.user.last_rate_limit_warning
+                print(f"DEBUG: Second violation? Warning was {int(time_since.total_seconds())}s ago")
+                if time_since < timedelta(hours=1):
+                    # Second rate limit hit within 1 hour = permanent ban
+                    print(f"DEBUG: BANNING {request.user.username}")
+                    request.user.is_banned = True
+                    request.user.save()
+                    return HttpResponse("Tu cuenta ha sido suspendida permanentemente por abuso.", status=429)
+            
+            # First violation: save warning and show timeout
+            print(f"DEBUG: First violation for {request.user.username}")
+            request.user.last_rate_limit_warning = timezone.now()
+            request.user.save()
+            
+            conversation = Conversation.objects.get(pk=self.kwargs['conversation_id'])
+            context = {
+                'timeout_minutes': get_rate_limit_timeout(request.user),
+                'conversation': conversation,
+                'otro_usuario': conversation.usuario2 if request.user == conversation.usuario1 else conversation.usuario1,
+            }
+            return render(request, 'inner_circle/mensaje_rate_limit.html', context, status=429)
+        
         conversation = Conversation.objects.get(pk=self.kwargs['conversation_id'])
         form = MensajeForm(request.POST)
         
@@ -735,6 +860,22 @@ class mensajeCreateView(LoginRequiredMixin, CreateView):
     form_class = MensajeForm
     template_name = "inner_circle/mensajeForm.html"
     
+    def dispatch(self, request, *args, **kwargs):
+        # Rate limit check at dispatch level (catches all attempts)
+        if request.method == 'POST':
+            print(f"DEBUG DISPATCH: User {request.user.username} attempting to send message")
+            if not can_send_message(request.user):
+                print(f"DEBUG DISPATCH: Rate limit exceeded for {request.user.username}, banning...")
+                # Ban them immediately for trying to bypass
+                check_and_ban_spammer(request.user, 'message')
+                # Refresh to verify ban
+                request.user.refresh_from_db()
+                print(f"DEBUG DISPATCH: User {request.user.username} is_banned after ban check: {request.user.is_banned}")
+                return HttpResponse("Has excedido el límite de mensajes. Tu cuenta ha sido suspendida temporalmente.", status=429)
+        
+        print(f"DEBUG DISPATCH: User {request.user.username} passed rate limit check")
+        return super().dispatch(request, *args, **kwargs)
+    
     def get_success_url(self):
         return reverse_lazy("inner_circle:conversacion_detail", 
                           kwargs={"conversation_id": self.object.conversation.pk})
@@ -753,7 +894,12 @@ class mensajeCreateView(LoginRequiredMixin, CreateView):
         form.instance.sender = self.request.user
         form.instance.conversation = conversation
         
-        return super().form_valid(form)
+        result = super().form_valid(form)
+        
+        # Final check for spam and auto-ban
+        check_and_ban_spammer(self.request.user, 'message')
+        
+        return result
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -817,6 +963,21 @@ class ReportUserView(LoginRequiredMixin, CreateView):
     form_class = ReportForm
     template_name = "inner_circle/reportUserForm.html"
     
+    def dispatch(self, request, *args, **kwargs):
+        # Rate limit check at dispatch level
+        if request.method == 'POST':
+            if not can_report_user(request.user):
+                # Ban them immediately and explicitly
+                print(f"DEBUG REPORT: Rate limit exceeded for {request.user.username}, banning NOW")
+                request.user.is_banned = True
+                request.user.save()
+                from django.db import connection
+                connection.commit()  # Force DB commit
+                print(f"DEBUG REPORT: User {request.user.username} is_banned set to True and saved to DB")
+                return HttpResponse("Has excedido el límite de reportes. Tu cuenta ha sido suspendida permanentemente.", status=429)
+        
+        return super().dispatch(request, *args, **kwargs)
+    
     def form_valid(self, form):
         reported_user = User.objects.get(pk=self.kwargs['pk'])
         
@@ -828,7 +989,12 @@ class ReportUserView(LoginRequiredMixin, CreateView):
         form.instance.reporter = self.request.user
         form.instance.reported_user = reported_user
         
-        return super().form_valid(form)
+        result = super().form_valid(form)
+        
+        # Final check for spam and auto-ban
+        check_and_ban_spammer(self.request.user, 'report')
+        
+        return result
     
     def get_success_url(self):
         return reverse_lazy("inner_circle:profile_detail", 
