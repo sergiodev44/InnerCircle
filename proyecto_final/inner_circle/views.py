@@ -15,6 +15,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from datetime import timedelta
 from django.http import HttpResponse
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import uuid
 import stripe
 import json
@@ -194,6 +195,7 @@ class productListView(ListView):
     model = Product
     template_name = "productList.html"
     context_object_name = "productos"
+    paginate_by = 12
     
     def get_queryset(self):
         queryset = Product.objects.exclude(user=self.request.user)
@@ -245,6 +247,7 @@ class amigosProductListView(LoginRequiredMixin, ListView):
     model = Product
     template_name = "amigosProductList.html"
     context_object_name = "amigos_productos"
+    paginate_by = 12
     
     def get_queryset(self):
         queryset = Product.objects.filter(user__in=self.request.user.friends.all())
@@ -339,6 +342,7 @@ class misProductosListView(LoginRequiredMixin, ListView):
     model = Product
     template_name = "misProducts.html"
     context_object_name = "productos"
+    paginate_by = 12
     
     def get_queryset(self):
         queryset = Product.objects.filter(user=self.request.user)
@@ -478,11 +482,35 @@ class stripeCheckoutView(LoginRequiredMixin, DetailView):
 
 class ventasList(LoginRequiredMixin, TemplateView):
     template_name = "inner_circle/ventas_list.html"
+    paginate_by = 10
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['ventas']= Venta.objects.filter(vendedor=self.request.user)
-        context['compras']= Venta.objects.filter(comprador=self.request.user)
+        
+        # Paginate ventas (sales as seller)
+        ventas = Venta.objects.filter(vendedor=self.request.user)
+        page = self.request.GET.get('page', 1)
+        paginator = Paginator(ventas, self.paginate_by)
+        try:
+            ventas = paginator.page(page)
+        except PageNotAnInteger:
+            ventas = paginator.page(1)
+        except EmptyPage:
+            ventas = paginator.page(paginator.num_pages)
+        
+        # Paginate compras (purchases as buyer) - use different page param
+        compras = Venta.objects.filter(comprador=self.request.user)
+        page_compras = self.request.GET.get('page_compras', 1)
+        paginator_compras = Paginator(compras, self.paginate_by)
+        try:
+            compras = paginator_compras.page(page_compras)
+        except PageNotAnInteger:
+            compras = paginator_compras.page(1)
+        except EmptyPage:
+            compras = paginator_compras.page(paginator_compras.num_pages)
+        
+        context['ventas'] = ventas
+        context['compras'] = compras
         return context
 
 
@@ -917,6 +945,7 @@ class mensajeCreateView(LoginRequiredMixin, CreateView):
 ### Esta bien necesita revisión ###
 class mensajesListView(LoginRequiredMixin, TemplateView):
     template_name = "inner_circle/mensajesList.html"
+    paginate_by = 10
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -925,6 +954,16 @@ class mensajesListView(LoginRequiredMixin, TemplateView):
         conversaciones = Conversation.objects.filter(
             Q(usuario1=usuario) | Q(usuario2=usuario)
         ).prefetch_related('mensajes')
+        
+        # Pagination
+        page = self.request.GET.get('page', 1)
+        paginator = Paginator(conversaciones, self.paginate_by)
+        try:
+            conversaciones = paginator.page(page)
+        except PageNotAnInteger:
+            conversaciones = paginator.page(1)
+        except EmptyPage:
+            conversaciones = paginator.page(paginator.num_pages)
         
         context['conversaciones'] = conversaciones
         return context
