@@ -2,6 +2,41 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from decimal import Decimal
+from django.core.validators import FileExtensionValidator
+from django.utils import timezone
+
+
+# Image Validation Constants
+MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5MB
+ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'avif']
+
+
+# Soft Delete QuerySet & Manager
+class SoftDeleteQuerySet(models.QuerySet):
+    """QuerySet that filters out soft-deleted products"""
+    def active(self):
+        return self.filter(deleted_at__isnull=True)
+    
+    def deleted(self):
+        return self.exclude(deleted_at__isnull=True)
+
+
+class SoftDeleteManager(models.Manager):
+    """Manager that returns only active (not soft-deleted) products by default"""
+    def get_queryset(self):
+        return SoftDeleteQuerySet(self.model, using=self._db).active()
+    
+    def all_including_deleted(self):
+        return SoftDeleteQuerySet(self.model, using=self._db)
+
+
+def validate_image_size(file):
+    """Validate image file size (prevent large uploads)"""
+    if file.size > MAX_IMAGE_SIZE:
+        raise ValidationError(
+            f'Imagen muy grande. Máximo {MAX_IMAGE_SIZE // (1024*1024)}MB. '
+            f'Tu archivo: {file.size / (1024*1024):.1f}MB'
+        )
 
 
 class User(AbstractUser):
@@ -9,6 +44,9 @@ class User(AbstractUser):
     #Atributo para el tema de la amistad
     friends = models.ManyToManyField('self', symmetrical=True, blank=True)
     is_banned = models.BooleanField(default=False)
+    email_verified = models.BooleanField(default=False)
+    email_verification_token = models.CharField(max_length=32, blank=True, null=True)
+    last_rate_limit_warning = models.DateTimeField(blank=True, null=True)  # Track rate limit violations
     
     @property
     def promedio_rating(self):
@@ -24,7 +62,13 @@ class Profile(models.Model):
     # max length?
     bio = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-    img_perfil = models.ImageField(upload_to="profiles/")
+    img_perfil = models.ImageField(
+        upload_to="profiles/",
+        validators=[
+            FileExtensionValidator(allowed_extensions=ALLOWED_IMAGE_EXTENSIONS),
+            validate_image_size,
+        ]
+    )
 
 class Category(models.Model):
     CATEGORIAS = [
@@ -62,8 +106,16 @@ class Product(models.Model):
     talla = models.CharField(choices=TALLAS)
     created_at = models.DateTimeField(auto_now_add=True)
     update_at = models.DateField(auto_now=True)
-    img_prod = models.ImageField(upload_to="products/")
-    # los productos también tienen imagenes, 3. Cómo lo añado?
+    img_prod = models.ImageField(
+        upload_to="products/",
+        validators=[
+            FileExtensionValidator(allowed_extensions=ALLOWED_IMAGE_EXTENSIONS),
+            validate_image_size,
+        ]
+    )
+    deleted_at = models.DateTimeField(null=True, blank=True, default=None)
+    
+    objects = SoftDeleteManager()
 
     class Meta:
         ordering = ['-created_at']

@@ -9,7 +9,10 @@ class Command(BaseCommand):
     help = 'Populate database with comprehensive test data'
 
     def handle(self, *args, **options):
-        # Clear existing data
+        # Clear existing data (order matters due to foreign key constraints)
+        Product.objects.all_including_deleted().delete()
+        Venta.objects.all().delete()
+        Conversation.objects.all().delete()
         Profile.objects.all().delete()
         Category.objects.all().delete()
         User.objects.all().delete()
@@ -113,7 +116,7 @@ class Command(BaseCommand):
                 'user': 'bardock',
                 'nombre': 'Black Sweatpants',
                 'descripcion': 'Comfortable black sweatpants for lounging. High quality fabric.',
-                'estado': 'RESV',
+                'estado': 'DISP',
                 'precio': 28.99,
                 'talla': 'M',
                 'category': 'pantalones',
@@ -215,25 +218,46 @@ class Command(BaseCommand):
             contenido='Only twice, they are almost like new!'
         )
 
-        # Create sales (ventas)
+        # Create sales (ventas) and mark products as VEND with soft delete
+        from decimal import Decimal
         venta1 = Venta.objects.create(
             comprador=users['vegeta'],
             vendedor=users['goku'],
             product=products[0],
-            importe=12.99
+            precio_base=Decimal('12.99'),
+            impuesto=Decimal('1.30'),
+            tarifa_servicio=Decimal('0.65'),
+            importe_total=Decimal('14.94')
         )
+        products[0].estado = 'VEND'
+        products[0].deleted_at = timezone.now()
+        products[0].save()
+        
         venta2 = Venta.objects.create(
             comprador=users['boo'],
             vendedor=users['broly'],
             product=products[4],
-            importe=35.00
+            precio_base=Decimal('35.00'),
+            impuesto=Decimal('3.50'),
+            tarifa_servicio=Decimal('1.75'),
+            importe_total=Decimal('40.25')
         )
+        products[4].estado = 'VEND'
+        products[4].deleted_at = timezone.now()
+        products[4].save()
+        
         venta3 = Venta.objects.create(
             comprador=users['bardock'],
             vendedor=users['vegeta'],
             product=products[2],
-            importe=45.00
+            precio_base=Decimal('45.00'),
+            impuesto=Decimal('4.50'),
+            tarifa_servicio=Decimal('2.25'),
+            importe_total=Decimal('51.75')
         )
+        products[2].estado = 'VEND'
+        products[2].deleted_at = timezone.now()
+        products[2].save()
 
         # Create reviews (reseñas)
         resena1 = Resena.objects.create(

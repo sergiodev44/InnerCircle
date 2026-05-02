@@ -1,17 +1,27 @@
 from django.urls import path
-from .views import profileDetailView,profileUpdateView, profileDeleteView, userCreateView
+from .views import profileDetailView,profileUpdateView, profileDeleteView, userCreateView, VerifyEmailView, ResendVerificationEmailView
 from .views import productListView,misProductosListView, amigosProductListView, productDetailView, productCreateView, productUpdateView, productDeleteView
 from .views import ventaDetailView, ventaCreateView, ventasList, resenaDetailView, resenaCreateView, resenaDeleteView
 from .views import frequestCreateView, frRequestResponseView, friendDeleteView
 from .views import profileNotis, conversacionDetailView, iniciarConversacionView, mensajesListView
 from .views import BlockUserView, UnblockUserView, ReportUserView, BannedView
 from .views import stripeCheckoutView, stripeWebhookView, stripePaymentStatusView
+from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
 
 app_name = "inner_circle"
 
 urlpatterns = [
     # User
     path('user/create', userCreateView.as_view(), name="user_create"),
+    path('verify-email/', VerifyEmailView.as_view(), name="verify_email"),
+    path('resend-verification/<int:pk>/', ResendVerificationEmailView.as_view(), name="resend_verification_email"),
+    
+    # Password Reset (Django built-in)
+    path('password-reset/', PasswordResetView.as_view(template_name='inner_circle/password_reset_form.html'), name="password_reset"),
+    path('password-reset/done/', PasswordResetDoneView.as_view(template_name='inner_circle/password_reset_done.html'), name="password_reset_done"),
+    path('password-reset/<uidb64>/<token>/', PasswordResetConfirmView.as_view(template_name='inner_circle/password_reset_confirm.html'), name="password_reset_confirm"),
+    path('password-reset/complete/', PasswordResetCompleteView.as_view(template_name='inner_circle/password_reset_complete.html'), name="password_reset_complete"),
+    
     # Profile
     path('perfil/<int:pk>/', profileDetailView.as_view(), name="profile_detail"),
     path('perfil/<int:pk>/actualizar/', profileUpdateView.as_view(), name="profile_update"),

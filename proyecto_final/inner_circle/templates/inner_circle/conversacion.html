@@ -26,7 +26,10 @@
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
-    <button type="submit">enviar</button>
+    <button type="submit" {% if rate_limited %}disabled{% endif %}>enviar</button>
+    {% if rate_limited %}
+        <small style="color: #d9534f; margin-left: 10px;">⚠ Límite de mensajes. Intenta en {{ timeout_minutes }}s.</small>
+    {% endif %}
 </form>
 
 {% endblock main %}

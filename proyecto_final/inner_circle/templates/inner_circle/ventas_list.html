@@ -11,6 +11,7 @@
             <a href="{% url 'inner_circle:resena_create' pk=c.pk %}">escribir reseña</a>
         </p>
         {% endfor %}
+        {% include "inner_circle/pagination_compras.html" %}
     {% else %}
             <p>no tienes compras</p>  
     {% endif %}
@@ -20,6 +21,7 @@
         {% for v in ventas  %}
         <p>{{v.product.nombre}} - {{v.product.talla}} - {{v.importe}}€</p>
         {% endfor %}
+        {% include "inner_circle/pagination_ventas.html" %}
     {% else %}
             <p>no tienes ventas</p>  
     {% endif %}

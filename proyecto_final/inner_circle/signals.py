@@ -2,6 +2,9 @@ from django.dispatch import receiver
 from django.db.models.signals import post_save
 from django.contrib.auth.signals import user_logged_in
 from .models import User, Profile, Mensaje, Venta, FriendRequest, Resena, Notification
+from django.core.mail import send_mail
+from django.conf import settings
+import uuid
 
 # Parte del user
 
@@ -9,6 +12,30 @@ from .models import User, Profile, Mensaje, Venta, FriendRequest, Resena, Notifi
 def create_profile(sender, instance, created, **kwargs):
     if created:
         Profile.objects.create(user=instance)
+
+
+@receiver(post_save, sender=User)
+def send_verification_email(sender, instance, created, **kwargs):
+    """Send email verification link when user signs up"""
+    if created and instance.email:
+        # Generate UUID token (dashes are URL-safe, won't be MIME-mangled)
+        token = str(uuid.uuid4())
+        instance.email_verification_token = token
+        instance.save()
+        
+        # Build verification link
+        verification_link = f"http://localhost:8000/inner/verify-email/?uid={instance.pk}&token={token}"
+        
+        # Email content
+        subject = 'Verify your email - InnerCircle'
+        message = f"Hi {instance.username},\n\nVerify your email:\n{verification_link}\n\nExpires in 24 hours."
+        
+        # Send email
+        try:
+            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [instance.email])
+        except Exception as e:
+            print(f"Failed to send email: {e}")
+
 
 @receiver(user_logged_in)
 def create_profile_extra(sender, user, request, **kwargs):

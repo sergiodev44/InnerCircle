@@ -1,0 +1,19 @@
+<nav style="margin-top: 20px; display: flex; justify-content: center; gap: 10px; padding: 10px; background-color: #f9f9f9; border-radius: 4px;">
+    {% if ventas.has_previous %}
+        <a href="?page=1" style="padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px;">«</a>
+        <a href="?page={{ ventas.previous_page_number }}" style="padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px;">‹</a>
+    {% else %}
+        <span style="padding: 5px 10px; color: #ccc;">«</span>
+        <span style="padding: 5px 10px; color: #ccc;">‹</span>
+    {% endif %}
+    
+    <span style="padding: 5px 10px; font-weight: bold;">{{ ventas.number }} / {{ ventas.paginator.num_pages }}</span>
+    
+    {% if ventas.has_next %}
+        <a href="?page={{ ventas.next_page_number }}" style="padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px;">›</a>
+        <a href="?page={{ ventas.paginator.num_pages }}" style="padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px;">»</a>
+    {% else %}
+        <span style="padding: 5px 10px; color: #ccc;">›</span>
+        <span style="padding: 5px 10px; color: #ccc;">»</span>
+    {% endif %}
+</nav>
