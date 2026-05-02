@@ -64,22 +64,6 @@ def notificar_venta(sender, instance, created,**kwargs):
             contenido=f"Interés de {instance.comprador.username} en {instance.product.nombre}",
             object_id=instance.pk
         )
-        
-        # Send email notification to seller
-        subject = f'¡Tu producto {instance.product.nombre} fue vendido!'
-        message = f"""Hola {instance.vendedor.username},
-
-{instance.comprador.username} compró tu producto "{instance.product.nombre}" por ${instance.precio_base}.
-
-Total: €    {instance.importe_total}
-
-Ve a tu panel de ventas para más detalles.
-
-—InnerCircle"""
-        try:
-            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [instance.vendedor.email])
-        except Exception as e:
-            print(f"Failed to send venta email: {e}")
 
 @receiver(post_save, sender=Resena)
 def notificar_resena(sender, instance, created, **kwargs):

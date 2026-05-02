@@ -27,6 +27,20 @@ from django.conf import settings
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
+def cleanup_abandoned_carts():
+    """Release products from abandoned carts (unpaid for >15 minutes)"""
+    cutoff_time = timezone.now() - timedelta(minutes=1)
+    abandoned = Venta.objects.filter(
+        estado_pago='no_pagado',
+        created_at__lt=cutoff_time
+    )
+    for venta in abandoned:
+        if venta.product.estado == 'RESV':
+            venta.product.estado = 'DISP'
+            venta.product.save()
+            venta.estado_pago = 'cancelada'
+            venta.save()
+
 def can_report_user(user):
     """Check if user can report (max 3 per hour)"""
     one_hour_ago = timezone.now() - timedelta(hours=1)
@@ -198,7 +212,8 @@ class productListView(ListView):
     paginate_by = 12
     
     def get_queryset(self):
-        queryset = Product.objects.exclude(user=self.request.user)
+        cleanup_abandoned_carts()
+        queryset = Product.objects.exclude(user=self.request.user).exclude(estado__in=['RESV', 'VEND'])
         
         # Exclude blocked users from showing their products
         if self.request.user.is_authenticated:
@@ -250,7 +265,8 @@ class amigosProductListView(LoginRequiredMixin, ListView):
     paginate_by = 12
     
     def get_queryset(self):
-        queryset = Product.objects.filter(user__in=self.request.user.friends.all())
+        cleanup_abandoned_carts()
+        queryset = Product.objects.filter(user__in=self.request.user.friends.all()).exclude(estado='VEND')
         
         # Exclude blocked users
         blocked_users = self.request.user.bloqueados.values_list('blocked', flat=True)
@@ -610,6 +626,22 @@ class stripeWebhookView(View):
                             product.save()
                             print(f"   ✅ Updated venta.estado_pago to 'pagado'")
                             print(f"   ✅ Soft-deleted product {product.pk} (marked as VEND)")
+                            
+                            # Send email to seller only when payment succeeds
+                            subject = f'¡Tu producto {product.nombre} fue vendido!'
+                            message = f"""Hola {venta.vendedor.username},
+
+{venta.comprador.username} compró tu producto "{product.nombre}" por ${venta.precio_base}.
+
+Total: €{venta.importe_total}
+
+Ve a tu panel de ventas para más detalles.
+
+—InnerCircle"""
+                            try:
+                                send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [venta.vendedor.email])
+                            except Exception as e:
+                                print(f"Failed to send payment confirmation email: {e}")
                     except Venta.DoesNotExist:
                         print(f"   ❌ Venta not found with id: {venta_id_int}")
                     except ValueError:
