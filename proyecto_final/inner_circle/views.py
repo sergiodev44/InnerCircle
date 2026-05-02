@@ -330,12 +330,30 @@ class productUpdateView(LoginRequiredMixin,UserPassesTestMixin,UpdateView,):
 #     success_url = reverse_lazy("inner_circle:producto_list")
     
     
-class productDeleteView(LoginRequiredMixin,UserPassesTestMixin,DeleteView):
-    model = Product
+class productDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
     template_name = "productDelete.html"
-    success_url = reverse_lazy("inner_circle:producto_list")
+    
     def test_func(self):
         return self.request.user == self.get_object().user
+    
+    def get_object(self):
+        return Product.objects.all_including_deleted().get(pk=self.kwargs['pk'])
+    
+    def get(self, request, *args, **kwargs):
+        product = self.get_object()
+        if not self.test_func():
+            return redirect('inner_circle:producto_list')
+        context = {'product': product}
+        return render(request, self.template_name, context)
+    
+    def post(self, request, *args, **kwargs):
+        product = self.get_object()
+        if not self.test_func():
+            return redirect('inner_circle:producto_list')
+        # Soft delete: mark with deleted_at timestamp
+        product.deleted_at = timezone.now()
+        product.save()
+        return redirect('inner_circle:mis_productos', pk=request.user.pk)
     
 
 class misProductosListView(LoginRequiredMixin, ListView):
@@ -345,6 +363,7 @@ class misProductosListView(LoginRequiredMixin, ListView):
     paginate_by = 12
     
     def get_queryset(self):
+        # Show only active (not deleted) products for the current user
         queryset = Product.objects.filter(user=self.request.user)
         return self._apply_filters(queryset)
     
@@ -396,7 +415,7 @@ class ventaCreateView(LoginRequiredMixin, View):
         
         # Double-check product status after acquiring lock
         if product.estado != 'DISP':
-            return redirect('inner_circle:product_list')
+            return redirect('inner_circle:producto_list')
         
         venta = Venta(
             comprador=request.user,
@@ -584,12 +603,13 @@ class stripeWebhookView(View):
                             venta.estado_pago = 'pagado'
                             venta.save()
                             
-                            # Mark product as SOLD (finalize the sale)
+                            # Mark product as SOLD (finalize the sale) - soft delete
                             product = venta.product
                             product.estado = 'VEND'
+                            product.deleted_at = timezone.now()
                             product.save()
                             print(f"   ✅ Updated venta.estado_pago to 'pagado'")
-                            print(f"   ✅ Updated product {product.pk} estado to 'VEND'")
+                            print(f"   ✅ Soft-deleted product {product.pk} (marked as VEND)")
                     except Venta.DoesNotExist:
                         print(f"   ❌ Venta not found with id: {venta_id_int}")
                     except ValueError:

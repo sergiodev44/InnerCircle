@@ -3,11 +3,31 @@ from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from decimal import Decimal
 from django.core.validators import FileExtensionValidator
+from django.utils import timezone
 
 
 # Image Validation Constants
 MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5MB
 ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'avif']
+
+
+# Soft Delete QuerySet & Manager
+class SoftDeleteQuerySet(models.QuerySet):
+    """QuerySet that filters out soft-deleted products"""
+    def active(self):
+        return self.filter(deleted_at__isnull=True)
+    
+    def deleted(self):
+        return self.exclude(deleted_at__isnull=True)
+
+
+class SoftDeleteManager(models.Manager):
+    """Manager that returns only active (not soft-deleted) products by default"""
+    def get_queryset(self):
+        return SoftDeleteQuerySet(self.model, using=self._db).active()
+    
+    def all_including_deleted(self):
+        return SoftDeleteQuerySet(self.model, using=self._db)
 
 
 def validate_image_size(file):
@@ -93,7 +113,9 @@ class Product(models.Model):
             validate_image_size,
         ]
     )
-    # los productos también tienen imagenes, 3. Cómo lo añado?
+    deleted_at = models.DateTimeField(null=True, blank=True, default=None)
+    
+    objects = SoftDeleteManager()
 
     class Meta:
         ordering = ['-created_at']
