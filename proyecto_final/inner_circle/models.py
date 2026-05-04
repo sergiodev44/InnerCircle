@@ -114,7 +114,9 @@ class Product(models.Model):
         validators=[
             FileExtensionValidator(allowed_extensions=ALLOWED_IMAGE_EXTENSIONS),
             validate_image_size,
-        ]
+        ],
+        null=True,
+        blank=True
     )
     deleted_at = models.DateTimeField(null=True, blank=True, default=None)
     
@@ -122,6 +124,29 @@ class Product(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+
+class ProductImage(models.Model):
+    """
+    Multiple images per product (1-4 images)
+    Just upload and order, no categorization needed
+    """
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="images")
+    image = models.ImageField(
+        upload_to="products/",
+        validators=[
+            FileExtensionValidator(allowed_extensions=ALLOWED_IMAGE_EXTENSIONS),
+            validate_image_size,
+        ]
+    )
+    order = models.PositiveIntegerField(default=0)  # For ordering images
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order', 'created_at']
+    
+    def __str__(self):
+        return f"{self.product.nombre} - Image {self.order}"
 
 class Venta(models.Model):
     ESTADO_VENTA = [("pendiente","pendiente"),("cancelada","cancelada"),("completada","completada")]
