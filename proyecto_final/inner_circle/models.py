@@ -4,6 +4,9 @@ from django.core.exceptions import ValidationError
 from decimal import Decimal
 from django.core.validators import FileExtensionValidator
 from django.utils import timezone
+from datetime import timedelta
+import stripe
+from django.conf import settings
 
 
 # Image Validation Constants
@@ -200,6 +203,81 @@ class Conversation(models.Model):
         return f"{self.producto.nombre} - {self.usuario1.username} & {self.usuario2.username}"
 
 
+class Dispute(models.Model):
+    """Minimal dispute system: buyer complaint → auto-resolve or manual decision"""
+    RAZONES = [
+        ('fake_product', 'Producto falso/no auténtico'),
+        ('never_received', 'Nunca llegó'),
+        ('damage', 'Llegó dañado'),
+        ('not_as_described', 'No corresponde a descripción'),
+    ]
+    ESTADO = [
+        ('ABIERTO', 'Abierto - Esperando respuesta del vendedor'),
+        ('RESPONDIDO', 'Respondido - Esperando decisión del admin'),
+        ('REEMBOLSADO', 'Reembolsado - Comprador gana (refund)'),
+        ('RECHAZADO', 'Rechazado - Vendedor gana (sin refund)'),
+    ]
+    
+    venta = models.OneToOneField(Venta, on_delete=models.CASCADE, related_name="dispute")
+    comprador = models.ForeignKey(User, on_delete=models.CASCADE, related_name="disputes_buyer")
+    vendedor = models.ForeignKey(User, on_delete=models.CASCADE, related_name="disputes_seller")
+    razon = models.CharField(max_length=50, choices=RAZONES)
+    descripcion = models.TextField()
+    estado = models.CharField(max_length=20, choices=ESTADO, default='ABIERTO')
+    
+    # Evidence files - can be None
+    comprador_evidence = models.FileField(
+        upload_to="disputes/",
+        null=True,
+        blank=True,
+        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'pdf', 'webp'])]
+    )
+    vendedor_response = models.TextField(blank=True, null=True)
+    vendedor_evidence = models.FileField(
+        upload_to="disputes/",
+        null=True,
+        blank=True,
+        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'pdf', 'webp'])]
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    refund_processed = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Dispute #{self.id} - {self.venta.product.nombre}"
+    
+    def auto_resolve_if_timeout(self):
+        """Auto-resolve + refund after 14 days if seller hasn't responded"""
+        if self.estado == 'ABIERTO' and timezone.now() - self.created_at > timedelta(days=14):
+            self.estado = 'REEMBOLSADO'
+            self.resolved_at = timezone.now()
+            self.save()
+            self.process_refund()
+            return True
+        return False
+    
+    def process_refund(self):
+        """Process Stripe refund"""
+        if self.refund_processed or not self.venta.stripe_payment_intent:
+            return False
+        try:
+            stripe.api_key = settings.STRIPE_SECRET_KEY
+            stripe.Refund.create(
+                payment_intent=self.venta.stripe_payment_intent,
+                reason='requested_by_customer'
+            )
+            self.refund_processed = True
+            self.save()
+            return True
+        except stripe.error.StripeError as e:
+            print(f"Refund error for dispute {self.id}: {str(e)}")
+            return False
+
+
 class Mensaje(models.Model):
     conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, null=True, blank=True, related_name="mensajes")
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="m_enviados")
@@ -219,7 +297,8 @@ class Notification(models.Model):
         ('mensaje', 'Nuevo mensaje'),
         ('venta', 'Nueva venta'),
         ('resena', 'Nueva reseña'),
-        ('amistad', 'Solicitud de amistad')
+        ('amistad', 'Solicitud de amistad'),
+        ('dispute', 'Reclamación')
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notificaciones')

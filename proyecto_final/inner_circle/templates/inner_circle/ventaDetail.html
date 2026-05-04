@@ -17,6 +17,20 @@
 
 <p><strong>Estado de pago:</strong> {{venta.get_estado_pago_display}}</p>
 
+{% if user == venta.comprador and venta.estado_pago == 'pagado' %}
+    {% if not venta.dispute %}
+        <div>
+            <a href="{% url 'inner_circle:dispute_create' venta_pk=venta.pk %}">
+                Crear Reclamación
+            </a>
+        </div>
+    {% else %}
+        <div>
+            <small>Ya existe una reclamación para esta compra. <a href="{% url 'inner_circle:dispute_detail' pk=venta.dispute.pk %}">Ver reclamación</a></small>
+        </div>
+    {% endif %}
+{% endif %}
+
 <a href="{% url 'inner_circle:profile_detail' pk=venta.comprador.profile.pk %}">Volver al perfil</a>
    
 {% endblock main %}

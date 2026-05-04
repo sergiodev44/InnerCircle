@@ -1,8 +1,8 @@
-from .models import Profile, Product, Venta, Resena, User, FriendRequest, Mensaje, Conversation, Notification, BlockedUser, Report
+from .models import Profile, Product, Venta, Resena, User, FriendRequest, Mensaje, Conversation, Notification, BlockedUser, Report, Dispute
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DeleteView, UpdateView, DetailView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from .forms import ProfileForm, ProductForm, ResenaForm, UserForm, FriendRequestForm, MensajeForm, ProductSearchForm, ReportForm
+from .forms import ProfileForm, ProductForm, ResenaForm, UserForm, FriendRequestForm, MensajeForm, ProductSearchForm, ReportForm, DisputeForm, DisputeResponseForm
 from django.views import View
 from django.views.generic import TemplateView
 from django.shortcuts import redirect
@@ -800,7 +800,9 @@ class profileNotis(LoginRequiredMixin, TemplateView):
         context['ventas']= Venta.objects.filter(vendedor=self.request.user)
         context['compras']= Venta.objects.filter(comprador=self.request.user)
         context['notificaciones'] = Notification.objects.filter(user=self.request.user)
-        # context["resenas_recibidos"] = Resena.objects.filter(escritor=self.get_object().user)
+        
+        # Marcar notificaciones como leídas cuando el usuario las ve
+        Notification.objects.filter(user=self.request.user, leido=False).update(leido=True)
 
         return context
     
@@ -1018,6 +1020,11 @@ class mensajesListView(LoginRequiredMixin, TemplateView):
             conversaciones = paginator.page(paginator.num_pages)
         
         context['conversaciones'] = conversaciones
+        
+        # Add disputes (como comprador y vendedor)
+        context['buyer_disputes'] = Dispute.objects.filter(comprador=usuario).order_by('-created_at')
+        context['seller_disputes'] = Dispute.objects.filter(vendedor=usuario).order_by('-created_at')
+        
         return context
 
 
@@ -1100,3 +1107,136 @@ class ReportUserView(LoginRequiredMixin, CreateView):
 class BannedView(TemplateView):
     """View shown to banned users"""
     template_name = "inner_circle/banned.html"
+
+
+# ==================== DISPUTE SYSTEM ====================
+
+class DisputeCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    """Buyer files a dispute with optional evidence"""
+    model = Dispute
+    form_class = DisputeForm
+    template_name = "inner_circle/dispute_form.html"
+    
+    def test_func(self):
+        """Only buyer can file dispute"""
+        venta = Venta.objects.get(pk=self.kwargs['venta_pk'])
+        return self.request.user == venta.comprador
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['venta'] = Venta.objects.get(pk=self.kwargs['venta_pk'])
+        return context
+    
+    def form_valid(self, form):
+        venta = Venta.objects.get(pk=self.kwargs['venta_pk'])
+        
+        # Prevent duplicate disputes
+        if Dispute.objects.filter(venta=venta).exists():
+            form.add_error(None, "Ya existe una reclamación para esta compra")
+            return self.form_invalid(form)
+        
+        form.instance.venta = venta
+        form.instance.comprador = venta.comprador
+        form.instance.vendedor = venta.vendedor
+        result = super().form_valid(form)
+        
+        # Notify seller that buyer filed dispute
+        Notification.objects.create(
+            user=venta.vendedor,
+            tipo='dispute',
+            contenido=f'{venta.comprador.username} abrió una reclamación: {form.cleaned_data["razon"]}',
+            object_id=self.object.id
+        )
+        
+        return result
+    
+    def get_success_url(self):
+        venta = Venta.objects.get(pk=self.kwargs['venta_pk'])
+        return reverse_lazy("inner_circle:dispute_detail", kwargs={"pk": venta.dispute.pk})
+
+
+class DisputeDetailView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """View & manage dispute - buyer sees complaint, seller can respond"""
+    template_name = "inner_circle/dispute_detail.html"
+    
+    def test_func(self):
+        """Only involved parties"""
+        dispute = Dispute.objects.get(pk=self.kwargs['pk'])
+        return self.request.user in [dispute.comprador, dispute.vendedor]
+    
+    def get(self, request, *args, **kwargs):
+        dispute = Dispute.objects.get(pk=self.kwargs['pk'])
+        
+        # Auto-resolve if timeout & notify both parties
+        if dispute.auto_resolve_if_timeout():
+            Notification.objects.create(
+                user=dispute.comprador,
+                tipo='dispute',
+                contenido=f'Reclamación resuelta: Reembolso automático procesado (14 días sin respuesta)',
+                object_id=dispute.id
+            )
+            Notification.objects.create(
+                user=dispute.vendedor,
+                tipo='dispute',
+                contenido=f'Reclamación resuelta en tu contra: Reembolso procesado por falta de respuesta',
+                object_id=dispute.id
+            )
+        
+        is_seller = request.user == dispute.vendedor
+        form = DisputeResponseForm() if is_seller and dispute.estado == 'ABIERTO' else None
+        
+        context = {
+            'dispute': dispute,
+            'is_buyer': request.user == dispute.comprador,
+            'is_seller': is_seller,
+            'form': form,
+        }
+        return render(request, self.template_name, context)
+    
+    def post(self, request, *args, **kwargs):
+        """Seller responds to dispute"""
+        dispute = Dispute.objects.get(pk=self.kwargs['pk'])
+        
+        # Only seller can respond
+        if request.user != dispute.vendedor:
+            return redirect('inner_circle:dispute_detail', pk=dispute.pk)
+        
+        form = DisputeResponseForm(request.POST, request.FILES, instance=dispute)
+        if form.is_valid():
+            dispute = form.save(commit=False)
+            dispute.estado = 'RESPONDIDO'
+            dispute.save()
+            
+            # Notify buyer that seller responded
+            Notification.objects.create(
+                user=dispute.comprador,
+                tipo='dispute',
+                contenido=f'{dispute.vendedor.username} respondió tu reclamación',
+                object_id=dispute.id
+            )
+        
+        return redirect('inner_circle:dispute_detail', pk=dispute.pk)
+
+
+class DisputeListView(LoginRequiredMixin, ListView):
+    """List all disputes for buyer & seller"""
+    model = Dispute
+    template_name = "inner_circle/dispute_list.html"
+    context_object_name = "disputes"
+    paginate_by = 10
+    
+    def get_queryset(self):
+        return Dispute.objects.filter(
+            Q(comprador=self.request.user) | Q(vendedor=self.request.user)
+        ).order_by('-created_at')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Count by role
+        context['buyer_disputes'] = Dispute.objects.filter(
+            comprador=self.request.user
+        ).count()
+        context['seller_disputes'] = Dispute.objects.filter(
+            vendedor=self.request.user
+        ).count()
+        return context

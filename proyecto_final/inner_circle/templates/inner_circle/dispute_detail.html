@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block main %}
+<h3>Reclamación #{{ dispute.id }} 
+    <span class="badge 
+        {% if dispute.estado == 'ABIERTO' %}bg-danger
+        {% elif dispute.estado == 'RESPONDIDO' %}bg-warning
+        {% elif dispute.estado == 'REEMBOLSADO' %}bg-success
+        {% else %}bg-secondary
+        {% endif %}">
+        {{ dispute.get_estado_display }}
+    </span>
+</h3>
+
+<!-- Estado de Resolución -->
+{% if dispute.estado == 'REEMBOLSADO' %}
+    <div class="alert alert-success mt-3">
+        <strong>✓ RECLAMACIÓN RESUELTA</strong>
+        <p class="mb-0">El comprador gana. Se procesó un reembolso de <strong>€{{ dispute.venta.importe_total }}</strong></p>
+        {% if dispute.resolved_at %}<small class="text-muted">Resuelto: {{ dispute.resolved_at|date:"d/m/Y H:i" }}</small>{% endif %}
+    </div>
+{% elif dispute.estado == 'RECHAZADO' %}
+    <div class="alert alert-danger mt-3">
+        <strong>✗ RECLAMACIÓN RESUELTA</strong>
+        <p class="mb-0">El vendedor gana. Sin reembolso.</p>
+        {% if dispute.resolved_at %}<small class="text-muted">Resuelto: {{ dispute.resolved_at|date:"d/m/Y H:i" }}</small>{% endif %}
+    </div>
+{% elif dispute.estado == 'RESPONDIDO' %}
+    <div class="alert alert-info mt-3">
+        <strong>⏳ ESPERANDO RESOLUCIÓN DEL ADMIN</strong>
+        <p class="mb-0">El vendedor ha respondido. Un administrador decidirá el resultado.</p>
+    </div>
+{% elif dispute.estado == 'ABIERTO' %}
+    <div class="alert alert-warning mt-3">
+        <strong>⏰ EN ESPERA DE RESPUESTA DEL VENDEDOR</strong>
+        <p class="mb-0">Si el vendedor no responde en 14 días, se procesará automáticamente el reembolso.</p>
+    </div>
+{% endif %}
+
+<hr>
+
+<p><strong>Producto:</strong> {{ dispute.venta.product.nombre }}</p>
+<p><strong>Precio:</strong> €{{ dispute.venta.importe_total }}</p>
+<p><strong>Razón:</strong> {{ dispute.get_razon_display }}</p>
+<p><strong>Creada:</strong> {{ dispute.created_at|date:"d/m/Y H:i" }}</p>
+
+<h5>Descripción del Problema:</h5>
+<p>{{ dispute.descripcion }}</p>
+
+{% if dispute.comprador_evidence %}
+    <p>
+        <strong>Prueba del Comprador:</strong>
+        <a href="{{ dispute.comprador_evidence.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+            Descargar
+        </a>
+    </p>
+{% endif %}
+
+<hr>
+
+<!-- Seller Response -->
+{% if dispute.estado != 'ABIERTO' %}
+    <h4>Respuesta del Vendedor - {{ dispute.vendedor.username }}</h4>
+    
+    {% if dispute.vendedor_response %}
+        <p>{{ dispute.vendedor_response }}</p>
+    {% else %}
+        <p class="text-muted">Sin respuesta</p>
+    {% endif %}
+    
+    {% if dispute.vendedor_evidence %}
+        <p>
+            <strong>Prueba:</strong>
+            <a href="{{ dispute.vendedor_evidence.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                Descargar
+            </a>
+        </p>
+    {% endif %}
+    
+    <hr>
+{% endif %}
+
+<!-- Seller Response Form -->
+{% if is_seller and dispute.estado == 'ABIERTO' %}
+    <h4>Responder a la Reclamación</h4>
+    
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+            <label for="{{ form.vendedor_response.id_for_label }}" class="form-label">{{ form.vendedor_response.label }}</label>
+            {{ form.vendedor_response }}
+        </div>
+
+        <div class="mb-3">
+            <label for="{{ form.vendedor_evidence.id_for_label }}" class="form-label">{{ form.vendedor_evidence.label }}</label>
+            {{ form.vendedor_evidence }}
+        </div>
+
+        <button type="submit" class="btn btn-warning">Enviar Respuesta</button>
+    </form>
+    
+    <div class="alert alert-danger mt-3 small">
+        <strong>⏰ Plazo:</strong> Tienes hasta {{ dispute.created_at|date:"d/m/Y" }} + 14 días para responder. Si no respondes, se procesará el reembolso automáticamente.
+    </div>
+{% endif %}
+
+<a href="{% url 'inner_circle:venta_detail' dispute.venta.pk %}" class="btn btn-secondary mt-3">
+    ← Volver a la Compra
+</a>
+
+{% endblock main %}

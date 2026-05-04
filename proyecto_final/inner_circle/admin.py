@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import User, Profile, Product, Category, Venta, Resena, FriendRequest, Conversation, Mensaje, Notification, BlockedUser, Report
+from .models import User, Profile, Product, Category, Venta, Resena, FriendRequest, Conversation, Mensaje, Notification, BlockedUser, Report, Dispute
+from django.utils import timezone
 
 # Register your models here.
 
@@ -88,3 +89,61 @@ class ReportAdmin(admin.ModelAdmin):
     def mark_as_dismissed(self, request, queryset):
         queryset.update(status='dismissed')
     mark_as_dismissed.short_description = "Desestimar reportes"
+
+@admin.register(Dispute)
+class DisputeAdmin(admin.ModelAdmin):
+    list_display = ('id', 'venta', 'comprador', 'vendedor', 'razon', 'estado', 'created_at', 'refund_processed')
+    search_fields = ('comprador__username', 'vendedor__username', 'venta__product__nombre')
+    list_filter = ('estado', 'razon', 'created_at')
+    readonly_fields = ('created_at', 'resolved_at', 'comprador', 'vendedor', 'venta')
+    actions = ['buyer_wins_with_refund', 'seller_wins_reject_claim']
+    
+    def buyer_wins_with_refund(self, request, queryset):
+        """Comprador gana: refund procesado automáticamente"""
+        count = 0
+        for dispute in queryset:
+            if dispute.estado in ['ABIERTO', 'RESPONDIDO']:
+                dispute.estado = 'REEMBOLSADO'
+                dispute.resolved_at = timezone.now()
+                if dispute.process_refund():
+                    count += 1
+                    dispute.save()
+                    
+                    # Notificaciones para ambas partes
+                    Notification.objects.create(
+                        user=dispute.comprador,
+                        tipo='dispute',
+                        contenido=f'✓ Reclamación #{dispute.id} RESUELTA: ¡Ganas! Recibirás un reembolso de €{dispute.venta.importe_total}.',
+                        object_id=dispute.id
+                    )
+                    Notification.objects.create(
+                        user=dispute.vendedor,
+                        tipo='dispute',
+                        contenido=f'✗ Reclamación #{dispute.id} RESUELTA: El comprador gana. Se procesó un reembolso de €{dispute.venta.importe_total}.',
+                        object_id=dispute.id
+                    )
+        self.message_user(request, f"✓ {count} reclamación(es): Comprador gana + refund procesado")
+    buyer_wins_with_refund.short_description = "✓ COMPRADOR GANA (refund + REEMBOLSADO)"
+    
+    def seller_wins_reject_claim(self, request, queryset):
+        """Vendedor gana: sin refund"""
+        updated = queryset.filter(estado__in=['ABIERTO', 'RESPONDIDO']).update(
+            estado='RECHAZADO',
+            resolved_at=timezone.now()
+        )
+        for dispute in queryset.filter(estado='RECHAZADO'):
+            # Notificaciones para ambas partes
+            Notification.objects.create(
+                user=dispute.comprador,
+                tipo='dispute',
+                contenido=f'✗ Reclamación #{dispute.id} RESUELTA: Tu reclamación fue rechazada. No se procesará reembolso.',
+                object_id=dispute.id
+            )
+            Notification.objects.create(
+                user=dispute.vendedor,
+                tipo='dispute',
+                contenido=f'✓ Reclamación #{dispute.id} RESUELTA: ¡Ganas! Tu reclamación fue rechazada a tu favor.',
+                object_id=dispute.id
+            )
+        self.message_user(request, f"✓ {updated} reclamación(es): Vendedor gana, sin refund (RECHAZADO)")
+    seller_wins_reject_claim.short_description = "✗ VENDEDOR GANA (sin refund - RECHAZADO)"

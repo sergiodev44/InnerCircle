@@ -1,11 +1,11 @@
 from django.core.management.base import BaseCommand
-from inner_circle.models import User, Profile, Product, FriendRequest, Category, Conversation, Mensaje, Venta, Resena, Notification
+from inner_circle.models import User, Profile, Product, FriendRequest, Category, Conversation, Mensaje, Venta, Resena, Notification, Dispute
 from django.core.files.base import ContentFile
 from django.utils import timezone
 import os
 
 
-class Command(BaseCommand):
+class Command(BaseCommand): #Dispute/Refund system - Buyer says "fake product" or "never received". Currently no way to handle except admin intervention. Real apps have evidence submission, timers, auto-resolution.
     help = 'Populate database with comprehensive test data'
 
     def handle(self, *args, **options):
@@ -220,6 +220,8 @@ class Command(BaseCommand):
 
         # Create sales (ventas) and mark products as VEND with soft delete
         from decimal import Decimal
+        import uuid
+        
         venta1 = Venta.objects.create(
             comprador=users['vegeta'],
             vendedor=users['goku'],
@@ -227,7 +229,9 @@ class Command(BaseCommand):
             precio_base=Decimal('12.99'),
             impuesto=Decimal('1.30'),
             tarifa_servicio=Decimal('0.65'),
-            importe_total=Decimal('14.94')
+            importe_total=Decimal('14.94'),
+            estado_pago='pagado',
+            stripe_payment_intent=f'pi_test_{uuid.uuid4().hex[:12]}'
         )
         products[0].estado = 'VEND'
         products[0].deleted_at = timezone.now()
@@ -240,7 +244,9 @@ class Command(BaseCommand):
             precio_base=Decimal('35.00'),
             impuesto=Decimal('3.50'),
             tarifa_servicio=Decimal('1.75'),
-            importe_total=Decimal('40.25')
+            importe_total=Decimal('40.25'),
+            estado_pago='pagado',
+            stripe_payment_intent=f'pi_test_{uuid.uuid4().hex[:12]}'
         )
         products[4].estado = 'VEND'
         products[4].deleted_at = timezone.now()
@@ -253,7 +259,9 @@ class Command(BaseCommand):
             precio_base=Decimal('45.00'),
             impuesto=Decimal('4.50'),
             tarifa_servicio=Decimal('2.25'),
-            importe_total=Decimal('51.75')
+            importe_total=Decimal('51.75'),
+            estado_pago='pagado',
+            stripe_payment_intent=f'pi_test_{uuid.uuid4().hex[:12]}'
         )
         products[2].estado = 'VEND'
         products[2].deleted_at = timezone.now()
@@ -314,6 +322,23 @@ class Command(BaseCommand):
             leido=False
         )
 
+        # Create test dispute (buyer claiming issue with purchase)
+        dispute = Dispute.objects.create(
+            venta=venta1,
+            comprador=venta1.comprador,
+            vendedor=venta1.vendedor,
+            razon='not_as_described',
+            descripcion='La camiseta que recibí no es la que ordené. Es de diferente color.'
+        )
+        
+        # Notification to seller that dispute was filed
+        Notification.objects.create(
+            user=venta1.vendedor,
+            tipo='dispute',
+            contenido=f'{venta1.comprador.username} abrió una reclamación: Producto no corresponde a descripción',
+            object_id=dispute.id
+        )
+
         # Create admin user
         admin = User.objects.create_superuser(
             username='admin',
@@ -337,4 +362,5 @@ class Command(BaseCommand):
         self.stdout.write(f'✅ Created friendships and friend requests')
         self.stdout.write(f'✅ Created conversations with messages')
         self.stdout.write(f'✅ Created 3 sales (ventas) with reviews')
-        self.stdout.write(f'✅ Created notifications for testing\n')
+        self.stdout.write(f'✅ Created notifications for testing')
+        self.stdout.write(f'✅ Created 1 test dispute (vegeta vs goku)\n')

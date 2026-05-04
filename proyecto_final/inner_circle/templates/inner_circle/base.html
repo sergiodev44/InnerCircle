@@ -38,7 +38,13 @@
     <a href="{% url 'inner_circle:product_create' %}">crear producto</a>
     <a href="{% url 'inner_circle:ventas_list' pk=request.user.profile.pk %}">ventas</a>
     <a href="{% url 'inner_circle:mensajes_list' %}">mensajes</a>
-    <a href="{% url 'inner_circle:profile_notis' pk=request.user.profile.pk %}">notificaciones</a>
+    <a href="{% url 'inner_circle:profile_notis' pk=request.user.profile.pk %}">notificaciones
+      {% if unread_notifications_count > 0 %}
+        <span class="badge" style="background-color: red; border-radius: 50%; display: inline-block; width: 20px; height: 20px; text-align: center; line-height: 20px; color: white; font-weight: bold;">
+          {{ unread_notifications_count }}
+        </span>
+      {% endif %}
+    </a>
    
 
 
