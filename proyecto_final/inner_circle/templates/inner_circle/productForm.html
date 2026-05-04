@@ -1,11 +1,165 @@
 {% extends "base.html" %}
+{% block title %}{% if form.instance.pk %}Editar Producto{% else %}Crear Producto{% endif %} — InnerCircle{% endblock %}
+
+{% block extra_css %}
+<style>
+  .ic-form-container {
+    max-width: 700px;
+    margin: 0 auto;
+    background: var(--ic-surface);
+    border: 1px solid var(--ic-border);
+    border-radius: var(--ic-radius-lg);
+    padding: 2.5rem;
+  }
+  .ic-form-group {
+    margin-bottom: 1.8rem;
+  }
+  .ic-form-group:last-child { margin-bottom: 0; }
+  .ic-form-label {
+    display: block;
+    font-size: .68rem;
+    font-weight: 400;
+    color: var(--ic-text);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    margin-bottom: .6rem;
+  }
+  .ic-form-group input,
+  .ic-form-group select,
+  .ic-form-group textarea {
+    width: 100%;
+    padding: .65rem .9rem;
+    border: 1px solid var(--ic-border);
+    border-radius: var(--ic-radius);
+    font-family: var(--ic-sans);
+    font-size: .9rem;
+    font-weight: 300;
+    color: var(--ic-text);
+    background: var(--ic-bg);
+    transition: border-color var(--ic-trans);
+  }
+  .ic-form-group input:focus,
+  .ic-form-group select:focus,
+  .ic-form-group textarea:focus {
+    outline: none;
+    border-color: var(--ic-text);
+    background: var(--ic-surface);
+  }
+  .ic-form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+  .ic-form-help {
+    font-size: .72rem;
+    color: var(--ic-muted);
+    margin-top: .3rem;
+  }
+  .ic-form-actions {
+    display: flex;
+    gap: .8rem;
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--ic-border);
+  }
+  .ic-form-actions a,
+  .ic-form-actions button {
+    flex: 1;
+  }
+</style>
+{% endblock %}
+
 {% block main %}
-<h3>Formulario de Productos</h3>
-<form method="post" enctype="multipart/form-data">
+
+<div class="ic-form-container">
+  <h1 style="font-size: 1.8rem; margin: 0 0 2rem; text-align: center;">{% if form.instance.pk %}Editar Producto{% else %}Publicar Producto{% endif %}</h1>
+  
+  <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
-    {{form.as_p}}
-    <button type="submit">enviar</button>
-</form>
-<a href="{% url 'inner_circle:producto_list' %}">cancelar</a>
+    
+    {% if form.non_field_errors %}
+      <div class="ic-alert ic-alert-error" style="margin-bottom: 1.5rem;">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+    
+    <!-- Nombre -->
+    <div class="ic-form-group">
+      <label for="{{ form.nombre.id_for_label }}" class="ic-form-label">{{ form.nombre.label }}</label>
+      {{ form.nombre }}
+      {% if form.nombre.errors %}
+        <div class="ic-alert ic-alert-error">{{ form.nombre.errors }}</div>
+      {% endif %}
+      {% if form.nombre.help_text %}
+        <p class="ic-form-help">{{ form.nombre.help_text|safe }}</p>
+      {% endif %}
+    </div>
+    
+    <!-- Descripción -->
+    <div class="ic-form-group">
+      <label for="{{ form.descripcion.id_for_label }}" class="ic-form-label">{{ form.descripcion.label }}</label>
+      {{ form.descripcion }}
+      {% if form.descripcion.errors %}
+        <div class="ic-alert ic-alert-error">{{ form.descripcion.errors }}</div>
+      {% endif %}
+    </div>
+    
+    <!-- Grid 2 columnas para campos pequeños -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+      <!-- Precio -->
+      <div class="ic-form-group">
+        <label for="{{ form.precio.id_for_label }}" class="ic-form-label">{{ form.precio.label }}</label>
+        {{ form.precio }}
+        {% if form.precio.errors %}
+          <div class="ic-alert ic-alert-error">{{ form.precio.errors }}</div>
+        {% endif %}
+      </div>
+      
+      <!-- Estado -->
+      <div class="ic-form-group">
+        <label for="{{ form.estado.id_for_label }}" class="ic-form-label">{{ form.estado.label }}</label>
+        {{ form.estado }}
+        {% if form.estado.errors %}
+          <div class="ic-alert ic-alert-error">{{ form.estado.errors }}</div>
+        {% endif %}
+      </div>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+      <!-- Talla -->
+      <div class="ic-form-group">
+        <label for="{{ form.talla.id_for_label }}" class="ic-form-label">{{ form.talla.label }}</label>
+        {{ form.talla }}
+        {% if form.talla.errors %}
+          <div class="ic-alert ic-alert-error">{{ form.talla.errors }}</div>
+        {% endif %}
+      </div>
+      
+      <!-- Categoría -->
+      <div class="ic-form-group">
+        <label for="{{ form.category.id_for_label }}" class="ic-form-label">{{ form.category.label }}</label>
+        {{ form.category }}
+        {% if form.category.errors %}
+          <div class="ic-alert ic-alert-error">{{ form.category.errors }}</div>
+        {% endif %}
+      </div>
+    </div>
+    
+    <!-- Imagen -->
+    <div class="ic-form-group">
+      <label for="{{ form.img_prod.id_for_label }}" class="ic-form-label">{{ form.img_prod.label }}</label>
+      {{ form.img_prod }}
+      {% if form.img_prod.errors %}
+        <div class="ic-alert ic-alert-error">{{ form.img_prod.errors }}</div>
+      {% endif %}
+      <p class="ic-form-help">Formato: JPG, PNG, AVIF. Tamaño máximo: 5MB</p>
+    </div>
+    
+    <!-- Actions -->
+    <div class="ic-form-actions">
+      <a href="{% url 'inner_circle:producto_list' %}" class="btn-ic-ghost" style="text-align: center; display: flex; align-items: center; justify-content: center;">Cancelar</a>
+      <button type="submit" class="btn-ic" style="cursor: pointer;">{% if form.instance.pk %}Actualizar{% else %}Publicar{% endif %}</button>
+    </div>
+  </form>
+</div>
 
 {% endblock main %}

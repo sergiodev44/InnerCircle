@@ -110,6 +110,9 @@ def check_and_ban_spammer(user, action_type):
     print(f"DEBUG: First violation for {user.username}. Warning issued. last_rate_limit_warning={user.last_rate_limit_warning}")
     return False
 
+class HomeView(LoginRequiredMixin, TemplateView):
+    template_name = "home.html"
+
 # USER
 class userCreateView(CreateView,):
     model = User
@@ -256,12 +259,13 @@ class productListView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['search_form'] = ProductSearchForm(self.request.GET)
+        context['current_tab'] = 'general'
         return context
     
 class amigosProductListView(LoginRequiredMixin, ListView):
     model = Product
-    template_name = "amigosProductList.html"
-    context_object_name = "amigos_productos"
+    template_name = "productList.html"
+    context_object_name = "productos"
     paginate_by = 12
     
     def get_queryset(self):
@@ -308,6 +312,7 @@ class amigosProductListView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['search_form'] = ProductSearchForm(self.request.GET)
+        context['current_tab'] = 'amigos'
         return context
     
     

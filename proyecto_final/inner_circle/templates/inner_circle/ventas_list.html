@@ -1,31 +1,184 @@
 {% extends "base.html" %}
+{% block title %}Compras y Ventas — InnerCircle{% endblock %}
+
+{% block extra_css %}
+<style>
+  .ic-transaction-card {
+    background: var(--ic-surface);
+    border: 1px solid var(--ic-border);
+    border-radius: var(--ic-radius-lg);
+    padding: 1.2rem;
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+  }
+  .ic-transaction-img {
+    width: 140px;
+    height: 140px;
+    aspect-ratio: 1/1;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: var(--ic-accent-bg);
+    border-radius: var(--ic-radius);
+  }
+  .ic-transaction-img-placeholder {
+    width: 140px;
+    height: 140px;
+    background: var(--ic-accent-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ic-border-dk);
+    font-size: 2rem;
+    flex-shrink: 0;
+    border-radius: var(--ic-radius);
+  }
+  .ic-transaction-content { flex: 1; }
+  .ic-transaction-title {
+    font-size: .95rem;
+    font-weight: 400;
+    margin: 0 0 .5rem;
+  }
+  .ic-transaction-meta {
+    display: flex;
+    gap: 1.5rem;
+    margin: .8rem 0;
+    flex-wrap: wrap;
+  }
+  .ic-transaction-meta-item {
+    font-size: .72rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ic-muted);
+  }
+  .ic-transaction-meta-value {
+    font-size: .88rem;
+    color: var(--ic-text);
+    font-weight: 400;
+  }
+  .ic-transaction-actions {
+    display: flex;
+    gap: .5rem;
+    margin-top: 1rem;
+  }
+</style>
+{% endblock %}
+
 {% block main %}
-<h3>Notificaciones</h3>
+
+<!-- Compras -->
+<div style="margin-bottom: 4rem;">
+  <h2 style="margin: 0 0 2rem; font-size: 1.8rem;">Compras</h2>
+  
+  {% if compras %}
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+      {% for c in compras %}
+        <div class="ic-transaction-card">
+          {% if c.product.img_prod %}
+            <img src="{{ c.product.img_prod.url }}" class="ic-transaction-img" alt="{{ c.product.nombre }}">
+          {% else %}
+            <div class="ic-transaction-img-placeholder"><i class="bi bi-image"></i></div>
+          {% endif %}
+          
+          <div class="ic-transaction-content">
+            <h3 class="ic-transaction-title">{{ c.product.nombre }}</h3>
+            
+            <div class="ic-transaction-meta">
+              <div>
+                <span class="ic-transaction-meta-item">Talla</span>
+                <div class="ic-transaction-meta-value">{{ c.product.talla }}</div>
+              </div>
+              <div>
+                <span class="ic-transaction-meta-item">Importe</span>
+                <div class="ic-transaction-meta-value">{{ c.importe }}€</div>
+              </div>
+              <div>
+                <span class="ic-transaction-meta-item">Vendedor</span>
+                <div class="ic-transaction-meta-value">{{ c.vendedor.profile.nombre_tag|default:c.vendedor.username }}</div>
+              </div>
+            </div>
+            
+            <div class="ic-transaction-actions">
+              <a href="{% url 'inner_circle:venta_detail' pk=c.pk %}" class="btn-ic-ghost" style="font-size: .72rem; padding: .4rem .9rem;">Detalles</a>
+              <a href="{% url 'inner_circle:resena_create' pk=c.pk %}" class="btn-ic" style="font-size: .72rem; padding: .4rem .9rem;">Escribir Reseña</a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
     
-<h3>Compras</h3>
-
-    {% if compras %}
-        {% for c in compras  %}
-        <p>{{c.product.nombre}} - {{c.product.talla}} - {{c.importe}}€ - vendedor: {{c.vendedor.profile.nombre_tag}}
-            <a href="{% url 'inner_circle:venta_detail' pk=c.pk  %}">detalles</a>
-            <a href="{% url 'inner_circle:resena_create' pk=c.pk %}">escribir reseña</a>
-        </p>
-        {% endfor %}
-        {% include "inner_circle/pagination_compras.html" %}
-    {% else %}
-            <p>no tienes compras</p>  
+    {% if is_paginated %}
+      <div class="ic-pagination" style="margin-top: 2.5rem;">
+        {% if page_obj.has_previous %}
+          <a href="?page={{ page_obj.previous_page_number }}" class="btn-ic-ghost" style="font-size: .78rem; padding: .4rem .9rem;">← Anterior</a>
+        {% endif %}
+        <span style="color: var(--ic-muted); font-size: .82rem; padding: 0 .5rem;">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}" class="btn-ic-ghost" style="font-size: .78rem; padding: .4rem .9rem;">Siguiente →</a>
+        {% endif %}
+      </div>
     {% endif %}
+  {% else %}
+    <div style="text-align: center; padding: 3rem 1rem; color: var(--ic-muted); background: var(--ic-accent-bg); border-radius: var(--ic-radius-lg);">
+      <i class="bi bi-bag-check" style="font-size: 2.5rem; display: block; margin-bottom: 1rem; opacity: .22;"></i>
+      <p style="font-size: .88rem; margin: 0; letter-spacing: .05em;">Aún no has realizado ninguna compra.</p>
+    </div>
+  {% endif %}
+</div>
 
-<h3>Ventas</h3>
-    {% if ventas %}
-        {% for v in ventas  %}
-        <p>{{v.product.nombre}} - {{v.product.talla}} - {{v.importe}}€</p>
-        {% endfor %}
-        {% include "inner_circle/pagination_ventas.html" %}
-    {% else %}
-            <p>no tienes ventas</p>  
+<!-- Ventas -->
+<div>
+  <h2 style="margin: 0 0 2rem; font-size: 1.8rem;">Ventas</h2>
+  
+  {% if ventas %}
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+      {% for v in ventas %}
+        <div class="ic-transaction-card">
+          {% if v.product.img_prod %}
+            <img src="{{ v.product.img_prod.url }}" class="ic-transaction-img" alt="{{ v.product.nombre }}">
+          {% else %}
+            <div class="ic-transaction-img-placeholder"><i class="bi bi-image"></i></div>
+          {% endif %}
+          
+          <div class="ic-transaction-content">
+            <h3 class="ic-transaction-title">{{ v.product.nombre }}</h3>
+            
+            <div class="ic-transaction-meta">
+              <div>
+                <span class="ic-transaction-meta-item">Talla</span>
+                <div class="ic-transaction-meta-value">{{ v.product.talla }}</div>
+              </div>
+              <div>
+                <span class="ic-transaction-meta-item">Importe</span>
+                <div class="ic-transaction-meta-value">{{ v.importe }}€</div>
+              </div>
+              <div>
+                <span class="ic-transaction-meta-item">Comprador</span>
+                <div class="ic-transaction-meta-value">{{ v.comprador.profile.nombre_tag|default:v.comprador.username }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    
+    {% if is_paginated %}
+      <div class="ic-pagination" style="margin-top: 2.5rem;">
+        {% if page_obj.has_previous %}
+          <a href="?page={{ page_obj.previous_page_number }}" class="btn-ic-ghost" style="font-size: .78rem; padding: .4rem .9rem;">← Anterior</a>
+        {% endif %}
+        <span style="color: var(--ic-muted); font-size: .82rem; padding: 0 .5rem;">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}" class="btn-ic-ghost" style="font-size: .78rem; padding: .4rem .9rem;">Siguiente →</a>
+        {% endif %}
+      </div>
     {% endif %}
+  {% else %}
+    <div style="text-align: center; padding: 3rem 1rem; color: var(--ic-muted); background: var(--ic-accent-bg); border-radius: var(--ic-radius-lg);">
+      <i class="bi bi-bag" style="font-size: 2.5rem; display: block; margin-bottom: 1rem; opacity: .22;"></i>
+      <p style="font-size: .88rem; margin: 0; letter-spacing: .05em;">Aún no has realizado ninguna venta.</p>
+    </div>
+  {% endif %}
+</div>
 
-    <a href="{% url 'inner_circle:producto_list' %}">volver</a>
-   
 {% endblock main %}
