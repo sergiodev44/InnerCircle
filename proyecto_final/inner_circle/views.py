@@ -800,7 +800,9 @@ class profileNotis(LoginRequiredMixin, TemplateView):
         context['ventas']= Venta.objects.filter(vendedor=self.request.user)
         context['compras']= Venta.objects.filter(comprador=self.request.user)
         context['notificaciones'] = Notification.objects.filter(user=self.request.user)
-        # context["resenas_recibidos"] = Resena.objects.filter(escritor=self.get_object().user)
+        
+        # Marcar notificaciones como leídas cuando el usuario las ve
+        Notification.objects.filter(user=self.request.user, leido=False).update(leido=True)
 
         return context
     
