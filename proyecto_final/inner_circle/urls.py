@@ -6,6 +6,7 @@ from .views import frequestCreateView, frRequestResponseView, friendDeleteView
 from .views import profileNotis, conversacionDetailView, iniciarConversacionView, mensajesListView
 from .views import BlockUserView, UnblockUserView, ReportUserView, BannedView
 from .views import stripeCheckoutView, stripeWebhookView, stripePaymentStatusView
+from .views import DisputeCreateView, DisputeDetailView, DisputeListView
 from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
 
 app_name = "inner_circle"
@@ -67,4 +68,9 @@ urlpatterns = [
     path('perfil/<int:pk>/desbloquear/', UnblockUserView.as_view(), name="unblock_user"),
     path('perfil/<int:pk>/reportar/', ReportUserView.as_view(), name="report_user"),
     path('banned/', BannedView.as_view(), name="banned"),
+    
+    # Disputes
+    path('venta/<int:venta_pk>/dispute/crear/', DisputeCreateView.as_view(), name="dispute_create"),
+    path('dispute/<int:pk>/', DisputeDetailView.as_view(), name="dispute_detail"),
+    path('disputes/', DisputeListView.as_view(), name="dispute_list"),
 ]

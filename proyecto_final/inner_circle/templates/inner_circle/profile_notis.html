@@ -4,11 +4,13 @@
 
 {% if notificaciones %}
     {% for noti in notificaciones %}
-        <div>
+        <div style="border: 1px solid #ddd; padding: 10px; margin: 10px 0; border-radius: 5px;">
             <p>{{ noti.contenido }}</p>
             <small>{{ noti.created_at }}</small>
             {% if noti.tipo == 'mensaje' and noti.object_id %}
-                <a href="{% url 'inner_circle:conversacion_detail' conversation_id=noti.object_id %}">Ver conversación</a>
+                <a href="{% url 'inner_circle:conversacion_detail' conversation_id=noti.object_id %}" class="btn btn-sm btn-primary">Ver conversación</a>
+            {% elif noti.tipo == 'dispute' and noti.object_id %}
+                <a href="{% url 'inner_circle:dispute_detail' pk=noti.object_id %}" class="btn btn-sm btn-warning">Ver reclamación</a>
             {% endif %}
         </div>
     {% endfor %}

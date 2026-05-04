@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block main %}
+<h3>Mis Reclamaciones</h3>
+<hr>
+
+<div class="mb-3">
+    <small class="text-muted">
+        Como comprador: <strong>{{ buyer_disputes }}</strong> | 
+        Como vendedor: <strong>{{ seller_disputes }}</strong>
+    </small>
+</div>
+
+{% if disputes %}
+    <div class="list-group">
+        {% for dispute in disputes %}
+            <a href="{% url 'inner_circle:dispute_detail' dispute.pk %}" class="list-group-item list-group-item-action">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="mb-1">
+                            {{ dispute.venta.product.nombre }}
+                            <span class="badge 
+                                {% if dispute.estado == 'ABIERTO' %}bg-warning
+                                {% elif dispute.estado == 'RESPONDIDO' %}bg-info
+                                {% else %}bg-success
+                                {% endif %}">
+                                {{ dispute.get_estado_display }}
+                            </span>
+                        </h6>
+                        <p class="mb-1 small">
+                            {% if user == dispute.comprador %}
+                                <strong>Vendedor:</strong> {{ dispute.vendedor.username }}
+                            {% else %}
+                                <strong>Comprador:</strong> {{ dispute.comprador.username }}
+                            {% endif %}
+                        </p>
+                        <p class="mb-0 small text-muted">
+                            <strong>Razón:</strong> {{ dispute.get_razon_display }}
+                        </p>
+                    </div>
+                    <small class="text-muted text-end">
+                        {{ dispute.created_at|date:"d/m/Y" }}
+                    </small>
+                </div>
+            </a>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1">Primera</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item active">
+                    <span class="page-link">
+                        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                    </span>
+                </li>
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Última</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+{% else %}
+    <div class="alert alert-info">
+        <strong>ℹ️ Sin reclamaciones</strong>
+        <p class="mb-0">No tienes reclamaciones en este momento.</p>
+    </div>
+{% endif %}
+
+{% endblock main %}

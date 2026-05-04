@@ -1,6 +1,6 @@
 from django import forms
 from django.forms import ModelForm
-from .models import Profile, Product, Venta, Resena, User, FriendRequest, Mensaje, Category, Report
+from .models import Profile, Product, Venta, Resena, User, FriendRequest, Mensaje, Category, Report, Dispute
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 
@@ -100,5 +100,43 @@ class ReportForm(forms.ModelForm):
         labels = {
             "reason": "Razón del reporte",
             "description": "Descripción detallada"
+        }
+
+
+class DisputeForm(forms.ModelForm):
+    """Form for buyer to file dispute"""
+    class Meta:
+        model = Dispute
+        fields = ["razon", "descripcion", "comprador_evidence"]
+        widgets = {
+            "razon": forms.Select(attrs={"class": "form-control"}),
+            "descripcion": forms.Textarea(attrs={
+                "cols": 50, "rows": 5, "class": "form-control",
+                "placeholder": "Explique detalladamente el problema"
+            }),
+            "comprador_evidence": forms.FileInput(attrs={"class": "form-control"}),
+        }
+        labels = {
+            "razon": "Razón de la reclamación",
+            "descripcion": "Descripción del problema",
+            "comprador_evidence": "Prueba (JPG, PNG, PDF) - Opcional"
+        }
+
+
+class DisputeResponseForm(forms.ModelForm):
+    """Form for seller to respond to dispute"""
+    class Meta:
+        model = Dispute
+        fields = ["vendedor_response", "vendedor_evidence"]
+        widgets = {
+            "vendedor_response": forms.Textarea(attrs={
+                "cols": 50, "rows": 5, "class": "form-control",
+                "placeholder": "Responda a la reclamación"
+            }),
+            "vendedor_evidence": forms.FileInput(attrs={"class": "form-control"}),
+        }
+        labels = {
+            "vendedor_response": "Tu respuesta",
+            "vendedor_evidence": "Prueba (JPG, PNG, PDF) - Opcional"
         }
 
