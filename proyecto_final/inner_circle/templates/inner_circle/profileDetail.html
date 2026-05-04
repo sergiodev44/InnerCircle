@@ -1,132 +1,177 @@
 {% extends "base.html" %}
+{% block title %}{{ profile.nombre_tag|default:profile.user.username }} — InnerCircle{% endblock %}
+
 {% block main %}
-<h3>Detalles del Perfil</h3>
- {% if profile.img_perfil %}
-        <img src="{{profile.img_perfil.url}}" alt="" width="90" height="90">
-    {% else %}
-        <img src="https://img.freepik.com/premium-vector/vector-flat-illustration-grayscale-avatar-user-profile-person-icon-gender-neutral-silhouette-profile-picture-suitable-social-media-profiles-icons-screensavers-as-templatex9xa_719432-2210.jpg?semt=ais_hybrid&w=740&q=80" width="40" height="40">
-    {% endif %}
 
-{% if profile.user.email_verified %}
-    <p><small>Email verificado</small></p>
-{% else %}
-    <p><small>Sin verificar - <a href="{% url 'inner_circle:resend_verification_email' pk=profile.user.pk %}">protege tu cuenta aquí</a></small></p>
-{% endif %}
-
-{% if profile.nombre_tag  %}
-    <p>{{profile.nombre_tag}} #{{profile.user.username}}</p>
-{% else %}
-   <p> Cómo quieres que otros te llamen?</p>
-{% endif %}
-    
-{% if profile.bio %}
-    <p>{{profile.bio}}</p>
-{% else %}
-    <p>Cuéntanos quién eres</p>
-{% endif %}
-
-{% if profile.user.promedio_rating %}
-    <p><strong>Calificación:</strong> ⭐ {{profile.user.promedio_rating}}/5.0</p>
-{% endif %}
-
-{% if profile.user.pk != request.user.pk and request.user.is_authenticated %}
-    <!-- Block/Report buttons for other users -->
+<!-- Header -->
+<div style="padding:3rem 0; border-bottom:1px solid var(--ic-border); margin-bottom:3rem;">
+  <div style="display:flex; align-items:flex-start; gap:2.5rem; margin-bottom:2rem;">
+    <!-- Avatar -->
     <div>
-        <a href="{% url 'inner_circle:report_user' pk=profile.user.pk %}">
-            <button>Reportar Usuario</button>
-        </a>
-        
-        {% if profile.user.id in blocked_user_ids %}
-            <form method="post" action="{% url 'inner_circle:unblock_user' pk=profile.user.pk %}">
-                {% csrf_token %}
-                <button type="submit">Desbloquear</button>
-            </form>
-        {% else %}
-            <form method="post" action="{% url 'inner_circle:block_user' pk=profile.user.pk %}">
-                {% csrf_token %}
-                <button type="submit">Bloquear</button>
-            </form>
-        {% endif %}
+      {% if profile.img_perfil %}
+        <img src="{{ profile.img_perfil.url }}" class="ic-avatar-lg" alt="{{ profile.nombre_tag|default:profile.user.username }}">
+      {% else %}
+        <span class="ic-avatar-lg ic-avatar-initials" style="font-size:1.8rem;">{{ profile.user.username|first|upper }}</span>
+      {% endif %}
     </div>
-{% endif %}
-
-{% if profile.user.pk == request.user.pk %}
-<a href="{% url 'inner_circle:frequest_create' pk=request.user.profile.pk %}">enviar peticion amistad</a><br>
-<a href="{% url 'inner_circle:profile_update' pk=request.user.profile.pk %}">actualizar perfil</a><br>
-<a href="{% url 'inner_circle:resena_create' pk=request.user.profile.pk %}">crear reseña</a><br> 
     
-{% endif %}
-
-
-{% if user.is_authenticated %}
-
-<form method="post" action="{% url 'logout' %}">
-    {% csrf_token %}
-    {{form.as_p}}
-    <button type="submit">logout</button>
-    </form>
-{% else %}
-    <p>ve a la pantalla de login
-    <a href="{% url 'login' %}">login</a>
-    </p>
-    
-{% endif %}
-    
-<h3> Mis Reseñas </h3>
-
-{% if mis_resenas %}
-    
-    {% for r in mis_resenas  %}
-     {% if r.escritor.profile.img_perfil %}
-        <img src="{{r.escritor.profile.img_perfil.url}}" alt="" width="20" height="20">
-    {% else %}
-        <img src="https://img.freepik.com/premium-vector/vector-flat-illustration-grayscale-avatar-user-profile-person-icon-gender-neutral-silhouette-profile-picture-suitable-social-media-profiles-icons-screensavers-as-templatex9xa_719432-2210.jpg?semt=ais_hybrid&w=740&q=80" width="20" height="20">
+    <!-- Info -->
+    <div style="flex:1;">
+      <div style="display:flex; align-items:baseline; gap:1rem; margin-bottom:.75rem; flex-wrap:wrap;">
+        <h1 class="ic-detail-title" style="margin:0;">{{ profile.nombre_tag|default:profile.user.username }}</h1>
+        {% if profile.user.promedio_rating %}
+          <span style="font-size:.9rem; color:var(--ic-muted);">⭐ {{ profile.user.promedio_rating }}/5.0</span>
+        {% endif %}
+      </div>
+      <p style="color:var(--ic-muted); font-size:.82rem; margin:0 0 1rem;">@{{ profile.user.username }}</p>
+      
+      {% if profile.bio %}
+        <p style="font-size:.9rem; color:var(--ic-muted); line-height:1.7; margin:0 0 1.25rem;">{{ profile.bio }}</p>
+      {% endif %}
+      
+      <!-- Email verification -->
+      {% if profile.user.pk == request.user.pk %}
+        {% if profile.user.email_verified %}
+          <span style="font-size:.7rem; color:var(--ic-muted); letter-spacing:.1em; text-transform:uppercase;"><i class="bi bi-check-circle" style="color:var(--ic-text);"></i> Email verificado</span>
+        {% else %}
+          <span style="font-size:.7rem; color:var(--ic-danger); letter-spacing:.1em; text-transform:uppercase;">
+            <i class="bi bi-exclamation-circle"></i> Sin verificar — 
+            <a href="{% url 'inner_circle:resend_verification_email' pk=profile.user.pk %}" style="text-decoration:underline;">Protege tu cuenta</a>
+          </span>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+  
+  <!-- Actions -->
+  <div style="display:flex; gap:.75rem; flex-wrap:wrap;">
+    {% if profile.user.pk == request.user.pk %}
+      <a href="{% url 'inner_circle:profile_update' pk=request.user.profile.pk %}" class="btn-ic-ghost" style="font-size:.72rem; padding:.55rem 1.4rem;">Editar perfil</a>
+      <form method="post" action="{% url 'logout' %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn-ic-danger" style="font-size:.72rem; padding:.55rem 1.4rem;">Cerrar sesion</button>
+      </form>
+    {% elif request.user.is_authenticated %}
+      {% if profile.user.id in blocked_user_ids %}
+        <form method="post" action="{% url 'inner_circle:unblock_user' pk=profile.user.pk %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn-ic-ghost" style="font-size:.72rem; padding:.55rem 1.4rem;">Desbloquear</button>
+        </form>
+      {% else %}
+        <form method="post" action="{% url 'inner_circle:block_user' pk=profile.user.pk %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn-ic-danger" style="font-size:.72rem; padding:.55rem 1.4rem;">Bloquear</button>
+        </form>
+      {% endif %}
+      <a href="{% url 'inner_circle:report_user' pk=profile.user.pk %}" style="font-size:.72rem; color:var(--ic-muted); text-decoration:underline; text-underline-offset:3px;">Reportar</a>
     {% endif %}
+  </div>
+</div>
 
-        {{r.escritor.profile.nombre_tag}} - {{r.puntuacion}} - {{r.contenido}} - {{r.created_at}}
-    {% endfor %}
-        
-{% else %}
-<p> El usuario no tiene reseñas </p>
-    
-{% endif %}
-    
+<!-- Reviews Section -->
+<section style="margin-bottom:4rem;">
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.75rem;">
+    <h2 style="margin:0; font-family:var(--ic-serif); font-size:1.4rem; font-weight:300;">Resenas</h2>
+    {% if profile.user.pk == request.user.pk %}
+      <a href="{% url 'inner_circle:resena_create' pk=request.user.profile.pk %}" class="btn-ic-ghost" style="font-size:.72rem; padding:.4rem .9rem;">+ Anadir</a>
+    {% endif %}
+  </div>
+  
+  {% if mis_resenas %}
+    <div style="display:grid; gap:1.5rem;">
+      {% for r in mis_resenas %}
+        <div style="border:1px solid var(--ic-border); border-radius:var(--ic-radius-lg); padding:1.25rem;">
+          <div style="display:flex; align-items:center; gap:.75rem; margin-bottom:.75rem;">
+            {% if r.escritor.profile.img_perfil %}
+              <img src="{{ r.escritor.profile.img_perfil.url }}" class="ic-avatar" alt="{{ r.escritor.username }}">
+            {% else %}
+              <span class="ic-avatar ic-avatar-initials">{{ r.escritor.username|first|upper }}</span>
+            {% endif %}
+            <div>
+              <p style="margin:0; font-size:.88rem; font-weight:500;">{{ r.escritor.profile.nombre_tag|default:r.escritor.username }}</p>
+              <p style="margin:0; font-size:.75rem; color:var(--ic-muted);">{{ r.created_at|date:"d M Y" }}</p>
+            </div>
+            <span style="margin-left:auto; font-size:.85rem;">⭐ {{ r.puntuacion }}/5</span>
+          </div>
+          <p style="margin:0; font-size:.88rem; color:var(--ic-muted); line-height:1.6;">{{ r.contenido }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div style="text-align:center; padding:2rem; color:var(--ic-muted);">
+      <i class="bi bi-star" style="font-size:2rem; opacity:.15; display:block; margin-bottom:.75rem;"></i>
+      <p style="margin:0; font-size:.88rem;">Aun no hay resenas para este usuario.</p>
+    </div>
+  {% endif %}
+</section>
 
+<!-- Friends & Blocked (only for own profile) -->
 {% if profile.user.pk == request.user.pk %}
-<h3> Lista de amigos </h3>
 
-
+  <!-- Friends Section -->
+  <section style="margin-bottom:4rem;">
+    <h2 style="margin:0 0 1.75rem; font-family:var(--ic-serif); font-size:1.4rem; font-weight:300;">Amigos ({{ amigos|length }})</h2>
+    
     {% if amigos %}
-        
-        {% for amigo in amigos  %}
-        <form method="post" action="{% url 'inner_circle:friend_remove' pk=amigo.pk %}">
-            {% csrf_token %}
-        <a  href="{% url 'inner_circle:profile_detail' pk=amigo.profile.pk %}"> {{amigo.profile.nombre_tag}} </a>
-        <button type="submit" name="action" value="remove">X</button>
-        </form>
-            
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:1.25rem;">
+        {% for amigo in amigos %}
+          <div style="border:1px solid var(--ic-border); border-radius:var(--ic-radius-lg); overflow:hidden;">
+            <a href="{% url 'inner_circle:profile_detail' pk=amigo.profile.pk %}" style="display:block; text-decoration:none; color:inherit;">
+              {% if amigo.profile.img_perfil %}
+                <img src="{{ amigo.profile.img_perfil.url }}" style="width:100%; aspect-ratio:1; object-fit:cover; display:block;" alt="{{ amigo.username }}">
+              {% else %}
+                <div style="width:100%; aspect-ratio:1; background:var(--ic-accent-bg); display:flex; align-items:center; justify-content:center;">{{ amigo.username|first|upper }}</div>
+              {% endif %}
+              <div style="padding:.75rem; text-align:center;">
+                <p style="margin:0; font-size:.82rem; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ amigo.profile.nombre_tag|default:amigo.username }}</p>
+              </div>
+            </a>
+            <form method="post" action="{% url 'inner_circle:friend_remove' pk=amigo.pk %}" style="padding:0 .75rem .75rem;">
+              {% csrf_token %}
+              <button type="submit" name="action" value="remove" class="btn-ic-danger" style="width:100%; font-size:.65rem; padding:.35rem .5rem;">Eliminar</button>
+            </form>
+          </div>
         {% endfor %}
-            
-    {% else %} 
-    <p>no tienes amigos<p>
+      </div>
+    {% else %}
+      <div style="text-align:center; padding:2rem; color:var(--ic-muted);">
+        <i class="bi bi-people" style="font-size:2rem; opacity:.15; display:block; margin-bottom:.75rem;"></i>
+        <p style="margin:0; font-size:.88rem;">Aun no tienes amigos.</p>
+      </div>
     {% endif %}
-
-<h3> Usuarios Bloqueados </h3>
-
-    {% if bloqueados %}
-        
-        {% for bloqueado in bloqueados  %}
-        <form method="post" action="{% url 'inner_circle:unblock_user' pk=bloqueado.blocked.pk %}">
-            {% csrf_token %}
-        <a href="{% url 'inner_circle:profile_detail' pk=bloqueado.blocked.profile.pk %}"> {{bloqueado.blocked.profile.nombre_tag}} </a>
-        <button type="submit" name="action" value="unblock">Desbloquear</button>
-        </form>
-            
-        {% endfor %}
-            
-    {% else %} 
-    <p>No tienes usuarios bloqueados</p>
-    {% endif %}
-{% endif %}
+  </section>
+  
+  <!-- Blocked Users Section -->
+  <section>
+    <h2 style="margin:0 0 1.75rem; font-family:var(--ic-serif); font-size:1.4rem; font-weight:300;">Usuarios Bloqueados</h2>
     
+    {% if bloqueados %}
+      <div style="display:grid; gap:.75rem;">
+        {% for bloqueado in bloqueados %}
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:.85rem; border:1px solid var(--ic-border); border-radius:var(--ic-radius-lg);">
+            <a href="{% url 'inner_circle:profile_detail' pk=bloqueado.blocked.profile.pk %}" style="display:flex; align-items:center; gap:.75rem; text-decoration:none; color:inherit;">
+              {% if bloqueado.blocked.profile.img_perfil %}
+                <img src="{{ bloqueado.blocked.profile.img_perfil.url }}" class="ic-avatar" alt="{{ bloqueado.blocked.username }}">
+              {% else %}
+                <span class="ic-avatar ic-avatar-initials">{{ bloqueado.blocked.username|first|upper }}</span>
+              {% endif %}
+              <span style="font-size:.88rem;">{{ bloqueado.blocked.profile.nombre_tag|default:bloqueado.blocked.username }}</span>
+            </a>
+            <form method="post" action="{% url 'inner_circle:unblock_user' pk=bloqueado.blocked.pk %}" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" name="action" value="unblock" class="btn-ic-ghost" style="font-size:.65rem; padding:.35rem .8rem;">Desbloquear</button>
+            </form>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div style="text-align:center; padding:2rem; color:var(--ic-muted);">
+        <i class="bi bi-shield" style="font-size:2rem; opacity:.15; display:block; margin-bottom:.75rem;"></i>
+        <p style="margin:0; font-size:.88rem;">No tienes usuarios bloqueados.</p>
+      </div>
+    {% endif %}
+  </section>
+
+{% endif %}
+
 {% endblock main %}

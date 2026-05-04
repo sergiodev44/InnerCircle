@@ -1,55 +1,129 @@
 {% extends "base.html" %}
+{% block title %}Everything — InnerCircle{% endblock %}
+
+{% block extra_css %}
+<style>.ic-main { max-width: 1280px; }</style>
+{% endblock %}
+
 {% block main %}
-<h3>General</h3>
 
-<details>
-    <summary style="cursor: pointer; font-weight: bold; padding: 10px; background-color: #f5f5f5; border-radius: 4px;">Buscar y Filtrar</summary>
-    <form method="get" action="" style="margin-top: 10px; padding: 10px; background-color: #fafafa; border-radius: 4px;">
-        {{ search_form.as_p }}
-        <button type="submit">Buscar</button>
-        <a href="{% url 'inner_circle:producto_list' %}">Limpiar</a>
-    </form>
-</details>
+<div class="ic-tabs">
+  <a href="{% url 'inner_circle:producto_list' %}" class="ic-tab {% if current_tab == 'general' %}active{% endif %}">General</a>
+  <a href="{% url 'inner_circle:amigos_product_list' %}" class="ic-tab {% if current_tab == 'amigos' %}active{% endif %}">Amigos</a>
+</div>
 
-{% if productos %}
-    {% for p in productos  %}
-    
-    <p>
-        
-        {% if p.user.profile.img_perfil %}
-            <img src="{{p.user.profile.img_perfil.url}}" alt="" width="20" height="20">
-        {% endif %}
-            
-        {{p.nombre.capitalize}}
-       
-        {{p.precio}}€ -
-        {{p.talla}} -
-        vendedor:<a  href="{% url 'inner_circle:profile_detail' pk=p.user.profile.pk %}"> {{p.user.profile.nombre_tag}} </a>
-        {% if p.user.promedio_rating %}
-            <span>⭐ {{p.user.promedio_rating}}</span>
-        {% endif %}
-        
-        
-        {% if request.user.pk == p.user.pk  %}
-        <a href='{% url "inner_circle:product_update" pk=p.pk %}'>editar</a>
-        <a href='{% url "inner_circle:product_delete" pk=p.pk %}'>borrar</a>
+<div class="ic-list-layout">
+
+  <!-- Sidebar filters -->
+  <aside class="ic-sidebar">
+    <form method="get" action="">
+
+      <div class="ic-filter-group">
+        <span class="ic-filter-title">Buscar</span>
+        <input type="text" name="nombre" value="{{ request.GET.nombre }}" class="ic-input" placeholder="Nombre…" style="font-size:.82rem;">
+      </div>
+
+      <div class="ic-filter-group">
+        <span class="ic-filter-title">Ordenar</span>
+        <select name="sort" class="ic-input" style="font-size:.82rem;" onchange="this.form.submit()">
+          {% for value, label in search_form.sort.field.choices %}
+            <option value="{{ value }}" {% if request.GET.sort == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="ic-filter-group">
+        <span class="ic-filter-title">Categoría</span>
+        {% for value, label in search_form.category.field.choices %}
+          <label class="ic-filter-option">
+            <input class="ic-filter-radio" type="radio" name="category" value="{{ value }}" {% if request.GET.category == value %}checked{% endif %} onchange="this.form.submit()">
+            <span>{{ label }}</span>
+          </label>
+        {% endfor %}
+      </div>
+
+      <div class="ic-filter-group">
+        <span class="ic-filter-title">Talla</span>
+        {% for value, label in search_form.talla.field.choices %}
+          {% if value %}
+          <label class="ic-filter-option">
+            <input class="ic-filter-radio" type="radio" name="talla" value="{{ value }}" {% if request.GET.talla == value %}checked{% endif %} onchange="this.form.submit()">
+            <span>{{ label }}</span>
+          </label>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <div class="ic-filter-group">
+        <span class="ic-filter-title">Precio</span>
+        <div style="display:flex; gap:.4rem; align-items:center;">
+          <input type="number" name="precio_min" value="{{ request.GET.precio_min }}" placeholder="Mín" class="ic-input" style="width:75px; font-size:.82rem; padding:.5rem .6rem;">
+          <span style="color:var(--ic-muted);">–</span>
+          <input type="number" name="precio_max" value="{{ request.GET.precio_max }}" placeholder="Máx" class="ic-input" style="width:75px; font-size:.82rem; padding:.5rem .6rem;">
+        </div>
+      </div>
+
+      <button type="submit" class="btn-ic" style="width:100%; margin-bottom:.6rem;">Aplicar</button>
+
+      {% if request.GET.nombre or request.GET.category or request.GET.talla or request.GET.precio_min or request.GET.precio_max or request.GET.sort %}
+        {% if current_tab == 'amigos' %}
+          <a href="{% url 'inner_circle:amigos_product_list' %}" class="btn-ic-ghost" style="width:100%; text-align:center; display:block;">Limpiar</a>
         {% else %}
-                
-                {% if p.estado == 'DISP' %}
-                    <a href="{% url 'inner_circle:producto_detail' pk=p.pk %}">ver detalles</a>
-                    <a href="{% url 'inner_circle:venta_crear' pk=p.pk %}">comprar</a>
-                {% else %}
-                    <p>No disponible</p>
-                {% endif %}
-                    
+          <a href="{% url 'inner_circle:producto_list' %}" class="btn-ic-ghost" style="width:100%; text-align:center; display:block;">Limpiar</a>
         {% endif %}
-            
-        <img src="{{p.img_prod.url}}" alt="" width=200 height=200>
-    </p>
-    {% endfor %}
-    {% include "inner_circle/pagination.html" %}
-{% else %}
-    <p>no hay productos aún<p>
-{% endif %}
+      {% endif %}
+
+    </form>
+  </aside>
+
+  <!-- Product grid -->
+  <div>
+    {% if productos %}
+      <div class="ic-product-grid">
+        {% for p in productos %}
+        <div class="ic-product-cell">
+          <a href="{% url 'inner_circle:producto_detail' pk=p.pk %}">
+            {% if p.img_prod %}
+              <img src="{{ p.img_prod.url }}" class="ic-product-img" alt="{{ p.nombre }}">
+            {% else %}
+              <div class="ic-product-img-placeholder"><i class="bi bi-image"></i></div>
+            {% endif %}
+            <div class="ic-product-info">
+              <p class="ic-product-seller">{{ p.user.profile.nombre_tag|default:p.user.username }}{% if p.user.promedio_rating %} · ⭐{{ p.user.promedio_rating }}{% endif %}</p>
+              <p class="ic-product-name">{{ p.nombre }}</p>
+              <div style="display:flex; justify-content:space-between; align-items:baseline;">
+                <span class="ic-product-price">{{ p.precio }} €</span>
+                <span class="ic-product-talla">{{ p.talla }}</span>
+              </div>
+            </div>
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+
+      {% if is_paginated %}
+        <div class="ic-pagination">
+          {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.nombre %}&nombre={{ request.GET.nombre }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.talla %}&talla={{ request.GET.talla }}{% endif %}{% if request.GET.precio_min %}&precio_min={{ request.GET.precio_min }}{% endif %}{% if request.GET.precio_max %}&precio_max={{ request.GET.precio_max }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" class="btn-ic-ghost" style="font-size:.78rem; padding:.4rem .9rem;">← Anterior</a>
+          {% endif %}
+          <span style="color:var(--ic-muted); font-size:.82rem; padding:0 .5rem;">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+          {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.nombre %}&nombre={{ request.GET.nombre }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.talla %}&talla={{ request.GET.talla }}{% endif %}{% if request.GET.precio_min %}&precio_min={{ request.GET.precio_min }}{% endif %}{% if request.GET.precio_max %}&precio_max={{ request.GET.precio_max }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" class="btn-ic-ghost" style="font-size:.78rem; padding:.4rem .9rem;">Siguiente →</a>
+          {% endif %}
+        </div>
+      {% endif %}
+
+    {% else %}
+      <div style="text-align:center; padding:6rem 1rem; color:var(--ic-muted);">
+        <i class="bi bi-bag" style="font-size:3rem; display:block; margin-bottom:1.5rem; opacity:.22;"></i>
+        <p style="font-size:.88rem; margin:0; letter-spacing:.05em;">No hay artículos disponibles.</p>
+        {% if current_tab == 'amigos' %}
+          <p style="font-size:.78rem; margin:.75rem 0 0; color:var(--ic-border-dk);">Agrega amigos para ver sus productos aquí.</p>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+
+</div>
 
 {% endblock main %}

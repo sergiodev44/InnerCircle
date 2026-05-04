@@ -71,7 +71,7 @@ class MensajeForm(forms.ModelForm):
 
 class ProductSearchForm(forms.Form):
     SORT_CHOICES = [
-        ('', '-- Más recientes primero --'),
+        ('', 'Novedades'),
         ('precio_asc', 'Precio: menor a mayor'),
         ('precio_desc', 'Precio: mayor a menor'),
     ]
@@ -79,8 +79,8 @@ class ProductSearchForm(forms.Form):
     nombre = forms.CharField(max_length=200, required=False, label="Nombre del producto")
     precio_min = forms.DecimalField(min_value=0, required=False, label="Precio mínimo")
     precio_max = forms.DecimalField(min_value=0, required=False, label="Precio máximo")
-    talla = forms.ChoiceField(choices=[('', '-- Todas las tallas --')] + list(Product.TALLAS), required=False, label="Talla")
-    category = forms.ChoiceField(choices=[('', '-- Todas las categorías --')] + list(Category.CATEGORIAS), required=False, label="Categoría")
+    talla = forms.ChoiceField(choices=[('', 'Todas las tallas')] + list(Product.TALLAS), required=False, label="Talla")
+    category = forms.ChoiceField(choices=[('', 'Todas las categorías')] + list(Category.CATEGORIAS), required=False, label="Categoría")
     sort = forms.ChoiceField(choices=SORT_CHOICES, required=False, label="Ordenar por")
 
 

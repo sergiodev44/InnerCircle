@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import profileDetailView,profileUpdateView, profileDeleteView, userCreateView, VerifyEmailView, ResendVerificationEmailView
+from .views import profileDetailView,profileUpdateView, profileDeleteView, userCreateView, VerifyEmailView, ResendVerificationEmailView, HomeView
 from .views import productListView,misProductosListView, amigosProductListView, productDetailView, productCreateView, productUpdateView, productDeleteView
 from .views import ventaDetailView, ventaCreateView, ventasList, resenaDetailView, resenaCreateView, resenaDeleteView
 from .views import frequestCreateView, frRequestResponseView, friendDeleteView
@@ -12,6 +12,9 @@ from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, 
 app_name = "inner_circle"
 
 urlpatterns = [
+    # Home
+    path('home/', HomeView.as_view(), name="home"),
+
     # User
     path('user/create', userCreateView.as_view(), name="user_create"),
     path('verify-email/', VerifyEmailView.as_view(), name="verify_email"),
