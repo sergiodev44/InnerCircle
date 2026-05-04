@@ -7,7 +7,19 @@
 
   <!-- Left: Image -->
   <div class="ic-detail-image">
-    {% if producto.img_prod %}
+    {% if producto.images.all %}
+      <img src="{{ producto.images.first.image.url }}" alt="{{ producto.nombre }}" id="main-image">
+      {% if producto.images.count > 1 %}
+        <div style="display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap;">
+          {% for img in producto.images.all %}
+            <img src="{{ img.image.url }}" alt="View {{ forloop.counter }}" 
+                 style="width: 60px; height: 60px; object-fit: cover; cursor: pointer; border: 2px solid transparent; border-radius: 4px;"
+                 onclick="document.getElementById('main-image').src = this.src; this.style.borderColor = 'var(--ic-primary)'; 
+                          Array.from(this.parentNode.children).forEach(el => { if(el !== this) el.style.borderColor = 'transparent'; })">
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% elif producto.img_prod %}
       <img src="{{ producto.img_prod.url }}" alt="{{ producto.nombre }}">
     {% else %}
       <div class="ic-detail-image-placeholder"><i class="bi bi-image"></i></div>

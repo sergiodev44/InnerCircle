@@ -35,7 +35,11 @@
         {% else %}
         <p>No disponible</p>
         {% endif %}
+        {% if p.images.all %}
+        <img src="{{p.images.first.image.url}}" alt="" width=200 height=200>
+        {% elif p.img_prod %}
         <img src="{{p.img_prod.url}}" alt="" width=200 height=200>
+        {% endif %}
         </p>
         {% endfor %}
         {% include "inner_circle/pagination.html" %}

@@ -74,7 +74,9 @@
     <div style="display: flex; flex-direction: column; gap: 1rem;">
       {% for c in compras %}
         <div class="ic-transaction-card">
-          {% if c.product.img_prod %}
+          {% if c.product.images.all %}
+            <img src="{{ c.product.images.first.image.url }}" class="ic-transaction-img" alt="{{ c.product.nombre }}">
+          {% elif c.product.img_prod %}
             <img src="{{ c.product.img_prod.url }}" class="ic-transaction-img" alt="{{ c.product.nombre }}">
           {% else %}
             <div class="ic-transaction-img-placeholder"><i class="bi bi-image"></i></div>
@@ -134,7 +136,9 @@
     <div style="display: flex; flex-direction: column; gap: 1rem;">
       {% for v in ventas %}
         <div class="ic-transaction-card">
-          {% if v.product.img_prod %}
+          {% if v.product.images.all %}
+            <img src="{{ v.product.images.first.image.url }}" class="ic-transaction-img" alt="{{ v.product.nombre }}">
+          {% elif v.product.img_prod %}
             <img src="{{ v.product.img_prod.url }}" class="ic-transaction-img" alt="{{ v.product.nombre }}">
           {% else %}
             <div class="ic-transaction-img-placeholder"><i class="bi bi-image"></i></div>

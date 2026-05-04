@@ -83,7 +83,9 @@
         {% for p in productos %}
         <div class="ic-product-cell">
           <a href="{% url 'inner_circle:producto_detail' pk=p.pk %}">
-            {% if p.img_prod %}
+            {% if p.images.all %}
+              <img src="{{ p.images.first.image.url }}" class="ic-product-img" alt="{{ p.nombre }}">
+            {% elif p.img_prod %}
               <img src="{{ p.img_prod.url }}" class="ic-product-img" alt="{{ p.nombre }}">
             {% else %}
               <div class="ic-product-img-placeholder"><i class="bi bi-image"></i></div>
