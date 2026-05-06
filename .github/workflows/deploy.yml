@@ -1,0 +1,62 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - feature/deploy_0
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.AWS_EC2_HOST }}
+          username: ${{ secrets.AWS_EC2_USER }}
+          key: ${{ secrets.AWS_EC2_KEY }}
+          script: |
+            cd /opt/innercircle
+            
+            # Pull latest code
+            git pull origin main
+            
+            # Update Docker images
+            docker-compose pull
+            
+            # Build new images
+            docker-compose build
+            
+            # Stop containers
+            docker-compose down
+            
+            # Start with new images
+            docker-compose up -d
+            
+            # Run migrations
+            docker-compose exec -T web python proyecto_final/manage.py migrate
+            
+            # Collect static files
+            docker-compose exec -T web python proyecto_final/manage.py collectstatic --noinput
+            
+            # View logs to verify
+            docker-compose logs web | head -50
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: always()
+    
+    steps:
+      - name: Send deployment notification
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: 'InnerCircle deployment to EC2 ${{ job.status }}'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        if: always()
