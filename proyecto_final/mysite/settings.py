@@ -32,6 +32,8 @@ DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
+# Arreglar el warning del github test AutoField > BigAutoField
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField' 
 
 # Application definition
 
