@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block main %}
+<h3>Actualizar Perfil de Usuario</h3>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{form.as_p}}
+    <button type="submit">enviar</button>
+</form>
+<a href="{% url 'inner_circle:profile_detail' pk=request.user.profile.pk %}">cancelar</a>
+{% endblock main %}

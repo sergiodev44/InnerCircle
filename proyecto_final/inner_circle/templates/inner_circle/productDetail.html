@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}{{ producto.nombre }} — InnerCircle{% endblock %}
+
+{% block main %}
+
+<div class="ic-detail-grid">
+
+  <!-- Left: Image -->
+  <div class="ic-detail-image">
+    {% if producto.images.all %}
+      <img src="{{ producto.images.first.image.url }}" alt="{{ producto.nombre }}" id="main-image">
+      {% if producto.images.count > 1 %}
+        <div style="display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap;">
+          {% for img in producto.images.all %}
+            <img src="{{ img.image.url }}" alt="View {{ forloop.counter }}" 
+                 style="width: 60px; height: 60px; object-fit: cover; cursor: pointer; border: 2px solid transparent; border-radius: 4px;"
+                 onclick="document.getElementById('main-image').src = this.src; this.style.borderColor = 'var(--ic-primary)'; 
+                          Array.from(this.parentNode.children).forEach(el => { if(el !== this) el.style.borderColor = 'transparent'; })">
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% elif producto.img_prod %}
+      <img src="{{ producto.img_prod.url }}" alt="{{ producto.nombre }}">
+    {% else %}
+      <div class="ic-detail-image-placeholder"><i class="bi bi-image"></i></div>
+    {% endif %}
+  </div>
+
+  <!-- Right: Info panel -->
+  <div>
+
+    <div style="display:flex; gap:.6rem; align-items:center; margin-bottom:1rem; flex-wrap:wrap;">
+      <span class="ic-badge ic-badge-available" style="font-size:.6rem;">{{ producto.category }}</span>
+      <span style="color:var(--ic-muted); font-size:.75rem;">{{ producto.get_estado_display }}</span>
+    </div>
+
+    <h1 class="ic-detail-title">{{ producto.nombre }}</h1>
+    <p class="ic-detail-price">{{ producto.precio }} €</p>
+
+    <div class="ic-detail-meta">
+      <div>
+        <span class="ic-detail-meta-label">Talla</span>
+        <span class="ic-detail-meta-value">{{ producto.get_talla_display }}</span>
+      </div>
+      <div>
+        <span class="ic-detail-meta-label">Estado</span>
+        <span class="ic-detail-meta-value">{{ producto.get_estado_display }}</span>
+      </div>
+      <div>
+        <span class="ic-detail-meta-label">Categoría</span>
+        <span class="ic-detail-meta-value">{{ producto.category }}</span>
+      </div>
+    </div>
+
+    {% if producto.descripcion %}
+      <p style="font-size:.9rem; color:var(--ic-muted); line-height:1.8; margin-bottom:1.75rem;">{{ producto.descripcion }}</p>
+    {% endif %}
+
+    <!-- Seller -->
+    <a href="{% url 'inner_circle:profile_detail' pk=producto.user.profile.pk %}"
+       style="display:flex; align-items:center; gap:.75rem; margin-bottom:2rem; color:var(--ic-text);">
+      {% if producto.user.profile.img_perfil %}
+        <img src="{{ producto.user.profile.img_perfil.url }}" class="ic-avatar" alt="{{ producto.user.username }}">
+      {% else %}
+        <span class="ic-avatar ic-avatar-initials">{{ producto.user.username|first|upper }}</span>
+      {% endif %}
+      <div>
+        <p style="margin:0; font-size:.88rem;">{{ producto.user.profile.nombre_tag|default:producto.user.username }}</p>
+        {% if producto.user.promedio_rating %}
+          <p style="margin:0; font-size:.75rem; color:var(--ic-muted);">⭐ {{ producto.user.promedio_rating }}</p>
+        {% endif %}
+      </div>
+    </a>
+
+    <!-- Actions -->
+    {% if request.user.is_authenticated and request.user != producto.user %}
+      {% if producto.estado == 'DISP' %}
+        <div style="display:flex; flex-direction:column; gap:.65rem; margin-bottom:2rem;">
+          <a href="{% url 'inner_circle:venta_crear' pk=producto.pk %}"
+             class="btn-ic" style="width:100%; padding:.85rem; font-size:.72rem; text-align:center; display:block;">Comprar ahora</a>
+          <a href="{% url 'inner_circle:iniciar_conversacion' product_pk=producto.pk user_pk=producto.user.pk %}"
+             class="btn-ic-ghost" style="width:100%; padding:.75rem; font-size:.72rem; text-align:center; display:block;">Contactar vendedor</a>
+        </div>
+      {% else %}
+        <div class="ic-alert ic-alert-error" style="margin-bottom:2rem; font-size:.82rem;">Este artículo ya no está disponible.</div>
+      {% endif %}
+    {% elif request.user == producto.user %}
+      <div style="display:flex; gap:.65rem; margin-bottom:2rem;">
+        <a href="{% url 'inner_circle:product_update' pk=producto.pk %}" class="btn-ic-ghost" style="flex:1; text-align:center; padding:.75rem; font-size:.72rem;">Editar</a>
+        <a href="{% url 'inner_circle:product_delete' pk=producto.pk %}" class="btn-ic-danger" style="flex:1; text-align:center; padding:.75rem; font-size:.72rem;">Eliminar</a>
+      </div>
+    {% else %}
+      <a href="{% url 'login' %}" class="btn-ic"
+         style="width:100%; padding:.85rem; font-size:.72rem; text-align:center; display:block; margin-bottom:2rem;">Inicia sesión para comprar</a>
+    {% endif %}
+
+    <!-- Info accordion (eBay-style) -->
+    <div class="ic-info-section">
+      <div class="ic-info-row">
+        <button class="ic-info-toggle" onclick="toggleInfo(this)">
+          <span>Envío</span>
+          <i class="bi bi-plus" style="font-size:.85rem;"></i>
+        </button>
+        <div class="ic-info-body">
+          El vendedor y el comprador acuerdan el método de envío tras confirmar la transacción. Se recomienda usar un servicio con número de seguimiento.
+        </div>
+      </div>
+      <div class="ic-info-row">
+        <button class="ic-info-toggle" onclick="toggleInfo(this)">
+          <span>Devoluciones</span>
+          <i class="bi bi-plus" style="font-size:.85rem;"></i>
+        </button>
+        <div class="ic-info-body">
+          Las devoluciones se gestionan directamente entre ambas partes. En caso de disputa, abre una incidencia desde tu panel de ventas y actuamos como mediadores.
+        </div>
+      </div>
+      <div class="ic-info-row">
+        <button class="ic-info-toggle" onclick="toggleInfo(this)">
+          <span>Pagos seguros</span>
+          <i class="bi bi-plus" style="font-size:.85rem;"></i>
+        </button>
+        <div class="ic-info-body">
+          Los pagos se procesan a través de Stripe. InnerCircle no almacena datos de tarjeta. El importe queda protegido hasta confirmar la recepción del artículo.
+        </div>
+      </div>
+    </div>
+
+    <!-- Report / Block -->
+    {% if request.user.is_authenticated and request.user != producto.user %}
+      <div style="margin-top:2rem; display:flex; gap:1.5rem; flex-wrap:wrap;">
+        <a href="{% url 'inner_circle:report_user' pk=producto.user.pk %}"
+           style="font-size:.72rem; color:var(--ic-muted); text-decoration:underline; text-underline-offset:3px;">Reportar vendedor</a>
+        {% if producto.user.id in blocked_user_ids %}
+          <form method="post" action="{% url 'inner_circle:unblock_user' pk=producto.user.pk %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" style="font-size:.72rem; color:var(--ic-muted); text-decoration:underline; text-underline-offset:3px; background:none; border:none; cursor:pointer; padding:0; font-family:var(--ic-sans);">Desbloquear vendedor</button>
+          </form>
+        {% else %}
+          <form method="post" action="{% url 'inner_circle:block_user' pk=producto.user.pk %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" style="font-size:.72rem; color:var(--ic-muted); text-decoration:underline; text-underline-offset:3px; background:none; border:none; cursor:pointer; padding:0; font-family:var(--ic-sans);">Bloquear vendedor</button>
+          </form>
+        {% endif %}
+      </div>
+    {% endif %}
+
+  </div>
+</div>
+
+{% endblock main %}
+
+{% block extra_js %}
+<script>
+function toggleInfo(btn) {
+  const body = btn.nextElementSibling;
+  const icon = btn.querySelector('i');
+  body.classList.toggle('open');
+  icon.className = body.classList.contains('open') ? 'bi bi-dash' : 'bi bi-plus';
+  icon.style.fontSize = '.85rem';
+}
+</script>
+{% endblock %}

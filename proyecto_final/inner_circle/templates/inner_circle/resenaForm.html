@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block main %}
+<h3>Formulario de Reseñas</h3>
+<form method="post">
+    {% csrf_token %}
+    {{form.as_p}}
+    <button type="submit">enviar</button>
+</form>
+{% endblock main %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block main %}
+<h3>Notificaciones</h3>
+
+{% if notificaciones %}
+    {% for noti in notificaciones %}
+        <div style="border: 1px solid #ddd; padding: 10px; margin: 10px 0; border-radius: 5px;">
+            <p>{{ noti.contenido }}</p>
+            <small>{{ noti.created_at }}</small>
+            {% if noti.tipo == 'mensaje' and noti.object_id %}
+                <a href="{% url 'inner_circle:conversacion_detail' conversation_id=noti.object_id %}" class="btn btn-sm btn-primary">Ver conversación</a>
+            {% elif noti.tipo == 'dispute' and noti.object_id %}
+                <a href="{% url 'inner_circle:dispute_detail' pk=noti.object_id %}" class="btn btn-sm btn-warning">Ver reclamación</a>
+            {% endif %}
+        </div>
+    {% endfor %}
+{% else %}
+    <p>No hay nuevas notificaciones</p>
+{% endif %}
+
+<h3>Peticiones de Amistad</h3>
+
+    {% if frequest %}
+
+    {% for fr in frequest  %}
+        <p>{{fr.sender.profile.nombre_tag}} - {{fr.status}} - {{fr.sent_at}}</p>
+        <form method="post" action="{% url 'inner_circle:frequest_respuesta' pk=fr.pk %}">
+            {% csrf_token %}
+            <button type="submit" name="action" value="aceptar">Aceptar</button>
+            <button type="submit" name="action" value="rechazar">Rechazar</button>
+        </form>
+        {% endfor %}
+    {% else %}
+            <p>no tienes peticiones de amistad</p>
+        
+        
+    {% endif %}
+
+   
+{% endblock main %}

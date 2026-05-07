@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block main %}
+<h3>Detalles de la venta</h3>
+    
+<p><strong>Vendedor:</strong> {{venta.vendedor.profile.nombre_tag}}</p>
+<p><strong>Comprador:</strong> {{venta.comprador.profile.nombre_tag}}</p>
+<p><strong>Producto:</strong> {{product.nombre}}</p>
+<p><strong>Talla:</strong> {{product.talla}}</p>
+
+<hr>
+<h4>Desglose de precios:</h4>
+<p><strong>Precio base:</strong> €{{venta.precio_base|floatformat:2}}</p>
+<p><strong>Impuesto (10%):</strong> €{{venta.impuesto|floatformat:2}}</p>
+<p><strong>Tarifa de servicio (5%):</strong> €{{venta.tarifa_servicio|floatformat:2}}</p>
+<hr>
+<p><strong>IMPORTE TOTAL:</strong> €{{venta.importe_total|floatformat:2}}</p>
+
+<p><strong>Estado de pago:</strong> {{venta.get_estado_pago_display}}</p>
+
+{% if user == venta.comprador and venta.estado_pago == 'pagado' %}
+    {% if not venta.dispute %}
+        <div>
+            <a href="{% url 'inner_circle:dispute_create' venta_pk=venta.pk %}">
+                Crear Reclamación
+            </a>
+        </div>
+    {% else %}
+        <div>
+            <small>Ya existe una reclamación para esta compra. <a href="{% url 'inner_circle:dispute_detail' pk=venta.dispute.pk %}">Ver reclamación</a></small>
+        </div>
+    {% endif %}
+{% endif %}
+
+<a href="{% url 'inner_circle:profile_detail' pk=venta.comprador.profile.pk %}">Volver al perfil</a>
+   
+{% endblock main %}

@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block main %}
+<h1>Mis Mensajes y Reclamaciones</h1>
+
+<hr>
+<h3> Mensajes</h3>
+
+{% if conversaciones %}
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Usuario</th>
+                <th>Último Mensaje</th>
+                <th>Fecha</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for conv in conversaciones %}
+                {% if request.user == conv.usuario1 %}
+                    {% with otro_usuario=conv.usuario2 %}
+                <tr>
+                    <td>{{ conv.producto.nombre }}</td>
+                    <td>{{ otro_usuario.profile.nombre_tag }}</td>
+                    <td>{{ conv.mensajes.last.contenido|truncatewords:10 }}</td>
+                    <td>{{ conv.mensajes.last.created_at }}</td>
+                    <td>
+                        <a href="{% url 'inner_circle:conversacion_detail' conversation_id=conv.pk %}" class="btn btn-sm btn-primary">
+                            Ver
+                        </a>
+                    </td>
+                </tr>
+                    {% endwith %}
+                {% else %}
+                    {% with otro_usuario=conv.usuario1 %}
+                <tr>
+                    <td>{{ conv.producto.nombre }}</td>
+                    <td>{{ otro_usuario.profile.nombre_tag }}</td>
+                    <td>{{ conv.mensajes.last.contenido|truncatewords:10 }}</td>
+                    <td>{{ conv.mensajes.last.created_at }}</td>
+                    <td>
+                        <a href="{% url 'inner_circle:conversacion_detail' conversation_id=conv.pk %}" class="btn btn-sm btn-primary">
+                            Ver
+                        </a>
+                    </td>
+                </tr>
+                    {% endwith %}
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+    {% include "inner_circle/pagination.html" %}
+{% else %}
+    <p class="text-muted">No tienes mensajes aún</p>
+{% endif %}
+
+<hr>
+
+<!-- RECLAMACIONES SECTION -->
+<h3> Reclamaciones</h3>
+
+{% if buyer_disputes or seller_disputes %}
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <p><strong>Como Comprador:</strong> {{ buyer_disputes|length }} reclamación(es)</p>
+            <p><strong>Como Vendedor:</strong> {{ seller_disputes|length }} reclamación(es)</p>
+        </div>
+    </div>
+
+    {% if buyer_disputes or seller_disputes %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Rol</th>
+                    <th>Producto</th>
+                    <th>Razón</th>
+                    <th>Estado</th>
+                    <th>Creada</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dispute in buyer_disputes %}
+                <tr>
+                    <td>#{{ dispute.id }}</td>
+                    <td><span class="badge bg-primary">Comprador</span></td>
+                    <td>{{ dispute.venta.product.nombre }}</td>
+                    <td>{{ dispute.get_razon_display }}</td>
+                    <td>
+                        <span class="badge 
+                            {% if dispute.estado == 'ABIERTO' %}bg-danger
+                            {% elif dispute.estado == 'RESPONDIDO' %}bg-warning
+                            {% elif dispute.estado == 'REEMBOLSADO' %}bg-success
+                            {% else %}bg-secondary
+                            {% endif %}">
+                            {{ dispute.get_estado_display }}
+                        </span>
+                    </td>
+                    <td>{{ dispute.created_at|date:"d/m/Y" }}</td>
+                    <td>
+                        <a href="{% url 'inner_circle:dispute_detail' pk=dispute.pk %}" class="btn btn-sm btn-info">
+                            Ver
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+
+                {% for dispute in seller_disputes %}
+                <tr>
+                    <td>#{{ dispute.id }}</td>
+                    <td><span class="badge bg-success">Vendedor</span></td>
+                    <td>{{ dispute.venta.product.nombre }}</td>
+                    <td>{{ dispute.get_razon_display }}</td>
+                    <td>
+                        <span class="badge 
+                            {% if dispute.estado == 'ABIERTO' %}bg-danger
+                            {% elif dispute.estado == 'RESPONDIDO' %}bg-warning
+                            {% elif dispute.estado == 'REEMBOLSADO' %}bg-success
+                            {% else %}bg-secondary
+                            {% endif %}">
+                            {{ dispute.get_estado_display }}
+                        </span>
+                    </td>
+                    <td>{{ dispute.created_at|date:"d/m/Y" }}</td>
+                    <td>
+                        <a href="{% url 'inner_circle:dispute_detail' pk=dispute.pk %}" class="btn btn-sm btn-info">
+                            Ver
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% else %}
+    <p class="text-muted">No tienes reclamaciones</p>
+{% endif %}
+
+{% endblock main %}

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block main %}
+
+<h3>Lista de Productos de Amigos</h3>
+
+<details>
+    <summary style="cursor: pointer; font-weight: bold; padding: 10px; background-color: #f5f5f5; border-radius: 4px;">Buscar y Filtrar</summary>
+    <form method="get" action="" style="margin-top: 10px; padding: 10px; background-color: #fafafa; border-radius: 4px;">
+        {{ search_form.as_p }}
+        <button type="submit">Buscar</button>
+        <a href="{% url 'inner_circle:amigos_product_list' %}">Limpiar</a>
+    </form>
+</details>
+
+{% if amigos_productos %}  
+        {% for p in amigos_productos %}
+        <p>
+        
+        {% if p.user.profile.img_perfil %}
+            <img src="{{p.user.profile.img_perfil.url}}" alt="" width="20" height="20">
+        {% endif %}
+            
+        {{p.nombre}}
+        {{p.precio}}    
+        {{p.talla}}
+        vendedor: <a  href="{% url 'inner_circle:profile_detail' pk=p.user.profile.pk %}"> {{p.user.profile.nombre_tag}} </a>
+        {% if p.user.promedio_rating %}
+            <span>⭐ {{p.user.promedio_rating}}</span>
+        {% endif %}
+        
+        
+        {% if p.estado == 'DISP' %}
+        <a href="{% url 'inner_circle:producto_detail' pk=p.pk %}">ver detalles</a>
+        <a href="{% url 'inner_circle:venta_crear' pk=p.pk %}">comprar</a>
+        {% else %}
+        <p>No disponible</p>
+        {% endif %}
+        {% if p.images.all %}
+        <img src="{{p.images.first.image.url}}" alt="" width=200 height=200>
+        {% elif p.img_prod %}
+        <img src="{{p.img_prod.url}}" alt="" width=200 height=200>
+        {% endif %}
+        </p>
+        {% endfor %}
+        {% include "inner_circle/pagination.html" %}
+          
+{% endif %}
+
+{% endblock main %}

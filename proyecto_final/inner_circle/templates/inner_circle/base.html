@@ -1,0 +1,124 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}InnerCircle{% endblock title %}</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+  <nav class="ic-nav {% block nav_extra_class %}{% endblock %}">
+    <div class="container">
+      <a href="{% url 'inner_circle:home' %}" class="ic-logo">Inner<span>Circle</span></a>
+
+      {% if user.is_authenticated %}
+        <ul class="ic-nav-links">
+          <li><a href="{% url 'inner_circle:producto_list' %}">Everything</a></li>
+          <li class="ic-dropdown">
+            <span class="ic-dropdown-trigger">Gestiones <i class="bi bi-chevron-down" style="font-size:.55rem;"></i></span>
+            <div class="ic-dropdown-menu">
+              <a href="{% url 'inner_circle:mis_productos' pk=request.user.profile.pk %}">Mis Productos</a>
+              <a href="{% url 'inner_circle:ventas_list' pk=request.user.profile.pk %}">Ventas</a>
+              <a href="{% url 'inner_circle:mensajes_list' %}">Mensajes</a>
+            </div>
+          </li>
+        </ul>
+
+        <div class="ic-nav-right">
+          <a href="{% url 'inner_circle:product_create' %}" class="btn-ic" style="padding:.4rem .9rem; font-size:.72rem;">+ Publicar</a>
+          <a href="{% url 'inner_circle:profile_notis' pk=request.user.profile.pk %}" title="Notificaciones" style="position:relative;">
+            <i class="bi bi-bell" style="font-size:1.1rem; color:var(--ic-muted);"></i>
+            {% if unread_notifications_count > 0 %}
+              <span class="ic-notif-dot"></span>
+            {% endif %}
+          </a>
+          <a href="{% url 'inner_circle:profile_detail' pk=request.user.profile.pk %}">
+            {% if user.profile.img_perfil %}
+              <img src="{{ user.profile.img_perfil.url }}" class="ic-avatar" alt="{{ user.username }}">
+            {% else %}
+              <span class="ic-avatar ic-avatar-initials">{{ user.username|first|upper }}</span>
+            {% endif %}
+          </a>
+        </div>
+
+      {% else %}
+        <div class="ic-nav-right">
+          <a href="{% url 'login' %}" class="btn-ic-ghost">Entrar</a>
+          <a href="{% url 'inner_circle:user_create' %}" class="btn-ic">Registrarse</a>
+        </div>
+      {% endif %}
+
+      <button class="ic-nav-mobile-toggle btn-ic-ghost" style="padding:.4rem .7rem">
+        <i class="bi bi-list" style="font-size:1.2rem"></i>
+      </button>
+    </div>
+  </nav>
+
+  {% block main_wrapper %}
+  <main class="ic-main">
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="ic-alert ic-alert-{{ message.tags }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    {% block main %}{% endblock main %}
+
+  </main>
+  {% endblock main_wrapper %}
+
+  {% block footer %}
+  <footer class="ic-footer">
+    <div class="ic-footer-grid">
+      <div>
+        <span class="ic-footer-logo">Inner<span style="font-style:normal">Circle</span></span>
+        <p class="ic-footer-tagline">Moda de segunda mano entre personas de confianza. Compra y vende piezas únicas de tu círculo.</p>
+      </div>
+      <div>
+        <p class="ic-footer-heading">Explorar</p>
+        <ul class="ic-footer-links">
+          <li><a href="{% url 'inner_circle:producto_list' %}">Everything</a></li>
+          {% if user.is_authenticated %}
+          <li><a href="{% url 'inner_circle:amigos_product_list' %}">Amigos</a></li>
+          <li><a href="{% url 'inner_circle:product_create' %}">Publicar</a></li>
+          {% endif %}
+        </ul>
+      </div>
+      <div>
+        <p class="ic-footer-heading">Mi Cuenta</p>
+        <ul class="ic-footer-links">
+          {% if user.is_authenticated %}
+          <li><a href="{% url 'inner_circle:profile_detail' pk=request.user.profile.pk %}">Perfil</a></li>
+          <li><a href="{% url 'inner_circle:ventas_list' pk=request.user.profile.pk %}">Ventas</a></li>
+          <li><a href="{% url 'inner_circle:mensajes_list' %}">Mensajes</a></li>
+          <li><a href="{% url 'logout' %}">Cerrar sesión</a></li>
+          {% else %}
+          <li><a href="{% url 'login' %}">Iniciar sesión</a></li>
+          <li><a href="{% url 'inner_circle:user_create' %}">Registrarse</a></li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+    <div class="ic-footer-bottom">
+      <span class="ic-footer-copy">© 2026 InnerCircle. Todos los derechos reservados.</span>
+      <span class="ic-footer-copy">Hecho con cuidado.</span>
+    </div>
+  </footer>
+  {% endblock footer %}
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

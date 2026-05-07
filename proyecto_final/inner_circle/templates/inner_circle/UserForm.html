@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block main %}
+<h3>Formulario de Crear Usuario</h3>
+<form method="post">
+    {% csrf_token %}
+    {{form.as_p}}
+    <button type="submit">enviar</button>
+</form>
+<a href="{% url 'login' %}">cancelar</a>
+
+{% endblock main %}

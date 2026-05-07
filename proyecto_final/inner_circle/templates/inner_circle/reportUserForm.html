@@ -1,0 +1,43 @@
+{% extends "inner_circle/base.html" %}
+
+{% block main %}
+<h2>Reportar Usuario</h2>
+
+{% if form.non_field_errors %}
+    <div>
+        {% for error in form.non_field_errors %}
+            {{ error }}
+        {% endfor %}
+    </div>
+{% endif %}
+
+<p><strong>Reportando a:</strong> {{ reported_user.username }}</p>
+
+<form method="post">
+    {% csrf_token %}
+    
+    <div>
+        <label for="{{ form.reason.id_for_label }}">{{ form.reason.label }}</label>
+        {{ form.reason }}
+        {% if form.reason.errors %}
+            <div>{{ form.reason.errors }}</div>
+        {% endif %}
+    </div>
+
+    <div>
+        <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+        {{ form.description }}
+        {% if form.description.errors %}
+            <div>{{ form.description.errors }}</div>
+        {% endif %}
+    </div>
+
+    <p><strong>Nota:</strong> Los reportes serán revisados por los administradores de la plataforma.</p>
+
+    <div>
+        <button type="submit">Reportar Usuario</button>
+        <a href="{% url 'inner_circle:profile_detail' reported_user.profile.pk %}"><button type="button">Cancelar</button></a>
+    </div>
+</form>
+{% endblock main %}
+

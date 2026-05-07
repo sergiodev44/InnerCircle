@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}InnerCircle{% endblock %}
+
+{% block nav_extra_class %}ic-nav--home{% endblock %}
+
+{% block main_wrapper %}
+{# To add your background photo: upload the image to media/ and set its URL below  #}
+{# Example: style="background-image: url('/media/home-bg.jpg');"                   #}
+<div class="ic-home-page" style="background-image: url('/media/my_clothes/desert2.jpg')">
+  <div class="ic-home-overlay"></div>
+  <div class="ic-home-content">
+    <h1 class="ic-home-brand">Inner<span>Circle</span></h1>
+    <p class="ic-home-tagline">Tu moda. Tu círculo.</p>
+    <a href="{% url 'inner_circle:producto_list' %}" class="ic-home-cta-btn">Everything</a>
+  </div>
+</div>
+{% endblock main_wrapper %}

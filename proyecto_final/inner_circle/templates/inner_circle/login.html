@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block main %}
+<h3>Login</h3>
+<form method="post" action="login">
+    {% csrf_token %}
+    {{form.as_p()}}
+    <button type="submit">login</button>
+</form>
+<a href="{% url 'inner_circle:home' %}">cancelar</a>
+
+{% endblock main %}
