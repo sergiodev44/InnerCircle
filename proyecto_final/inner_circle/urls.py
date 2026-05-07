@@ -8,6 +8,7 @@ from .views import BlockUserView, UnblockUserView, ReportUserView, BannedView
 from .views import stripeCheckoutView, stripeWebhookView, stripePaymentStatusView
 from .views import DisputeCreateView, DisputeDetailView, DisputeListView
 from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
+from django.views.generic import TemplateView
 
 app_name = "inner_circle"
 
@@ -76,4 +77,6 @@ urlpatterns = [
     path('venta/<int:venta_pk>/dispute/crear/', DisputeCreateView.as_view(), name="dispute_create"),
     path('dispute/<int:pk>/', DisputeDetailView.as_view(), name="dispute_detail"),
     path('disputes/', DisputeListView.as_view(), name="dispute_list"),
+    # Simple TOS/FAQ (local marketplace)
+    path('tos/', TemplateView.as_view(template_name='inner_circle/tos.html'), name='tos'),
 ]

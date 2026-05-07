@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
 {% block main %}
-<div style="text-align: center; padding: 50px;">
-    <h1>⛔ Cuenta Baneada</h1>
-    <p style="font-size: 18px; color: #d32f2f;">Tu cuenta ha sido baneada por los administradores.</p>
-    <p>Si crees que esto es un error, contacta con el administrador.</p>
-    <a href="{% url 'login' %}" style="margin-top: 20px; display: inline-block; padding: 10px 20px; background-color: #1976d2; color: white; text-decoration: none; border-radius: 4px;">
+<div style="text-align: center; padding: 30px; color:var(--ic-muted);">
+    <h2 style="font-size:1.25rem; margin-bottom:.5rem;">Cuenta suspendida</h2>
+    <p style="font-size:14px; color:var(--ic-muted);">Tu cuenta ha sido suspendida por los administradores.</p>
+    <p style="font-size:13px; color:var(--ic-muted);">Si crees que esto es un error, contacta con el administrador.</p>
+    <a href="{% url 'login' %}" style="margin-top: 14px; display: inline-block; padding: 8px 14px; background-color:transparent; color:var(--ic-accent); text-decoration:underline; border-radius: 4px;">
         Volver al Login
     </a>
 </div>

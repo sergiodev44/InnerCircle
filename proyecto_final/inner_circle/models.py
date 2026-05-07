@@ -64,6 +64,7 @@ class Profile(models.Model):
     nombre_tag = models.CharField(max_length=200)
     # max length?
     bio = models.TextField()
+    location = models.CharField(max_length=100, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     img_perfil = models.ImageField(
         upload_to="profiles/",

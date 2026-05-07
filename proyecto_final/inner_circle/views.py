@@ -184,6 +184,18 @@ class profileDetailView(DetailView):
         # Pass list of blocked user IDs for template checks
         if self.request.user.is_authenticated:
             context["blocked_user_ids"] = list(self.request.user.bloqueados.values_list('blocked__id', flat=True))
+            # Friendship / friend request state (when viewing a profile)
+            try:
+                profile_user = self.get_object().user
+                user = self.request.user
+                context['is_friend'] = user.friends.filter(pk=profile_user.pk).exists()
+                from .models import FriendRequest
+                context['friend_request_sent'] = FriendRequest.objects.filter(sender=user, recibidor2=profile_user, status='pendiente').exists()
+                context['friend_request_received'] = FriendRequest.objects.filter(sender=profile_user, recibidor2=user, status='pendiente').exists()
+            except Exception:
+                context['is_friend'] = False
+                context['friend_request_sent'] = False
+                context['friend_request_received'] = False
         return context
     
 class profileUpdateView(LoginRequiredMixin,UserPassesTestMixin,UpdateView):
@@ -325,6 +337,18 @@ class productDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         if self.request.user.is_authenticated:
             context["blocked_user_ids"] = list(self.request.user.bloqueados.values_list('blocked__id', flat=True))
+            # Friendship / friend request state for seller (used in productDetail template)
+            try:
+                seller = self.get_object().user
+                user = self.request.user
+                context['is_friend'] = user.friends.filter(pk=seller.pk).exists()
+                from .models import FriendRequest
+                context['friend_request_sent'] = FriendRequest.objects.filter(sender=user, recibidor2=seller, status='pendiente').exists()
+                context['friend_request_received'] = FriendRequest.objects.filter(sender=seller, recibidor2=user, status='pendiente').exists()
+            except Exception:
+                context['is_friend'] = False
+                context['friend_request_sent'] = False
+                context['friend_request_received'] = False
         return context
 
 class productCreateView(LoginRequiredMixin,CreateView):

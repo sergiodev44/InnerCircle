@@ -57,20 +57,45 @@
     {% endif %}
 
     <!-- Seller -->
-    <a href="{% url 'inner_circle:profile_detail' pk=producto.user.profile.pk %}"
-       style="display:flex; align-items:center; gap:.75rem; margin-bottom:2rem; color:var(--ic-text);">
-      {% if producto.user.profile.img_perfil %}
-        <img src="{{ producto.user.profile.img_perfil.url }}" class="ic-avatar" alt="{{ producto.user.username }}">
-      {% else %}
-        <span class="ic-avatar ic-avatar-initials">{{ producto.user.username|first|upper }}</span>
-      {% endif %}
-      <div>
-        <p style="margin:0; font-size:.88rem;">{{ producto.user.profile.nombre_tag|default:producto.user.username }}</p>
-        {% if producto.user.promedio_rating %}
-          <p style="margin:0; font-size:.75rem; color:var(--ic-muted);">⭐ {{ producto.user.promedio_rating }}</p>
+    <div style="display:flex; align-items:center; gap:.75rem; margin-bottom:2rem; color:var(--ic-text);">
+      <a href="{% url 'inner_circle:profile_detail' pk=producto.user.profile.pk %}" style="display:flex; align-items:center; gap:.75rem; color:inherit; text-decoration:none;">
+        {% if producto.user.profile.img_perfil %}
+          <img src="{{ producto.user.profile.img_perfil.url }}" class="ic-avatar" alt="{{ producto.user.username }}">
+        {% else %}
+          <span class="ic-avatar ic-avatar-initials">{{ producto.user.username|first|upper }}</span>
         {% endif %}
-      </div>
-    </a>
+        <div>
+          <p style="margin:0; font-size:.88rem;">{{ producto.user.profile.nombre_tag|default:producto.user.username }}</p>
+          {% if producto.user.promedio_rating %}
+            <p style="margin:0; font-size:.75rem; color:var(--ic-muted);">⭐ {{ producto.user.promedio_rating }}</p>
+          {% endif %}
+          {% if producto.user.profile.location %}
+            <p style="margin:0; font-size:.75rem; color:var(--ic-muted);"> {{ producto.user.profile.location }}</p>
+          {% endif %}
+        </div>
+      </a>
+
+      {% if request.user.is_authenticated and request.user != producto.user %}
+        <div style="margin-left:auto;">
+          {% if is_friend %}
+            <form method="post" action="{% url 'inner_circle:friend_remove' pk=producto.user.pk %}" style="display:inline;">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="remove">
+              <button type="submit" class="btn-ic-ghost" style="font-size:.8rem; padding:.35rem .6rem;">Amigo</button>
+            </form>
+          {% elif friend_request_sent %}
+            <span style="font-size:.8rem; color:var(--ic-muted);">Solicitud enviada</span>
+          {% elif friend_request_received %}
+            <a href="{% url 'inner_circle:profile_notis' pk=request.user.profile.pk %}" class="btn-ic-ghost" style="font-size:.72rem; padding:.35rem .6rem;">Revisar petición</a>
+          {% else %}
+            <form method="post" action="{% url 'inner_circle:frequest_create' pk=producto.user.profile.pk %}" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn-ic-ghost" style="font-size:.72rem; padding:.35rem .6rem;">Seguir</button>
+            </form>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
 
     <!-- Actions -->
     {% if request.user.is_authenticated and request.user != producto.user %}
@@ -78,8 +103,8 @@
         <div style="display:flex; flex-direction:column; gap:.65rem; margin-bottom:2rem;">
           <a href="{% url 'inner_circle:venta_crear' pk=producto.pk %}"
              class="btn-ic" style="width:100%; padding:.85rem; font-size:.72rem; text-align:center; display:block;">Comprar ahora</a>
-          <a href="{% url 'inner_circle:iniciar_conversacion' product_pk=producto.pk user_pk=producto.user.pk %}"
-             class="btn-ic-ghost" style="width:100%; padding:.75rem; font-size:.72rem; text-align:center; display:block;">Contactar vendedor</a>
+            <a href="{% url 'inner_circle:iniciar_conversacion' product_pk=producto.pk user_pk=producto.user.pk %}"
+               class="btn-ic-ghost" style="width:100%; padding:.75rem; font-size:.72rem; text-align:center; display:block;">Contactar vendedor</a>
         </div>
       {% else %}
         <div class="ic-alert ic-alert-error" style="margin-bottom:2rem; font-size:.82rem;">Este artículo ya no está disponible.</div>
@@ -158,5 +183,16 @@ function toggleInfo(btn) {
   icon.className = body.classList.contains('open') ? 'bi bi-dash' : 'bi bi-plus';
   icon.style.fontSize = '.85rem';
 }
+
+// Auto-submit follow/unfollow forms using event delegation
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('follow-btn')) {
+    e.preventDefault();
+    const form = e.target.closest('.follow-form');
+    if (form) {
+      form.submit();
+    }
+  }
+});
 </script>
 {% endblock %}

@@ -19,9 +19,10 @@ class UserForm(UserCreationForm):
 class ProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ["nombre_tag", "bio", "img_perfil"]
+        fields = ["nombre_tag", "location", "bio", "img_perfil"]
         widgets = {
             "nombre_tag": forms.TextInput(attrs={}),
+            "location": forms.TextInput(attrs={"list": "cities"}),
             "bio": forms.Textarea(attrs={'cols':30,'rows':2}),
             "img_perfil": forms.ClearableFileInput(attrs={}),
         }

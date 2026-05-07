@@ -17,6 +17,10 @@
   {% block extra_css %}{% endblock %}
 </head>
 <body>
+    <!-- Site-wide local marketplace banner (subtle) -->
+    <div class="ic-local-banner" style="background:rgba(250,245,235,0.6);border-bottom:1px solid var(--ic-border);text-align:center;padding:.35rem 0;font-size:.85rem;color:var(--ic-muted);">
+      Disponible en Jerez de la Frontera, España — próximas ciudades pronto.
+    </div>
 
   <nav class="ic-nav {% block nav_extra_class %}{% endblock %}">
     <div class="container">
@@ -64,6 +68,8 @@
       </button>
     </div>
   </nav>
+  
+
 
   {% block main_wrapper %}
   <main class="ic-main">
@@ -114,6 +120,7 @@
     <div class="ic-footer-bottom">
       <span class="ic-footer-copy">© 2026 InnerCircle. Todos los derechos reservados.</span>
       <span class="ic-footer-copy">Hecho con cuidado.</span>
+      <span class="ic-footer-copy" style="margin-left:1rem;"><a href="{% url 'inner_circle:tos' %}">Términos y FAQ</a></span>
     </div>
   </footer>
   {% endblock footer %}

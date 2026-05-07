@@ -3,7 +3,29 @@
 <h3>Actualizar Perfil de Usuario</h3>
 <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
-    {{form.as_p}}
+        <p>
+            <label for="id_nombre_tag">Nombre público</label><br>
+            {{ form.nombre_tag }}
+        </p>
+        <p>
+            <label for="id_location">Localidad</label><br>
+            {{ form.location }}
+            <datalist id="cities">
+                <option value="Jerez de la Frontera"></option>
+                <option value="El Puerto de Santa María"></option>
+                <option value="Sanlúcar de Barrameda"></option>
+                <option value="Chipiona"></option>
+                <option value="Cádiz"></option>
+            </datalist>
+        </p>
+        <p>
+            <label for="id_bio">Biografía</label><br>
+            {{ form.bio }}
+        </p>
+        <p>
+            <label for="id_img_perfil">Imagen de perfil</label><br>
+            {{ form.img_perfil }}
+        </p>
     <button type="submit">enviar</button>
 </form>
 <a href="{% url 'inner_circle:profile_detail' pk=request.user.profile.pk %}">cancelar</a>

@@ -9,11 +9,18 @@
     <!-- Avatar -->
     <div>
       {% if profile.img_perfil %}
-        <img src="{{ profile.img_perfil.url }}" class="ic-avatar-lg" alt="{{ profile.nombre_tag|default:profile.user.username }}">
+        <img src="{{ profile.img_perfil.url }}" class="ic-avatar-lg" id="avatarImg" alt="{{ profile.nombre_tag|default:profile.user.username }}">
       {% else %}
         <span class="ic-avatar-lg ic-avatar-initials" style="font-size:1.8rem;">{{ profile.user.username|first|upper }}</span>
       {% endif %}
     </div>
+
+    <!-- Modal -->
+    {% if profile.img_perfil %}
+    <div class="ic-modal-overlay" id="avatarModal">
+      <img src="{{ profile.img_perfil.url }}" class="ic-modal-image" alt="{{ profile.nombre_tag|default:profile.user.username }}">
+    </div>
+    {% endif %}
     
     <!-- Info -->
     <div style="flex:1;">
@@ -23,7 +30,7 @@
           <span style="font-size:.9rem; color:var(--ic-muted);">⭐ {{ profile.user.promedio_rating }}/5.0</span>
         {% endif %}
       </div>
-      <p style="color:var(--ic-muted); font-size:.82rem; margin:0 0 1rem;">@{{ profile.user.username }}</p>
+        <p style="color:var(--ic-muted); font-size:.82rem; margin:0 0 1rem;">@{{ profile.user.username }}{% if profile.location %} · {{ profile.location }}{% endif %}</p>
       
       {% if profile.bio %}
         <p style="font-size:.9rem; color:var(--ic-muted); line-height:1.7; margin:0 0 1.25rem;">{{ profile.bio }}</p>
@@ -44,7 +51,7 @@
   </div>
   
   <!-- Actions -->
-  <div style="display:flex; gap:.75rem; flex-wrap:wrap;">
+  <div style="display:flex; gap:.75rem; flex-wrap:wrap; align-items:center;">
     {% if profile.user.pk == request.user.pk %}
       <a href="{% url 'inner_circle:profile_update' pk=request.user.profile.pk %}" class="btn-ic-ghost" style="font-size:.72rem; padding:.55rem 1.4rem;">Editar perfil</a>
       <form method="post" action="{% url 'logout' %}" style="display:inline;">
@@ -52,18 +59,37 @@
         <button type="submit" class="btn-ic-danger" style="font-size:.72rem; padding:.55rem 1.4rem;">Cerrar sesion</button>
       </form>
     {% elif request.user.is_authenticated %}
+      <!-- Follow / request action -->
+      <div style="display:inline-block;">
+        {% if is_friend %}
+          <form method="post" action="{% url 'inner_circle:friend_remove' pk=profile.user.pk %}" style="display:inline;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="remove">
+            <button type="submit" class="btn-ic-ghost" style="font-size:.7rem; padding:.4rem .9rem;">Siguiendo</button>
+          </form>
+        {% elif friend_request_sent %}
+          <span style="font-size:.7rem; color:var(--ic-muted); padding:.4rem .9rem;">Solicitud enviada</span>
+        {% elif friend_request_received %}
+          <a href="{% url 'inner_circle:profile_notis' pk=request.user.profile.pk %}" class="btn-ic-ghost" style="font-size:.7rem; padding:.4rem .9rem;">Revisar petición</a>
+        {% else %}
+          <form method="post" action="{% url 'inner_circle:frequest_create' pk=profile.pk %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn-ic-ghost" style="font-size:.7rem; padding:.4rem .9rem;">Seguir</button>
+          </form>
+        {% endif %}
+      </div>
       {% if profile.user.id in blocked_user_ids %}
         <form method="post" action="{% url 'inner_circle:unblock_user' pk=profile.user.pk %}" style="display:inline;">
           {% csrf_token %}
-          <button type="submit" class="btn-ic-ghost" style="font-size:.72rem; padding:.55rem 1.4rem;">Desbloquear</button>
+          <button type="submit" class="btn-ic-ghost" style="font-size:.7rem; padding:.4rem .9rem;">Dejar de silenciar</button>
         </form>
       {% else %}
         <form method="post" action="{% url 'inner_circle:block_user' pk=profile.user.pk %}" style="display:inline;">
           {% csrf_token %}
-          <button type="submit" class="btn-ic-danger" style="font-size:.72rem; padding:.55rem 1.4rem;">Bloquear</button>
+          <button type="submit" class="btn-ic-ghost" style="font-size:.7rem; padding:.4rem .9rem;">Silenciar</button>
         </form>
       {% endif %}
-      <a href="{% url 'inner_circle:report_user' pk=profile.user.pk %}" style="font-size:.72rem; color:var(--ic-muted); text-decoration:underline; text-underline-offset:3px;">Reportar</a>
+      <a href="{% url 'inner_circle:report_user' pk=profile.user.pk %}" style="font-size:.7rem; color:var(--ic-muted); text-decoration:underline; text-underline-offset:3px; padding:.4rem .9rem;">Reportar</a>
     {% endif %}
   </div>
 </div>
@@ -71,9 +97,9 @@
 <!-- Reviews Section -->
 <section style="margin-bottom:4rem;">
   <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.75rem;">
-    <h2 style="margin:0; font-family:var(--ic-serif); font-size:1.4rem; font-weight:300;">Resenas</h2>
+      <h2 style="margin:0; font-family:var(--ic-serif); font-size:1.4rem; font-weight:300;">Reseñas</h2>
     {% if profile.user.pk == request.user.pk %}
-      <a href="{% url 'inner_circle:resena_create' pk=request.user.profile.pk %}" class="btn-ic-ghost" style="font-size:.72rem; padding:.4rem .9rem;">+ Anadir</a>
+      <a href="{% url 'inner_circle:resena_create' pk=request.user.profile.pk %}" class="btn-ic-ghost" style="font-size:.72rem; padding:.4rem .9rem;">+ Añadir</a>
     {% endif %}
   </div>
   
@@ -98,10 +124,10 @@
       {% endfor %}
     </div>
   {% else %}
-    <div style="text-align:center; padding:2rem; color:var(--ic-muted);">
-      <i class="bi bi-star" style="font-size:2rem; opacity:.15; display:block; margin-bottom:.75rem;"></i>
-      <p style="margin:0; font-size:.88rem;">Aun no hay resenas para este usuario.</p>
-    </div>
+      <div style="text-align:center; padding:2rem; color:var(--ic-muted);">
+        <i class="bi bi-star" style="font-size:1.6rem; opacity:.12; display:block; margin-bottom:.75rem;"></i>
+        <p style="margin:0; font-size:.88rem;">Aún no hay reseñas para este usuario.</p>
+      </div>
   {% endif %}
 </section>
 
@@ -173,5 +199,28 @@
   </section>
 
 {% endif %}
+
+<script>
+  const avatarImg = document.getElementById('avatarImg');
+  const avatarModal = document.getElementById('avatarModal');
+  
+  if (avatarImg) {
+    avatarImg.addEventListener('click', () => avatarModal.classList.add('active'));
+  }
+  if (avatarModal) {
+    avatarModal.addEventListener('click', () => avatarModal.classList.remove('active'));
+  }
+
+  // Auto-submit follow/unfollow forms using event delegation
+  document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('follow-btn')) {
+      e.preventDefault();
+      const form = e.target.closest('.follow-form');
+      if (form) {
+        form.submit();
+      }
+    }
+  });
+</script>
 
 {% endblock main %}
