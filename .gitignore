@@ -144,7 +144,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-env.old
+.env.old
 
 # Spyder project settings
 .spyderproject
