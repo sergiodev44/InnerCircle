@@ -1,5 +1,4 @@
 from django.core.management.base import BaseCommand
-from django.conf import settings
 from inner_circle.models import User, Profile, Product, FriendRequest, Category, Conversation, Mensaje, Venta, Resena, Notification, ProductImage
 from django.core.files.base import ContentFile
 from django.utils import timezone
@@ -13,8 +12,8 @@ from io import BytesIO
 try:
     import pillow_heif
     pillow_heif.register_heif_opener()
-except Exception as e:
-    print(f"WARNING: Failed to register pillow_heif: {e}")
+except ImportError:
+    pass
 
 
 class Command(BaseCommand):
@@ -40,9 +39,8 @@ class Command(BaseCommand):
         }
 
         # Copy AI PFPs to profiles folder if they don't exist
-        base_media = Path(settings.MEDIA_ROOT)
-        ai_pfps_dir = base_media / 'ai_pfps'
-        profiles_dir = base_media / 'profiles'
+        ai_pfps_dir = Path('/home/sergio/Desktop/InnerCircle/proyecto_final/media/ai_pfps')
+        profiles_dir = Path('/home/sergio/Desktop/InnerCircle/proyecto_final/media/profiles')
         
         if ai_pfps_dir.exists():
             for pfp_file in ai_pfps_dir.glob('*.png'):
@@ -80,15 +78,11 @@ class Command(BaseCommand):
             users[user_info['username']] = user
 
         # Get all images from media/my_clothes
-        clothes_dir = base_media / 'my_clothes'
+        clothes_dir = Path('/home/sergio/Desktop/InnerCircle/proyecto_final/media/my_clothes')
         
         # Group images by base name (without _f, _b suffix and extension)
         image_groups = {}
-        self.stdout.write(f"Looking for images in: {clothes_dir}")
-        self.stdout.write(f"Directory exists: {clothes_dir.exists()}")
         if clothes_dir.exists():
-            files_found = list(clothes_dir.iterdir())
-            self.stdout.write(f"Files found in my_clothes: {len(files_found)}")
             for image_file in sorted(clothes_dir.iterdir()):
                 if image_file.is_file():
                     # Extract base name (e.g., "baggy_jeans" from "baggy_jeans_f.HEIC")
@@ -109,7 +103,6 @@ class Command(BaseCommand):
                         'view_type': view_type,
                         'filename': image_file.name
                     })
-            self.stdout.write(f"Image groups found: {list(image_groups.keys())}")
 
         # Product data mapping
         products_data = [
@@ -241,7 +234,7 @@ class Command(BaseCommand):
                 'precio': 32.00,
                 'talla': 'L',
                 'category': 'jerseis',
-                'image_group': 'jeans_grey'
+                'image_group': 'jersey_grey'
             },
             {
                 'user': 'brett',
@@ -345,7 +338,6 @@ class Command(BaseCommand):
                     image_groups[image_group_name], 
                     key=lambda x: (0 if x['view_type'] == 'front' else 1, x['view_type'])
                 )
-                self.stdout.write(f"  Adding {len(sorted_images)} images to {product.nombre}")
                 for img_info in sorted_images:
                     image_path = img_info['path']
                     
@@ -377,11 +369,7 @@ class Command(BaseCommand):
                             )
                         
                         order += 1
-                        self.stdout.write(self.style.SUCCESS(f'    ✓ Added image {filename}'))
-                    else:
-                        self.stdout.write(self.style.ERROR(f'    ✗ Failed to add image {image_path.name}'))
-            else:
-                self.stdout.write(self.style.WARNING(f"  No images found for group: {image_group_name}"))
+                        self.stdout.write(self.style.SUCCESS(f'✓ Added image to {product.nombre}'))
             
             product_key += 1
 
