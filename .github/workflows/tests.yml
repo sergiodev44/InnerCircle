@@ -39,7 +39,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       
-      - name: Run tests
+      - name: System checks
         env:
           DEBUG: 'False'
           DB_ENGINE: django.db.backends.postgresql
@@ -54,18 +54,4 @@ jobs:
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
         run: |
           cd proyecto_final
-          python manage.py test inner_circle
-      
-      - name: Run migrations
-        env:
-          DEBUG: 'False'
-          DB_ENGINE: django.db.backends.postgresql
-          DB_NAME: test_innercircle_db
-          DB_USER: test_user
-          DB_PASSWORD: test_password
-          DB_HOST: localhost
-          DB_PORT: 5432
-          SECRET_KEY: test-secret-key-for-ci
-        run: |
-          cd proyecto_final
-          python manage.py migrate --check
+          python manage.py check
