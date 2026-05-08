@@ -17,6 +17,8 @@ class UserForm(UserCreationForm):
 
 
 class ProfileForm(forms.ModelForm):
+    email = forms.EmailField()
+    
     class Meta:
         model = Profile
         fields = ["nombre_tag", "location", "bio", "img_perfil"]
@@ -26,6 +28,16 @@ class ProfileForm(forms.ModelForm):
             "bio": forms.Textarea(attrs={'cols':30,'rows':2}),
             "img_perfil": forms.ClearableFileInput(attrs={}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].initial = self.instance.user.email
+    
+    def save(self, commit=True):
+        profile = super().save(commit=commit)
+        profile.user.email = self.cleaned_data['email']
+        profile.user.save()
+        return profile
 
 
 class ProductForm(forms.ModelForm):

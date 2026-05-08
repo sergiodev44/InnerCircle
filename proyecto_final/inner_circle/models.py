@@ -53,11 +53,11 @@ class User(AbstractUser):
     
     @property
     def promedio_rating(self):
-        """Calcula el promedio de calificaciones recibidas"""
+        """Calcula el promedio de calificaciones recibidas, empieza en 5/5"""
         ratings = self.recibidor.all()
         if ratings.exists():
             return round(ratings.aggregate(prom=models.Avg('puntuacion'))['prom'], 1)
-        return None
+        return 5.0
 
 class Profile(models.Model):
     user = models.OneToOneField(User,on_delete=models.CASCADE)
