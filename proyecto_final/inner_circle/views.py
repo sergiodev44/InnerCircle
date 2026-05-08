@@ -177,25 +177,34 @@ class profileDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["frequest"] = self.get_object().user.recibe_solicitud.all()
-        context["amigos"] = self.get_object().user.friends.all()
-        context["mis_resenas"] = Resena.objects.filter(recibidor=self.get_object().user)
-        context["bloqueados"] = BlockedUser.objects.filter(blocker=self.get_object().user)
+        profile_user = self.get_object().user
+        context["frequest"] = profile_user.recibe_solicitud.all()
+        context["amigos"] = profile_user.friends.all()
+        context["mis_resenas"] = Resena.objects.filter(recibidor=profile_user)
+        context["bloqueados"] = BlockedUser.objects.filter(blocker=profile_user)
+        context["user_products"] = Product.objects.filter(user=profile_user, deleted_at__isnull=True).order_by('-created_at')
+        context["user_ventas"] = Venta.objects.filter(vendedor=profile_user).select_related('product', 'comprador__profile').order_by('-created_at')
         # Pass list of blocked user IDs for template checks
         if self.request.user.is_authenticated:
             context["blocked_user_ids"] = list(self.request.user.bloqueados.values_list('blocked__id', flat=True))
-            # Friendship / friend request state (when viewing a profile)
-            try:
-                profile_user = self.get_object().user
-                user = self.request.user
-                context['is_friend'] = user.friends.filter(pk=profile_user.pk).exists()
-                from .models import FriendRequest
-                context['friend_request_sent'] = FriendRequest.objects.filter(sender=user, recibidor2=profile_user, status='pendiente').exists()
-                context['friend_request_received'] = FriendRequest.objects.filter(sender=profile_user, recibidor2=user, status='pendiente').exists()
-            except Exception:
-                context['is_friend'] = False
-                context['friend_request_sent'] = False
-                context['friend_request_received'] = False
+            context["my_friends_ids"] = set(self.request.user.friends.values_list('id', flat=True))
+            user = self.request.user
+            context['is_friend'] = user.friends.filter(pk=profile_user.pk).exists()
+            # Stats visible only if owner or friends
+            context['can_view_stats'] = user.pk == profile_user.pk or context['is_friend']
+            from .models import FriendRequest
+            
+            # Check for sent request
+            sent_request = FriendRequest.objects.filter(sender=user, recibidor2=profile_user, status='pendiente').first()
+            context['friend_request_sent'] = sent_request is not None
+            context['friend_request_sent_id'] = sent_request.pk if sent_request else None
+            
+            # Check for received request
+            received_request = FriendRequest.objects.filter(sender=profile_user, recibidor2=user, status='pendiente').first()
+            context['friend_request_received'] = received_request is not None
+            context['friend_request_received_id'] = received_request.pk if received_request else None
+        else:
+            context['can_view_stats'] = False
         return context
     
 class profileUpdateView(LoginRequiredMixin,UserPassesTestMixin,UpdateView):
@@ -343,12 +352,22 @@ class productDetailView(DetailView):
                 user = self.request.user
                 context['is_friend'] = user.friends.filter(pk=seller.pk).exists()
                 from .models import FriendRequest
-                context['friend_request_sent'] = FriendRequest.objects.filter(sender=user, recibidor2=seller, status='pendiente').exists()
-                context['friend_request_received'] = FriendRequest.objects.filter(sender=seller, recibidor2=user, status='pendiente').exists()
+                
+                # Check for sent request
+                sent_request = FriendRequest.objects.filter(sender=user, recibidor2=seller, status='pendiente').first()
+                context['friend_request_sent'] = sent_request is not None
+                context['friend_request_sent_id'] = sent_request.pk if sent_request else None
+                
+                # Check for received request
+                received_request = FriendRequest.objects.filter(sender=seller, recibidor2=user, status='pendiente').first()
+                context['friend_request_received'] = received_request is not None
+                context['friend_request_received_id'] = received_request.pk if received_request else None
             except Exception:
                 context['is_friend'] = False
                 context['friend_request_sent'] = False
+                context['friend_request_sent_id'] = None
                 context['friend_request_received'] = False
+                context['friend_request_received_id'] = None
         return context
 
 class productCreateView(LoginRequiredMixin,CreateView):
@@ -764,26 +783,29 @@ class resenaDeleteView(LoginRequiredMixin, UserPassesTestMixin,DeleteView):
     
 
 # FriendRequest
-class frequestCreateView(LoginRequiredMixin,CreateView):
-    model = FriendRequest
-    template_name = "fRequestForm.html"
-    form_class = FriendRequestForm
-
-    def form_valid(self, form):
-        if form.instance.recibidor2 == self.request.user:
-            form.add_error("No puedes enviar solicitud a tí mismo")
-            return self.form_invalid(form)
-        form.instance.sender = self.request.user 
-        return super().form_valid(form)
-    
-    def get_success_url(self):
-        return  reverse_lazy("inner_circle:profile_detail",
-        kwargs={"pk" : self.request.user.profile.pk}
-        )
+class frequestCreateView(LoginRequiredMixin, View):
+    """Create a friend request - just POST without form page"""
+    def post(self, request, *args, **kwargs):
+        profile = Profile.objects.get(pk=self.kwargs['pk'])
+        recipient = profile.user
+        
+        # Don't allow sending request to yourself
+        if recipient == request.user:
+            return redirect('inner_circle:profile_detail', pk=profile.pk)
+        
+        # Check if request already exists
+        if FriendRequest.objects.filter(sender=request.user, recibidor2=recipient).exists():
+            return redirect('inner_circle:profile_detail', pk=profile.pk)
+        
+        # Create the friend request
+        FriendRequest.objects.create(sender=request.user, recibidor2=recipient)
+        
+        return redirect('inner_circle:profile_detail', pk=profile.pk)
   
 # REMEMBER #
 ### Esta bien necesita revisión ###
 class frRequestResponseView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Accept or reject a friend request"""
     def test_func(self):
         fr = FriendRequest.objects.get(pk=self.kwargs['pk'])
         return self.request.user == fr.recibidor2
@@ -794,11 +816,29 @@ class frRequestResponseView(LoginRequiredMixin, UserPassesTestMixin, View):
 
         if action == 'aceptar':
             request.user.friends.add(fr.sender)
-            fr.delete()
+            fr.status = 'aceptada'
         elif action == 'rechazar':
-            fr.delete()
-
+            fr.status = 'rechazada'
+        
+        fr.save()
         return redirect('inner_circle:profile_detail', pk=request.user.profile.pk)
+
+
+class frRequestCancelView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Cancel a pending friend request sent by current user"""
+    def test_func(self):
+        fr = FriendRequest.objects.get(pk=self.kwargs['pk'])
+        return self.request.user == fr.sender
+    
+    def post(self, request, *args, **kwargs):
+        fr = FriendRequest.objects.get(pk=self.kwargs['pk'])
+        # Just delete the pending request
+        if fr.status == 'pendiente':
+            fr.delete()
+        
+        # Determine where to redirect back to
+        recipient_profile = fr.recibidor2.profile
+        return redirect('inner_circle:profile_detail', pk=recipient_profile.pk)
     
 
 # REMEMBER #

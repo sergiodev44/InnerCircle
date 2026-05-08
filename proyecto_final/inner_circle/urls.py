@@ -2,7 +2,7 @@ from django.urls import path
 from .views import profileDetailView,profileUpdateView, profileDeleteView, userCreateView, VerifyEmailView, ResendVerificationEmailView, HomeView
 from .views import productListView,misProductosListView, amigosProductListView, productDetailView, productCreateView, productUpdateView, productDeleteView
 from .views import ventaDetailView, ventaCreateView, ventasList, resenaDetailView, resenaCreateView, resenaDeleteView
-from .views import frequestCreateView, frRequestResponseView, friendDeleteView
+from .views import frequestCreateView, frRequestResponseView, frRequestCancelView, friendDeleteView
 from .views import profileNotis, conversacionDetailView, iniciarConversacionView, mensajesListView
 from .views import BlockUserView, UnblockUserView, ReportUserView, BannedView
 from .views import stripeCheckoutView, stripeWebhookView, stripePaymentStatusView
@@ -59,6 +59,7 @@ urlpatterns = [
     # Notificaciones
     path('perfil/<int:pk>/enviar-peticion', frequestCreateView.as_view(), name="frequest_create"),
     path('frequest/<int:pk>/respuesta/', frRequestResponseView.as_view(), name="frequest_respuesta"),
+    path('frequest/<int:pk>/cancelar/', frRequestCancelView.as_view(), name="frequest_cancel"),
     path('perfil/<int:pk>/amigos-eliminar/', friendDeleteView.as_view(), name="friend_remove"),
     path('notificaciones/<int:pk>/', profileNotis.as_view(), name="profile_notis" ),
 

@@ -1,36 +1,117 @@
 {% extends "base.html" %}
 {% block main %}
-<h3>Detalles de la venta</h3>
-    
-<p><strong>Vendedor:</strong> {{venta.vendedor.profile.nombre_tag}}</p>
-<p><strong>Comprador:</strong> {{venta.comprador.profile.nombre_tag}}</p>
-<p><strong>Producto:</strong> {{product.nombre}}</p>
-<p><strong>Talla:</strong> {{product.talla}}</p>
 
-<hr>
-<h4>Desglose de precios:</h4>
-<p><strong>Precio base:</strong> €{{venta.precio_base|floatformat:2}}</p>
-<p><strong>Impuesto (10%):</strong> €{{venta.impuesto|floatformat:2}}</p>
-<p><strong>Tarifa de servicio (5%):</strong> €{{venta.tarifa_servicio|floatformat:2}}</p>
-<hr>
-<p><strong>IMPORTE TOTAL:</strong> €{{venta.importe_total|floatformat:2}}</p>
-
-<p><strong>Estado de pago:</strong> {{venta.get_estado_pago_display}}</p>
-
-{% if user == venta.comprador and venta.estado_pago == 'pagado' %}
-    {% if not venta.dispute %}
-        <div>
-            <a href="{% url 'inner_circle:dispute_create' venta_pk=venta.pk %}">
-                Crear Reclamación
-            </a>
+<div class="ic-detail-grid">
+  <!-- Left: Product Image -->
+  <div class="ic-detail-image">
+    {% if product.images.all %}
+      <img src="{{ product.images.first.image.url }}" alt="{{ product.nombre }}">
+      
+      {% if product.images.count > 1 %}
+        <div style="display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap;">
+          {% for img in product.images.all %}
+            <img src="{{ img.image.url }}" alt="View {{ forloop.counter }}" 
+                 style="width: 60px; height: 60px; object-fit: cover; border: 2px solid transparent; border-radius: 4px;"
+                 onclick="Array.from(this.parentNode.querySelectorAll('img')).forEach(el => el.style.borderColor = 'transparent'); document.querySelector('.ic-detail-image img:first-child').src = this.src; this.style.borderColor = 'var(--ic-primary)';">
+          {% endfor %}
         </div>
+      {% endif %}
+    {% elif product.img_prod %}
+      <img src="{{ product.img_prod.url }}" alt="{{ product.nombre }}">
     {% else %}
-        <div>
-            <small>Ya existe una reclamación para esta compra. <a href="{% url 'inner_circle:dispute_detail' pk=venta.dispute.pk %}">Ver reclamación</a></small>
-        </div>
+      <div class="ic-detail-image-placeholder"><i class="bi bi-image"></i></div>
     {% endif %}
-{% endif %}
+  </div>
 
-<a href="{% url 'inner_circle:profile_detail' pk=venta.comprador.profile.pk %}">Volver al perfil</a>
-   
+  <!-- Right: Sale Details -->
+  <div>
+    <div style="display:flex; gap:.6rem; align-items:center; margin-bottom:1rem; flex-wrap:wrap;">
+      <span class="ic-badge ic-badge-available" style="font-size:.6rem;">{{ product.category }}</span>
+      <span style="color:var(--ic-muted); font-size:.75rem;">Venta completada</span>
+    </div>
+
+    <h1 class="ic-detail-title">{{ product.nombre }}</h1>
+
+    <div class="ic-detail-meta">
+      <div>
+        <span class="ic-detail-meta-label">Talla</span>
+        <span class="ic-detail-meta-value">{{ product.get_talla_display }}</span>
+      </div>
+      <div>
+        <span class="ic-detail-meta-label">Vendedor</span>
+        <span class="ic-detail-meta-value"><a href="{% url 'inner_circle:profile_detail' pk=venta.vendedor.profile.pk %}" style="color:inherit; text-decoration:none;">{{ venta.vendedor.profile.nombre_tag }}</a></span>
+      </div>
+      <div>
+        <span class="ic-detail-meta-label">Comprador</span>
+        <span class="ic-detail-meta-value"><a href="{% url 'inner_circle:profile_detail' pk=venta.comprador.profile.pk %}" style="color:inherit; text-decoration:none;">{{ venta.comprador.profile.nombre_tag }}</a></span>
+      </div>
+    </div>
+
+    <!-- Price Breakdown -->
+    <div style="margin-top:2rem; padding:1.5rem; background:var(--ic-accent-bg); border-radius:var(--ic-radius-lg);">
+      <h3 style="margin:0 0 1rem; font-size:.95rem; font-weight:600;">Desglose de precios</h3>
+      
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:.75rem; font-size:.88rem;">
+        <span style="color:var(--ic-muted);">Precio base</span>
+        <span style="font-weight:500;">€{{ venta.precio_base|floatformat:2 }}</span>
+      </div>
+      
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:.75rem; font-size:.88rem;">
+        <span style="color:var(--ic-muted);">Impuesto (10%)</span>
+        <span style="font-weight:500;">€{{ venta.impuesto|floatformat:2 }}</span>
+      </div>
+      
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; font-size:.88rem; border-bottom:1px solid var(--ic-border); padding-bottom:1rem;">
+        <span style="color:var(--ic-muted);">Tarifa de servicio (5%)</span>
+        <span style="font-weight:500;">€{{ venta.tarifa_servicio|floatformat:2 }}</span>
+      </div>
+      
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:1rem; font-weight:600;">
+        <span>IMPORTE TOTAL</span>
+        <span>€{{ venta.importe_total|floatformat:2 }}</span>
+      </div>
+    </div>
+
+    <!-- Payment Status -->
+    <div style="margin-top:1.5rem;">
+      <span style="font-size:.72rem; color:var(--ic-muted); letter-spacing:.1em; text-transform:uppercase;">
+        <i class="bi bi-check-circle" style="color:var(--ic-text); margin-right:.5rem;"></i>
+        {{ venta.get_estado_pago_display }}
+      </span>
+    </div>
+
+    <!-- Dispute Section -->
+    {% if user == venta.comprador and venta.estado_pago == 'pagado' %}
+      <div style="margin-top:2rem;">
+        {% if not venta.dispute %}
+          <a href="{% url 'inner_circle:dispute_create' venta_pk=venta.pk %}" class="btn-ic-ghost" style="font-size:.72rem; padding:.55rem 1.4rem;">Crear Reclamación</a>
+        {% else %}
+          <div style="font-size:.75rem; color:var(--ic-muted); padding:.75rem; background:var(--ic-accent-bg); border-radius:var(--ic-radius); margin-bottom:1rem;">
+            <i class="bi bi-info-circle"></i> Ya existe una reclamación para esta compra. 
+            <a href="{% url 'inner_circle:dispute_detail' pk=venta.dispute.pk %}" style="text-decoration:underline;">Ver reclamación</a>
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <!-- Back Link -->
+    <div style="margin-top:2rem;">
+      <a href="{% url 'inner_circle:ventas_list' pk=request.user.profile.pk %}" style="font-size:.72rem; color:var(--ic-muted); text-decoration:underline; text-underline-offset:3px;">← Volver a transacciones</a>
+    </div>
+  </div>
+</div>
+
 {% endblock main %}
+
+{% block extra_js %}
+<script>
+// Product image modal
+const mainImage = document.getElementById('main-image');
+const productModal = document.getElementById('productModal');
+
+if (mainImage && productModal) {
+  mainImage.addEventListener('click', () => productModal.classList.add('active'));
+  productModal.addEventListener('click', () => productModal.classList.remove('active'));
+}
+</script>
+{% endblock extra_js %}

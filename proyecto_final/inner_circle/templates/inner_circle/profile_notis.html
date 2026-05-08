@@ -8,9 +8,9 @@
             <p>{{ noti.contenido }}</p>
             <small>{{ noti.created_at }}</small>
             {% if noti.tipo == 'mensaje' and noti.object_id %}
-                <a href="{% url 'inner_circle:conversacion_detail' conversation_id=noti.object_id %}" class="btn btn-sm btn-primary">Ver conversación</a>
+                <a href="{% url 'inner_circle:conversacion_detail' conversation_id=noti.object_id %}" class="btn-ic" style="display: inline-block; margin-top: 0.5rem;">Ver conversación</a>
             {% elif noti.tipo == 'dispute' and noti.object_id %}
-                <a href="{% url 'inner_circle:dispute_detail' pk=noti.object_id %}" class="btn btn-sm btn-warning">Ver reclamación</a>
+                <a href="{% url 'inner_circle:dispute_detail' pk=noti.object_id %}" class="btn-ic" style="display: inline-block; margin-top: 0.5rem;">Ver reclamación</a>
             {% endif %}
         </div>
     {% endfor %}
@@ -23,11 +23,11 @@
     {% if frequest %}
 
     {% for fr in frequest  %}
-        <p>{{fr.sender.profile.nombre_tag}} - {{fr.status}} - {{fr.sent_at}}</p>
-        <form method="post" action="{% url 'inner_circle:frequest_respuesta' pk=fr.pk %}">
+        <p>Solicitud de amistad de <strong>{{fr.sender.profile.nombre_tag}}</strong> - {{fr.status}} - {{fr.sent_at}}</p>
+        <form method="post" action="{% url 'inner_circle:frequest_respuesta' pk=fr.pk %}" style="display: flex; gap: 0.5rem;">
             {% csrf_token %}
-            <button type="submit" name="action" value="aceptar">Aceptar</button>
-            <button type="submit" name="action" value="rechazar">Rechazar</button>
+            <button type="submit" name="action" value="aceptar" class="btn-ic">Aceptar</button>
+            <button type="submit" name="action" value="rechazar" class="btn-ic-danger">Rechazar</button>
         </form>
         {% endfor %}
     {% else %}

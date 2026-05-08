@@ -24,75 +24,271 @@
     
     <!-- Info -->
     <div style="flex:1;">
-      <div style="display:flex; align-items:baseline; gap:1rem; margin-bottom:.75rem; flex-wrap:wrap;">
-        <h1 class="ic-detail-title" style="margin:0;">{{ profile.nombre_tag|default:profile.user.username }}</h1>
-        {% if profile.user.promedio_rating %}
-          <span style="font-size:.9rem; color:var(--ic-muted);">⭐ {{ profile.user.promedio_rating }}/5.0</span>
+      <!-- Stats Row -->
+      <div style="display:flex; gap:2rem; flex-wrap:wrap; margin-bottom:1rem;">
+        <!-- Ventas -->
+        <div data-modal="ventas" {% if not can_view_stats %}data-restricted="true"{% endif %} style="display:flex; gap:.5rem; align-items:baseline; cursor:pointer; user-select:none;">
+          <span style="font-size:.95rem; font-weight:600;">{{ profile.user.venta_set.count|default:"0" }}</span>
+          <span style="font-size:.75rem; color:var(--ic-muted); text-transform:uppercase; letter-spacing:.05em;">Ventas</span>
+        </div>
+        <!-- Amigos -->
+        <div data-modal="amigos" {% if not can_view_stats %}data-restricted="true"{% endif %} style="display:flex; gap:.5rem; align-items:baseline; cursor:pointer; user-select:none;">
+          <span style="font-size:.95rem; font-weight:600;">{{ amigos|length }}</span>
+          <span style="font-size:.75rem; color:var(--ic-muted); text-transform:uppercase; letter-spacing:.05em;">Amigos</span>
+        </div>
+        <!-- Reseñas -->
+        <div data-modal="resenas" {% if not can_view_stats %}data-restricted="true"{% endif %} style="display:flex; gap:.5rem; align-items:baseline; cursor:pointer; user-select:none;">
+          <span style="font-size:.95rem; font-weight:600;">{% if profile.user.promedio_rating %}{{ profile.user.promedio_rating|floatformat:0 }}/5{% else %}0/5{% endif %}</span>
+          <span style="font-size:.75rem; color:var(--ic-muted); text-transform:uppercase; letter-spacing:.05em;">Reseñas ({{ mis_resenas|length }})</span>
+        </div>
+        <!-- Usuarios silenciados (only own profile) -->
+        {% if profile.user.pk == request.user.pk %}
+        <div data-modal="silenciados" style="display:none; gap:.5rem; align-items:baseline; cursor:pointer; user-select:none;">
+          <span style="font-size:.95rem; font-weight:600;">{{ bloqueados|length }}</span>
+          <span style="font-size:.75rem; color:var(--ic-muted); text-transform:uppercase; letter-spacing:.05em;">Silenciados</span>
+        </div>
         {% endif %}
       </div>
-        <p style="color:var(--ic-muted); font-size:.82rem; margin:0 0 1rem;">@{{ profile.user.username }}{% if profile.location %} · {{ profile.location }}{% endif %}</p>
+
+      <!-- Name -->
+      <h1 class="ic-detail-title" style="margin:0 0 .2rem; display:flex; align-items:center; gap:.5rem;">
+        {{ profile.nombre_tag|default:profile.user.username }}
+        {% if profile.user.email_verified %}<i class="bi bi-check-circle-fill" style="color:var(--ic-text); font-size:1.1rem;"></i>{% endif %}
+      </h1>
+      <p style="color:var(--ic-muted); font-size:.82rem; margin:0 0 .75rem;">@{{ profile.user.username }}</p>
+
+      <!-- Location and Bio -->
+      {% if profile.location %}
+        <p style="color:var(--ic-muted); font-size:.82rem; margin:0 0 .75rem;">{{ profile.location }}</p>
+      {% endif %}
       
       {% if profile.bio %}
         <p style="font-size:.9rem; color:var(--ic-muted); line-height:1.7; margin:0 0 1.25rem;">{{ profile.bio }}</p>
       {% endif %}
       
-      <!-- Email verification -->
-      {% if profile.user.pk == request.user.pk %}
-        {% if profile.user.email_verified %}
-          <span style="font-size:.7rem; color:var(--ic-muted); letter-spacing:.1em; text-transform:uppercase;"><i class="bi bi-check-circle" style="color:var(--ic-text);"></i> Email verificado</span>
-        {% else %}
-          <span style="font-size:.7rem; color:var(--ic-danger); letter-spacing:.1em; text-transform:uppercase;">
-            <i class="bi bi-exclamation-circle"></i> Sin verificar — 
-            <a href="{% url 'inner_circle:resend_verification_email' pk=profile.user.pk %}" style="text-decoration:underline;">Protege tu cuenta</a>
-          </span>
-        {% endif %}
+      <!-- Email verification warning -->
+      {% if profile.user.pk == request.user.pk and not profile.user.email_verified %}
+        <span style="font-size:.7rem; color:var(--ic-danger); letter-spacing:.1em; text-transform:uppercase;">
+          <i class="bi bi-exclamation-circle"></i> Sin verificar — 
+          <a href="{% url 'inner_circle:resend_verification_email' pk=profile.user.pk %}" style="text-decoration:underline;">Protege tu cuenta</a>
+        </span>
       {% endif %}
     </div>
   </div>
   
   <!-- Actions -->
-  <div style="display:flex; gap:.75rem; flex-wrap:wrap; align-items:center;">
-    {% if profile.user.pk == request.user.pk %}
-      <a href="{% url 'inner_circle:profile_update' pk=request.user.profile.pk %}" class="btn-ic-ghost" style="font-size:.72rem; padding:.55rem 1.4rem;">Editar perfil</a>
-      <form method="post" action="{% url 'logout' %}" style="display:inline;">
-        {% csrf_token %}
-        <button type="submit" class="btn-ic-danger" style="font-size:.72rem; padding:.55rem 1.4rem;">Cerrar sesion</button>
-      </form>
-    {% elif request.user.is_authenticated %}
-      <!-- Follow / request action -->
-      <div style="display:inline-block;">
-        {% if is_friend %}
-          <form method="post" action="{% url 'inner_circle:friend_remove' pk=profile.user.pk %}" style="display:inline;">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="remove">
-            <button type="submit" class="btn-ic-ghost" style="font-size:.7rem; padding:.4rem .9rem;">Siguiendo</button>
-          </form>
-        {% elif friend_request_sent %}
-          <span style="font-size:.7rem; color:var(--ic-muted); padding:.4rem .9rem;">Solicitud enviada</span>
-        {% elif friend_request_received %}
-          <a href="{% url 'inner_circle:profile_notis' pk=request.user.profile.pk %}" class="btn-ic-ghost" style="font-size:.7rem; padding:.4rem .9rem;">Revisar petición</a>
-        {% else %}
-          <form method="post" action="{% url 'inner_circle:frequest_create' pk=profile.pk %}" style="display:inline;">
-            {% csrf_token %}
-            <button type="submit" class="btn-ic-ghost" style="font-size:.7rem; padding:.4rem .9rem;">Seguir</button>
-          </form>
-        {% endif %}
-      </div>
-      {% if profile.user.id in blocked_user_ids %}
-        <form method="post" action="{% url 'inner_circle:unblock_user' pk=profile.user.pk %}" style="display:inline;">
+  {% if profile.user.pk != request.user.pk and request.user.is_authenticated %}
+  <div style="display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; margin-top:.5rem;">
+    <div style="display:inline-block;">
+      {% if is_friend %}
+        <form method="post" action="{% url 'inner_circle:friend_remove' pk=profile.user.pk %}" style="display:inline;">
           {% csrf_token %}
-          <button type="submit" class="btn-ic-ghost" style="font-size:.7rem; padding:.4rem .9rem;">Dejar de silenciar</button>
+          <input type="hidden" name="action" value="remove">
+          <button type="submit" class="btn-ic-ghost" style="font-size:.7rem; padding:.4rem .9rem;">Siguiendo</button>
         </form>
-      {% else %}
-        <form method="post" action="{% url 'inner_circle:block_user' pk=profile.user.pk %}" style="display:inline;">
+      {% elif friend_request_sent %}
+        <form method="post" action="{% url 'inner_circle:frequest_cancel' pk=friend_request_sent_id %}" style="display:inline;">
           {% csrf_token %}
-          <button type="submit" class="btn-ic-ghost" style="font-size:.7rem; padding:.4rem .9rem;">Silenciar</button>
+          <button type="submit" class="btn-ic-ghost" style="font-size:.7rem; padding:.4rem .9rem;">Solicitud enviada</button>
+        </form>
+      {% elif friend_request_received %}
+        <a href="{% url 'inner_circle:profile_notis' pk=request.user.profile.pk %}" class="btn-ic-ghost" style="font-size:.7rem; padding:.4rem .9rem;">Revisar petición</a>
+      {% else %}
+        <form method="post" action="{% url 'inner_circle:frequest_create' pk=profile.pk %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn-ic-ghost" style="font-size:.7rem; padding:.4rem .9rem;">Seguir</button>
         </form>
       {% endif %}
-      <a href="{% url 'inner_circle:report_user' pk=profile.user.pk %}" style="font-size:.7rem; color:var(--ic-muted); text-decoration:underline; text-underline-offset:3px; padding:.4rem .9rem;">Reportar</a>
+    </div>
+    {% if profile.user.id in blocked_user_ids %}
+      <form method="post" action="{% url 'inner_circle:unblock_user' pk=profile.user.pk %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn-ic-ghost" style="font-size:.7rem; padding:.4rem .9rem;">Dejar de silenciar</button>
+      </form>
+    {% else %}
+      <form method="post" action="{% url 'inner_circle:block_user' pk=profile.user.pk %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn-ic-ghost" style="font-size:.7rem; padding:.4rem .9rem;">Silenciar</button>
+      </form>
     {% endif %}
+    <a href="{% url 'inner_circle:report_user' pk=profile.user.pk %}" style="font-size:.7rem; color:var(--ic-muted); text-decoration:underline; text-underline-offset:3px; padding:.4rem .9rem;">Reportar</a>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ── Stat Modals (Instagram-style centered dialogs) ── -->
+
+<!-- Ventas Modal -->
+<div id="ic-modal-ventas" class="ic-stat-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.55);align-items:center;justify-content:center;">
+  <div style="background:var(--ic-surface);border:1px solid var(--ic-border);border-radius:var(--ic-radius-lg);width:min(460px,94vw);max-height:80vh;display:flex;flex-direction:column;overflow:hidden;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.25rem;border-bottom:1px solid var(--ic-border);flex-shrink:0;">
+      <span style="font-size:.88rem;font-weight:600;letter-spacing:.04em;">Ventas</span>
+      <button class="ic-modal-close" data-target="ic-modal-ventas" style="background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--ic-muted);padding:.1rem .4rem;line-height:1;">✕</button>
+    </div>
+    <div style="overflow-y:auto;">
+      {% for v in user_ventas %}
+        <a href="{% url 'inner_circle:venta_detail' pk=v.pk %}" style="display:flex;align-items:center;gap:.9rem;padding:.75rem 1.25rem;text-decoration:none;color:inherit;border-bottom:1px solid var(--ic-border);">
+          <div style="width:44px;height:44px;border-radius:var(--ic-radius);overflow:hidden;flex-shrink:0;background:var(--ic-accent-bg);">
+            {% if v.product.images.first %}
+              <img src="{{ v.product.images.first.image.url }}" style="width:100%;height:100%;object-fit:cover;" alt="">
+            {% elif v.product.img_prod %}
+              <img src="{{ v.product.img_prod.url }}" style="width:100%;height:100%;object-fit:cover;" alt="">
+            {% endif %}
+          </div>
+          <div style="flex:1;min-width:0;">
+            <p style="margin:0 0 .15rem;font-size:.85rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ v.product.nombre }}</p>
+            <p style="margin:0;font-size:.75rem;color:var(--ic-muted); display:flex; align-items:center; gap:.3rem;">{{ v.comprador.profile.nombre_tag|default:v.comprador.username }}{% if v.comprador.email_verified %}<i class="bi bi-check-circle-fill" style="color:var(--ic-text); font-size:.75rem; flex-shrink:0;"></i>{% endif %}</p>
+          </div>
+          <span style="font-size:.85rem;font-weight:600;flex-shrink:0;">€{{ v.importe_total }}</span>
+        </a>
+      {% empty %}
+        <p style="padding:1.5rem 1.25rem;color:var(--ic-muted);font-size:.88rem;margin:0;">Sin ventas aún.</p>
+      {% endfor %}
+    </div>
   </div>
 </div>
+
+<!-- Amigos Modal -->
+<div id="ic-modal-amigos" class="ic-stat-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.55);align-items:center;justify-content:center;">
+  <div style="background:var(--ic-surface);border:1px solid var(--ic-border);border-radius:var(--ic-radius-lg);width:min(380px,94vw);max-height:80vh;display:flex;flex-direction:column;overflow:hidden;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.25rem;border-bottom:1px solid var(--ic-border);flex-shrink:0;">
+      <span style="font-size:.88rem;font-weight:600;letter-spacing:.04em;">Amigos</span>
+      <button class="ic-modal-close" data-target="ic-modal-amigos" style="background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--ic-muted);padding:.1rem .4rem;line-height:1;">✕</button>
+    </div>
+    <div style="overflow-y:auto;">
+      {% for a in amigos %}
+        <div style="display:flex;align-items:center;gap:.85rem;padding:.65rem 1.25rem;border-bottom:1px solid var(--ic-border);">
+          <a href="{% url 'inner_circle:profile_detail' pk=a.profile.pk %}" style="display:flex;align-items:center;gap:.85rem;text-decoration:none;color:inherit;flex:1;min-width:0;">
+            {% if a.profile.img_perfil %}
+              <img src="{{ a.profile.img_perfil.url }}" class="ic-avatar" alt="{{ a.username }}">
+            {% else %}
+              <span class="ic-avatar ic-avatar-initials">{{ a.username|first|upper }}</span>
+            {% endif %}
+          <div style="flex:1;min-width:0;">
+            <p style="margin:0;font-size:.85rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; display:flex; align-items:center; gap:.3rem;">{{ a.profile.nombre_tag|default:a.username }}{% if a.email_verified %}<i class="bi bi-check-circle-fill" style="color:var(--ic-text); font-size:.8rem; flex-shrink:0;"></i>{% endif %}</p>
+            <p style="margin:0;font-size:.75rem;color:var(--ic-muted);">@{{ a.username }}</p>
+          </div>
+          </a>
+          {% if request.user.is_authenticated and a.id != request.user.id %}
+            {% if a.id in my_friends_ids %}
+              <form method="post" action="{% url 'inner_circle:friend_remove' pk=a.pk %}" style="flex-shrink:0;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="remove">
+                <button type="submit" class="btn-ic-ghost" style="font-size:.7rem;padding:.3rem .8rem;">Siguiendo</button>
+              </form>
+            {% else %}
+              <form method="post" action="{% url 'inner_circle:frequest_create' pk=a.profile.pk %}" style="flex-shrink:0;">
+                {% csrf_token %}
+                <button type="submit" class="btn-ic-ghost" style="font-size:.7rem;padding:.3rem .8rem;">Seguir</button>
+              </form>
+            {% endif %}
+          {% endif %}
+        </div>
+      {% empty %}
+        <p style="padding:1.5rem 1.25rem;color:var(--ic-muted);font-size:.88rem;margin:0;">Sin amigos aún.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Reseñas Modal -->
+<div id="ic-modal-resenas" class="ic-stat-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.55);align-items:center;justify-content:center;">
+  <div style="background:var(--ic-surface);border:1px solid var(--ic-border);border-radius:var(--ic-radius-lg);width:min(460px,94vw);max-height:80vh;display:flex;flex-direction:column;overflow:hidden;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.25rem;border-bottom:1px solid var(--ic-border);flex-shrink:0;">
+      <span style="font-size:.88rem;font-weight:600;letter-spacing:.04em;">Reseñas</span>
+      <button class="ic-modal-close" data-target="ic-modal-resenas" style="background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--ic-muted);padding:.1rem .4rem;line-height:1;">✕</button>
+    </div>
+    <div style="overflow-y:auto;">
+      {% for r in mis_resenas %}
+        <div style="display:flex;align-items:flex-start;gap:.85rem;padding:.85rem 1.25rem;border-bottom:1px solid var(--ic-border);">
+          <a href="{% url 'inner_circle:profile_detail' pk=r.escritor.profile.pk %}" style="flex-shrink:0;">
+            {% if r.escritor.profile.img_perfil %}
+              <img src="{{ r.escritor.profile.img_perfil.url }}" class="ic-avatar" alt="{{ r.escritor.username }}">
+            {% else %}
+              <span class="ic-avatar ic-avatar-initials">{{ r.escritor.username|first|upper }}</span>
+            {% endif %}
+          </a>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.25rem;">
+                <p style="margin:0;font-size:.85rem;font-weight:500; display:flex; align-items:center; gap:.3rem;">{{ r.escritor.profile.nombre_tag|default:r.escritor.username }}{% if r.escritor.email_verified %}<i class="bi bi-check-circle-fill" style="color:var(--ic-text); font-size:.8rem;"></i>{% endif %}</p>
+              <span style="font-size:.8rem;flex-shrink:0;">⭐ {{ r.puntuacion }}/5</span>
+            </div>
+            <p style="margin:0;font-size:.8rem;color:var(--ic-muted);line-height:1.5;">{{ r.contenido }}</p>
+          </div>
+        </div>
+      {% empty %}
+        <p style="padding:1.5rem 1.25rem;color:var(--ic-muted);font-size:.88rem;margin:0;">Sin reseñas aún.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Usuarios Silenciados Modal -->
+<div id="ic-modal-silenciados" class="ic-stat-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.55);align-items:center;justify-content:center;">
+  <div style="background:var(--ic-surface);border:1px solid var(--ic-border);border-radius:var(--ic-radius-lg);width:min(380px,94vw);max-height:80vh;display:flex;flex-direction:column;overflow:hidden;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.25rem;border-bottom:1px solid var(--ic-border);flex-shrink:0;">
+      <span style="font-size:.88rem;font-weight:600;letter-spacing:.04em;">Usuarios Silenciados</span>
+      <button class="ic-modal-close" data-target="ic-modal-silenciados" style="background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--ic-muted);padding:.1rem .4rem;line-height:1;">✕</button>
+    </div>
+    <div style="overflow-y:auto;">
+      {% for bloqueado in bloqueados %}
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:.65rem 1.25rem;border-bottom:1px solid var(--ic-border);">
+          <a href="{% url 'inner_circle:profile_detail' pk=bloqueado.blocked.profile.pk %}" style="display:flex;align-items:center;gap:.75rem;text-decoration:none;color:inherit;flex:1;min-width:0;">
+            {% if bloqueado.blocked.profile.img_perfil %}
+              <img src="{{ bloqueado.blocked.profile.img_perfil.url }}" class="ic-avatar" alt="{{ bloqueado.blocked.username }}">
+            {% else %}
+              <span class="ic-avatar ic-avatar-initials">{{ bloqueado.blocked.username|first|upper }}</span>
+            {% endif %}
+            <div style="min-width:0;">
+              <p style="margin:0;font-size:.85rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; display:flex; align-items:center; gap:.3rem;">{{ bloqueado.blocked.profile.nombre_tag|default:bloqueado.blocked.username }}{% if bloqueado.blocked.email_verified %}<i class="bi bi-check-circle-fill" style="color:var(--ic-text); font-size:.8rem; flex-shrink:0;"></i>{% endif %}</p>
+              <p style="margin:0;font-size:.75rem;color:var(--ic-muted);">@{{ bloqueado.blocked.username }}</p>
+            </div>
+          </a>
+          <form method="post" action="{% url 'inner_circle:unblock_user' pk=bloqueado.blocked.pk %}" style="flex-shrink:0;">
+            {% csrf_token %}
+            <button type="submit" class="btn-ic-ghost" style="font-size:.7rem;padding:.3rem .8rem;">Desbloquear</button>
+          </form>
+        </div>
+      {% empty %}
+        <p style="padding:1.5rem 1.25rem;color:var(--ic-muted);font-size:.88rem;margin:0;">Sin usuarios silenciados.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Mis Productos Section -->
+<section style="margin-bottom:4rem;">
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
+    <h2 style="margin:0; font-family:var(--ic-serif); font-size:1.4rem; font-weight:300;"> Mis Productos</h2>
+    <a href="{% url 'inner_circle:mis_productos' pk=profile.pk %}" style="font-size:.72rem; color:var(--ic-muted); text-decoration:underline; text-underline-offset:3px;">Ver todos</a>
+  </div>
+  {% if user_products %}
+    <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:1px;">
+      {% for prod in user_products|slice:":12" %}
+        <div style="background:var(--ic-bg); border:1px solid var(--ic-border); border-left:none; border-top:none;">
+          <a href="{% url 'inner_circle:producto_detail' pk=prod.pk %}" style="display:block; color:inherit; text-decoration:none;">
+            {% if prod.images.first %}
+              <img src="{{ prod.images.first.image.url }}" style="width:100%; aspect-ratio:3/4; object-fit:cover; display:block; background:var(--ic-accent-bg);" alt="{{ prod.nombre }}">
+            {% elif prod.img_prod %}
+              <img src="{{ prod.img_prod.url }}" style="width:100%; aspect-ratio:3/4; object-fit:cover; display:block; background:var(--ic-accent-bg);" alt="{{ prod.nombre }}">
+            {% else %}
+              <div style="width:100%; aspect-ratio:3/4; background:var(--ic-accent-bg); display:flex; align-items:center; justify-content:center;"><i class="bi bi-image" style="color:var(--ic-border-dk); font-size:1.2rem;"></i></div>
+            {% endif %}
+            <div style="padding:.5rem .4rem .7rem;">
+              <p style="margin:0 0 .08rem; font-size:.75rem; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ prod.nombre }}</p>
+              <p style="margin:0; font-size:.7rem; color:var(--ic-muted);">€{{ prod.precio }}</p>
+            </div>
+          </a>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div style="text-align:center; padding:2rem; color:var(--ic-muted);">
+      <i class="bi bi-box" style="font-size:1.6rem; opacity:.12; display:block; margin-bottom:.75rem;"></i>
+      <p style="margin:0; font-size:.88rem;">Sin productos publicados.</p>
+    </div>
+  {% endif %}
+</section>
 
 <!-- Reviews Section -->
 <section style="margin-bottom:4rem;">
@@ -131,96 +327,42 @@
   {% endif %}
 </section>
 
-<!-- Friends & Blocked (only for own profile) -->
-{% if profile.user.pk == request.user.pk %}
-
-  <!-- Friends Section -->
-  <section style="margin-bottom:4rem;">
-    <h2 style="margin:0 0 1.75rem; font-family:var(--ic-serif); font-size:1.4rem; font-weight:300;">Amigos ({{ amigos|length }})</h2>
-    
-    {% if amigos %}
-      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:1.25rem;">
-        {% for amigo in amigos %}
-          <div style="border:1px solid var(--ic-border); border-radius:var(--ic-radius-lg); overflow:hidden;">
-            <a href="{% url 'inner_circle:profile_detail' pk=amigo.profile.pk %}" style="display:block; text-decoration:none; color:inherit;">
-              {% if amigo.profile.img_perfil %}
-                <img src="{{ amigo.profile.img_perfil.url }}" style="width:100%; aspect-ratio:1; object-fit:cover; display:block;" alt="{{ amigo.username }}">
-              {% else %}
-                <div style="width:100%; aspect-ratio:1; background:var(--ic-accent-bg); display:flex; align-items:center; justify-content:center;">{{ amigo.username|first|upper }}</div>
-              {% endif %}
-              <div style="padding:.75rem; text-align:center;">
-                <p style="margin:0; font-size:.82rem; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ amigo.profile.nombre_tag|default:amigo.username }}</p>
-              </div>
-            </a>
-            <form method="post" action="{% url 'inner_circle:friend_remove' pk=amigo.pk %}" style="padding:0 .75rem .75rem;">
-              {% csrf_token %}
-              <button type="submit" name="action" value="remove" class="btn-ic-danger" style="width:100%; font-size:.65rem; padding:.35rem .5rem;">Eliminar</button>
-            </form>
-          </div>
-        {% endfor %}
-      </div>
-    {% else %}
-      <div style="text-align:center; padding:2rem; color:var(--ic-muted);">
-        <i class="bi bi-people" style="font-size:2rem; opacity:.15; display:block; margin-bottom:.75rem;"></i>
-        <p style="margin:0; font-size:.88rem;">Aun no tienes amigos.</p>
-      </div>
-    {% endif %}
-  </section>
-  
-  <!-- Blocked Users Section -->
-  <section>
-    <h2 style="margin:0 0 1.75rem; font-family:var(--ic-serif); font-size:1.4rem; font-weight:300;">Usuarios Bloqueados</h2>
-    
-    {% if bloqueados %}
-      <div style="display:grid; gap:.75rem;">
-        {% for bloqueado in bloqueados %}
-          <div style="display:flex; align-items:center; justify-content:space-between; padding:.85rem; border:1px solid var(--ic-border); border-radius:var(--ic-radius-lg);">
-            <a href="{% url 'inner_circle:profile_detail' pk=bloqueado.blocked.profile.pk %}" style="display:flex; align-items:center; gap:.75rem; text-decoration:none; color:inherit;">
-              {% if bloqueado.blocked.profile.img_perfil %}
-                <img src="{{ bloqueado.blocked.profile.img_perfil.url }}" class="ic-avatar" alt="{{ bloqueado.blocked.username }}">
-              {% else %}
-                <span class="ic-avatar ic-avatar-initials">{{ bloqueado.blocked.username|first|upper }}</span>
-              {% endif %}
-              <span style="font-size:.88rem;">{{ bloqueado.blocked.profile.nombre_tag|default:bloqueado.blocked.username }}</span>
-            </a>
-            <form method="post" action="{% url 'inner_circle:unblock_user' pk=bloqueado.blocked.pk %}" style="display:inline;">
-              {% csrf_token %}
-              <button type="submit" name="action" value="unblock" class="btn-ic-ghost" style="font-size:.65rem; padding:.35rem .8rem;">Desbloquear</button>
-            </form>
-          </div>
-        {% endfor %}
-      </div>
-    {% else %}
-      <div style="text-align:center; padding:2rem; color:var(--ic-muted);">
-        <i class="bi bi-shield" style="font-size:2rem; opacity:.15; display:block; margin-bottom:.75rem;"></i>
-        <p style="margin:0; font-size:.88rem;">No tienes usuarios bloqueados.</p>
-      </div>
-    {% endif %}
-  </section>
-
-{% endif %}
-
 <script>
-  const avatarImg = document.getElementById('avatarImg');
-  const avatarModal = document.getElementById('avatarModal');
-  
-  if (avatarImg) {
-    avatarImg.addEventListener('click', () => avatarModal.classList.add('active'));
-  }
-  if (avatarModal) {
-    avatarModal.addEventListener('click', () => avatarModal.classList.remove('active'));
-  }
+  // Avatar modal
+  var avatarImg = document.getElementById('avatarImg');
+  var avatarModal = document.getElementById('avatarModal');
+  if (avatarImg) { avatarImg.addEventListener('click', function(){ avatarModal.classList.add('active'); }); }
+  if (avatarModal) { avatarModal.addEventListener('click', function(){ avatarModal.classList.remove('active'); }); }
 
-  // Auto-submit follow/unfollow forms using event delegation
-  document.addEventListener('click', (e) => {
-    if (e.target.classList.contains('follow-btn')) {
-      e.preventDefault();
-      const form = e.target.closest('.follow-form');
-      if (form) {
-        form.submit();
-      }
-    }
+  // Stat modals — open (only if not restricted)
+  document.querySelectorAll('[data-modal]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      if (btn.hasAttribute('data-restricted')) return;
+      var m = document.getElementById('ic-modal-' + btn.dataset.modal);
+      if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+    });
   });
+  // Stat modals — close via ✕ button
+  document.querySelectorAll('.ic-modal-close').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var m = document.getElementById(btn.dataset.target);
+      if (m) { m.style.display = 'none'; document.body.style.overflow = ''; }
+    });
+  });
+  // Stat modals — close on backdrop click
+  document.querySelectorAll('.ic-stat-modal').forEach(function(m) {
+    m.addEventListener('click', function(e) {
+      if (e.target === m) { m.style.display = 'none'; document.body.style.overflow = ''; }
+    });
+  });
+
+  // Auto-open modal if query param is present
+  var urlParams = new URLSearchParams(window.location.search);
+  var modalToOpen = urlParams.get('modal');
+  if (modalToOpen) {
+    var modal = document.getElementById('ic-modal-' + modalToOpen);
+    if (modal) { modal.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+  }
 </script>
 
 {% endblock main %}

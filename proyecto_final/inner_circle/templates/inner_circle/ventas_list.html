@@ -75,9 +75,9 @@
       {% for c in compras %}
         <div class="ic-transaction-card">
           {% if c.product.images.all %}
-            <img src="{{ c.product.images.first.image.url }}" class="ic-transaction-img" alt="{{ c.product.nombre }}">
+            <img src="{{ c.product.images.first.image.url }}" class="ic-transaction-img transaction-img" alt="{{ c.product.nombre }}">
           {% elif c.product.img_prod %}
-            <img src="{{ c.product.img_prod.url }}" class="ic-transaction-img" alt="{{ c.product.nombre }}">
+            <img src="{{ c.product.img_prod.url }}" class="ic-transaction-img transaction-img" alt="{{ c.product.nombre }}">
           {% else %}
             <div class="ic-transaction-img-placeholder"><i class="bi bi-image"></i></div>
           {% endif %}
@@ -137,9 +137,9 @@
       {% for v in ventas %}
         <div class="ic-transaction-card">
           {% if v.product.images.all %}
-            <img src="{{ v.product.images.first.image.url }}" class="ic-transaction-img" alt="{{ v.product.nombre }}">
+            <img src="{{ v.product.images.first.image.url }}" class="ic-transaction-img transaction-img" alt="{{ v.product.nombre }}">
           {% elif v.product.img_prod %}
-            <img src="{{ v.product.img_prod.url }}" class="ic-transaction-img" alt="{{ v.product.nombre }}">
+            <img src="{{ v.product.img_prod.url }}" class="ic-transaction-img transaction-img" alt="{{ v.product.nombre }}">
           {% else %}
             <div class="ic-transaction-img-placeholder"><i class="bi bi-image"></i></div>
           {% endif %}
@@ -186,3 +186,21 @@
 </div>
 
 {% endblock main %}
+
+{% block extra_js %}
+<script>
+// Transaction image modals
+document.querySelectorAll('.transaction-img').forEach(img => {
+  img.addEventListener('click', () => {
+    const modalId = img.dataset.modal;
+    const modal = document.getElementById(modalId);
+    if (modal) modal.classList.add('active');
+  });
+});
+
+// Close modal on click
+document.querySelectorAll('.ic-modal-overlay').forEach(modal => {
+  modal.addEventListener('click', () => modal.classList.remove('active'));
+});
+</script>
+{% endblock extra_js %}

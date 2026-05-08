@@ -29,14 +29,9 @@
       {% if user.is_authenticated %}
         <ul class="ic-nav-links">
           <li><a href="{% url 'inner_circle:producto_list' %}">Everything</a></li>
-          <li class="ic-dropdown">
-            <span class="ic-dropdown-trigger">Gestiones <i class="bi bi-chevron-down" style="font-size:.55rem;"></i></span>
-            <div class="ic-dropdown-menu">
-              <a href="{% url 'inner_circle:mis_productos' pk=request.user.profile.pk %}">Mis Productos</a>
-              <a href="{% url 'inner_circle:ventas_list' pk=request.user.profile.pk %}">Ventas</a>
-              <a href="{% url 'inner_circle:mensajes_list' %}">Mensajes</a>
-            </div>
-          </li>
+          <li><a href="{% url 'inner_circle:mis_productos' pk=request.user.profile.pk %}">Mis Productos</a></li>
+          <li><a href="{% url 'inner_circle:ventas_list' pk=request.user.profile.pk %}">Actividad</a></li>
+          <li><a href="{% url 'inner_circle:mensajes_list' %}">Mensajes</a></li>
         </ul>
 
         <div class="ic-nav-right">
@@ -47,13 +42,35 @@
               <span class="ic-notif-dot"></span>
             {% endif %}
           </a>
-          <a href="{% url 'inner_circle:profile_detail' pk=request.user.profile.pk %}">
-            {% if user.profile.img_perfil %}
-              <img src="{{ user.profile.img_perfil.url }}" class="ic-avatar" alt="{{ user.username }}">
-            {% else %}
-              <span class="ic-avatar ic-avatar-initials">{{ user.username|first|upper }}</span>
-            {% endif %}
-          </a>
+          <div style="position:relative;">
+            <button id="userMenuBtn" style="background:none;border:none;cursor:pointer;padding:0;line-height:0;display:flex;align-items:center;">
+              {% if user.profile.img_perfil %}
+                <img src="{{ user.profile.img_perfil.url }}" class="ic-avatar" alt="{{ user.username }}">
+              {% else %}
+                <span class="ic-avatar ic-avatar-initials">{{ user.username|first|upper }}</span>
+              {% endif %}
+            </button>
+            <div id="userMenuDropdown" style="display:none;position:absolute;right:0;top:calc(100% + .75rem);background:var(--ic-surface);border:1px solid var(--ic-border);border-radius:var(--ic-radius-lg);min-width:210px;z-index:1000;box-shadow:0 4px 24px rgba(0,0,0,.08);">
+              <div style="padding:.85rem 1.1rem;border-bottom:1px solid var(--ic-border);">
+                <p style="margin:0 0 .15rem;font-size:.88rem;font-weight:500;">{{ user.profile.nombre_tag|default:user.username }}</p>
+                <p style="margin:0;font-size:.72rem;color:var(--ic-muted);">@{{ user.username }}</p>
+              </div>
+              <div style="padding:.4rem 0;">
+                <a href="{% url 'inner_circle:profile_detail' pk=request.user.profile.pk %}" style="display:block;padding:.55rem 1.1rem;font-size:.82rem;text-decoration:none;color:var(--ic-text);">Perfil</a>
+                <a href="{% url 'inner_circle:profile_update' pk=request.user.profile.pk %}" style="display:block;padding:.55rem 1.1rem;font-size:.82rem;text-decoration:none;color:var(--ic-text);">Editar Detalles</a>
+                <a href="{% url 'inner_circle:mis_productos' pk=request.user.profile.pk %}" style="display:block;padding:.55rem 1.1rem;font-size:.82rem;text-decoration:none;color:var(--ic-text);">Mis Productos</a>
+                <a href="{% url 'inner_circle:ventas_list' pk=request.user.profile.pk %}" style="display:block;padding:.55rem 1.1rem;font-size:.82rem;text-decoration:none;color:var(--ic-text);">Actividad</a>
+                <a href="{% url 'inner_circle:mensajes_list' %}" style="display:block;padding:.55rem 1.1rem;font-size:.82rem;text-decoration:none;color:var(--ic-text);">Mensajes</a>
+                <a href="{% url 'inner_circle:dispute_list' %}" style="display:block;padding:.55rem 1.1rem;font-size:.82rem;text-decoration:none;color:var(--ic-text);">Reclamaciones</a>
+                <a href="{% url 'inner_circle:profile_detail' pk=request.user.profile.pk %}?modal=silenciados" style="display:block;padding:.55rem 1.1rem;font-size:.82rem;text-decoration:none;color:var(--ic-text);">Usuarios silenciados</a>
+                <div style="border-top:1px solid var(--ic-border);margin:.4rem 0;"></div>
+                <form method="post" action="{% url 'logout' %}">
+                  {% csrf_token %}
+                  <button type="submit" style="display:block;width:100%;text-align:left;padding:.55rem 1.1rem;font-size:.82rem;background:none;border:none;cursor:pointer;color:var(--ic-danger);">Cerrar sesión</button>
+                </form>
+              </div>
+            </div>
+          </div>
         </div>
 
       {% else %}
@@ -100,6 +117,7 @@
           <li><a href="{% url 'inner_circle:amigos_product_list' %}">Amigos</a></li>
           <li><a href="{% url 'inner_circle:product_create' %}">Publicar</a></li>
           {% endif %}
+          <li><a href="{% url 'inner_circle:tos' %}">FAQ</a></li>
         </ul>
       </div>
       <div>
@@ -118,14 +136,26 @@
       </div>
     </div>
     <div class="ic-footer-bottom">
-      <span class="ic-footer-copy">© 2026 InnerCircle. Todos los derechos reservados.</span>
-      <span class="ic-footer-copy">Hecho con cuidado.</span>
-      <span class="ic-footer-copy" style="margin-left:1rem;"><a href="{% url 'inner_circle:tos' %}">Términos y FAQ</a></span>
+      <span class="ic-footer-copy">© 2026 InnerCircle</span>
     </div>
   </footer>
   {% endblock footer %}
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    (function(){
+      var btn = document.getElementById('userMenuBtn');
+      var menu = document.getElementById('userMenuDropdown');
+      if (!btn || !menu) return;
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+      });
+      document.addEventListener('click', function(){
+        if (menu) menu.style.display = 'none';
+      });
+    })();
+  </script>
   {% block extra_js %}{% endblock %}
 </body>
 </html>

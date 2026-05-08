@@ -50,7 +50,7 @@
 {% if dispute.comprador_evidence %}
     <p>
         <strong>Prueba del Comprador:</strong>
-        <a href="{{ dispute.comprador_evidence.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+        <a href="{{ dispute.comprador_evidence.url }}" target="_blank" class="btn-ic-ghost" style="display: inline-block;">
             Descargar
         </a>
     </p>
@@ -71,7 +71,7 @@
     {% if dispute.vendedor_evidence %}
         <p>
             <strong>Prueba:</strong>
-            <a href="{{ dispute.vendedor_evidence.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+            <a href="{{ dispute.vendedor_evidence.url }}" target="_blank" class="btn-ic-ghost" style="display: inline-block;">
                 Descargar
             </a>
         </p>
@@ -97,7 +97,7 @@
             {{ form.vendedor_evidence }}
         </div>
 
-        <button type="submit" class="btn btn-warning">Enviar Respuesta</button>
+        <button type="submit" class="btn-ic">Enviar Respuesta</button>
     </form>
     
     <div class="alert alert-danger mt-3 small">

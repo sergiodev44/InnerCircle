@@ -8,19 +8,28 @@
   <!-- Left: Image -->
   <div class="ic-detail-image">
     {% if producto.images.all %}
-      <img src="{{ producto.images.first.image.url }}" alt="{{ producto.nombre }}" id="main-image">
+      <img src="{{ producto.images.first.image.url }}" alt="{{ producto.nombre }}" id="main-image" style="cursor:pointer;">
+      
+      <!-- Modal for expanded image -->
+      <div class="ic-modal-overlay" id="productModal">
+        <img src="{{ producto.images.first.image.url }}" class="ic-modal-image" alt="{{ producto.nombre }}">
+      </div>
+      
       {% if producto.images.count > 1 %}
         <div style="display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap;">
           {% for img in producto.images.all %}
             <img src="{{ img.image.url }}" alt="View {{ forloop.counter }}" 
                  style="width: 60px; height: 60px; object-fit: cover; cursor: pointer; border: 2px solid transparent; border-radius: 4px;"
-                 onclick="document.getElementById('main-image').src = this.src; this.style.borderColor = 'var(--ic-primary)'; 
+                 onclick="document.getElementById('main-image').src = this.src; document.getElementById('productModal').querySelector('img').src = this.src; this.style.borderColor = 'var(--ic-primary)'; 
                           Array.from(this.parentNode.children).forEach(el => { if(el !== this) el.style.borderColor = 'transparent'; })">
           {% endfor %}
         </div>
       {% endif %}
     {% elif producto.img_prod %}
-      <img src="{{ producto.img_prod.url }}" alt="{{ producto.nombre }}">
+      <img src="{{ producto.img_prod.url }}" alt="{{ producto.nombre }}" id="main-image" style="cursor:pointer;">
+      <div class="ic-modal-overlay" id="productModal">
+        <img src="{{ producto.img_prod.url }}" class="ic-modal-image" alt="{{ producto.nombre }}">
+      </div>
     {% else %}
       <div class="ic-detail-image-placeholder"><i class="bi bi-image"></i></div>
     {% endif %}
@@ -65,7 +74,7 @@
           <span class="ic-avatar ic-avatar-initials">{{ producto.user.username|first|upper }}</span>
         {% endif %}
         <div>
-          <p style="margin:0; font-size:.88rem;">{{ producto.user.profile.nombre_tag|default:producto.user.username }}</p>
+          <p style="margin:0; font-size:.88rem; display:flex; align-items:center; gap:.4rem;">{{ producto.user.profile.nombre_tag|default:producto.user.username }}{% if producto.user.email_verified %}<i class="bi bi-check-circle-fill" style="color:var(--ic-text); font-size:.9rem;"></i>{% endif %}</p>
           {% if producto.user.promedio_rating %}
             <p style="margin:0; font-size:.75rem; color:var(--ic-muted);">⭐ {{ producto.user.promedio_rating }}</p>
           {% endif %}
@@ -84,7 +93,10 @@
               <button type="submit" class="btn-ic-ghost" style="font-size:.8rem; padding:.35rem .6rem;">Amigo</button>
             </form>
           {% elif friend_request_sent %}
-            <span style="font-size:.8rem; color:var(--ic-muted);">Solicitud enviada</span>
+            <form method="post" action="{% url 'inner_circle:frequest_cancel' pk=friend_request_sent_id %}" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn-ic-ghost" style="font-size:.8rem; padding:.35rem .6rem;">Solicitud enviada</button>
+            </form>
           {% elif friend_request_received %}
             <a href="{% url 'inner_circle:profile_notis' pk=request.user.profile.pk %}" class="btn-ic-ghost" style="font-size:.72rem; padding:.35rem .6rem;">Revisar petición</a>
           {% else %}
@@ -152,18 +164,19 @@
 
     <!-- Report / Block -->
     {% if request.user.is_authenticated and request.user != producto.user %}
-      <div style="margin-top:2rem; display:flex; gap:1.5rem; flex-wrap:wrap;">
+      <div style="margin-top:2rem; font-size:.72rem;">
         <a href="{% url 'inner_circle:report_user' pk=producto.user.pk %}"
-           style="font-size:.72rem; color:var(--ic-muted); text-decoration:underline; text-underline-offset:3px;">Reportar vendedor</a>
+           style="color:var(--ic-muted); text-decoration:underline; text-underline-offset:3px; display:inline;">Reportar</a>
+        <span style="color:var(--ic-border); display:inline; margin:0 .5rem;">·</span>
         {% if producto.user.id in blocked_user_ids %}
-          <form method="post" action="{% url 'inner_circle:unblock_user' pk=producto.user.pk %}" style="display:inline;">
+          <form method="post" action="{% url 'inner_circle:unblock_user' pk=producto.user.pk %}" style="display:inline; margin:0; padding:0;">
             {% csrf_token %}
-            <button type="submit" style="font-size:.72rem; color:var(--ic-muted); text-decoration:underline; text-underline-offset:3px; background:none; border:none; cursor:pointer; padding:0; font-family:var(--ic-sans);">Desbloquear vendedor</button>
+            <button type="submit" style="color:var(--ic-muted); text-decoration:underline; text-underline-offset:3px; background:none; border:none; cursor:pointer; padding:0; font-family:var(--ic-sans); font-size:.72rem;">Desbloquear</button>
           </form>
         {% else %}
-          <form method="post" action="{% url 'inner_circle:block_user' pk=producto.user.pk %}" style="display:inline;">
+          <form method="post" action="{% url 'inner_circle:block_user' pk=producto.user.pk %}" style="display:inline; margin:0; padding:0;">
             {% csrf_token %}
-            <button type="submit" style="font-size:.72rem; color:var(--ic-muted); text-decoration:underline; text-underline-offset:3px; background:none; border:none; cursor:pointer; padding:0; font-family:var(--ic-sans);">Bloquear vendedor</button>
+            <button type="submit" style="color:var(--ic-muted); text-decoration:underline; text-underline-offset:3px; background:none; border:none; cursor:pointer; padding:0; font-family:var(--ic-sans); font-size:.72rem;">Bloquear</button>
           </form>
         {% endif %}
       </div>
@@ -182,6 +195,15 @@ function toggleInfo(btn) {
   body.classList.toggle('open');
   icon.className = body.classList.contains('open') ? 'bi bi-dash' : 'bi bi-plus';
   icon.style.fontSize = '.85rem';
+}
+
+// Product image modal
+const mainImage = document.getElementById('main-image');
+const productModal = document.getElementById('productModal');
+
+if (mainImage && productModal) {
+  mainImage.addEventListener('click', () => productModal.classList.add('active'));
+  productModal.addEventListener('click', () => productModal.classList.remove('active'));
 }
 
 // Auto-submit follow/unfollow forms using event delegation

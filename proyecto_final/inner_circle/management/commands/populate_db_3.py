@@ -113,7 +113,7 @@ class Command(BaseCommand):
             {
                 'user': 'santiago',
                 'nombre': 'Vaqueros Baggy Vintage',
-                'descripcion': 'Vaqueros baggy con un look 90s clásico. Cómodos y resistentes, perfectos para un estilo desenfadado.',
+                'descripcion': 'Vaqueros baggy con un look 90s clásico. Cómodos y resistentes, perfectos para un estilo desenfadado. Como la prosa de Hemingway - simple, poderosa, inolvidable.',
                 'estado': 'DISP',
                 'precio': 45.00,
                 'talla': 'M',
@@ -122,8 +122,8 @@ class Command(BaseCommand):
             },
             {
                 'user': 'roberto',
-                'nombre': 'Jersey Cashmere Suave',
-                'descripcion': 'Jersey mezcla cashmere, muy suave y cálido. Ideal para mañanas frías.',
+                'nombre': 'Jersey de Cashmira Suave',
+                'descripcion': 'Jersey lujo con mezcla de cashmira para las mañanas frías. Suave como un recuerdo susurrado, elegante como el amanecer mismo.',
                 'estado': 'DISP',
                 'precio': 65.00,
                 'talla': 'L',
@@ -133,7 +133,7 @@ class Command(BaseCommand):
             {
                 'user': 'andres',
                 'nombre': 'Chaqueta de Pana',
-                'descripcion': 'Chaqueta de pana en tonos tierra, resistente y con estilo atemporal.',
+                'descripcion': 'Pana atemporal en tonos tierra. Construida para durar todas las estaciones, como la montaña que inspiró su nombre.',
                 'estado': 'DISP',
                 'precio': 75.00,
                 'talla': 'L',
@@ -142,8 +142,8 @@ class Command(BaseCommand):
             },
             {
                 'user': 'beatriz',
-                'nombre': 'Camisa Country',
-                'descripcion': 'Camisa con carácter y textura, perfecta para looks casuales.',
+                'nombre': 'Camisa Country con Carácter',
+                'descripcion': 'Camisa country rugosa y con textura. Cada mancha cuenta una historia. Siente la tierra bajo tus pies.',
                 'estado': 'DISP',
                 'precio': 38.00,
                 'talla': 'M',
@@ -153,12 +153,142 @@ class Command(BaseCommand):
             {
                 'user': 'maria',
                 'nombre': 'Top Crop Esencial',
-                'descripcion': 'Top corto, minimalista y versátil — ideal para capas y combinaciones.',
+                'descripcion': 'Top corto y minimalista, perfecto para capas. Versátil, atemporal, esencial. Una prenda, infinitas posibilidades.',
                 'estado': 'DISP',
                 'precio': 22.00,
                 'talla': 'S',
                 'category': 'camisetas',
                 'image_group': 'crop_top'
+            },
+            {
+                'user': 'santiago',
+                'nombre': 'Jersey Azul Marino Ajustado',
+                'descripcion': 'Jersey azul marino ajustado que favorece cualquier silueta. Suave como una frase perfectamente elaborada.',
+                'estado': 'DISP',
+                'precio': 28.00,
+                'talla': 'M',
+                'category': 'jerseis',
+                'image_group': 'fit_jersey'
+            },
+            {
+                'user': 'roberto',
+                'nombre': 'Camiseta Gráfica Impactante',
+                'descripcion': 'Diseño gráfico audaz en algodón premium. Exprésate sin decir una palabra. Deja que la camiseta hable por ti.',
+                'estado': 'DISP',
+                'precio': 24.00,
+                'talla': 'L',
+                'category': 'camisetas',
+                'image_group': 'g_shirt'
+            },
+            {
+                'user': 'andres',
+                'nombre': 'Sudadera Cómoda',
+                'descripcion': 'Sudadera cálida y acogedora para esos momentos en que necesitas confort. Como un buen libro en una noche fría.',
+                'estado': 'DISP',
+                'precio': 55.00,
+                'talla': 'XL',
+                'category': 'sudaderas',
+                'image_group': 'hoodie'
+            },
+            {
+                'user': 'beatriz',
+                'nombre': 'Vaqueros Negros Premium',
+                'descripcion': 'Vaqueros negros perfectamente desteñidos. Gastados pero no rotos. Cada uso añade carácter.',
+                'estado': 'DISP',
+                'precio': 50.00,
+                'talla': 'M',
+                'category': 'pantalones',
+                'image_group': 'jeans_black'
+            },
+            {
+                'user': 'maria',
+                'nombre': 'Vaqueros Grises Vintage',
+                'descripcion': 'Lavado gris suave con ese aspecto gastado. Cómodos desde el primer día. Como un viejo amigo con el que acabas de reconectarte.',
+                'estado': 'DISP',
+                'precio': 48.00,
+                'talla': 'L',
+                'category': 'pantalones',
+                'image_group': 'jeans_grey'
+            },
+            {
+                'user': 'santiago',
+                'nombre': 'Jersey Algodón Orgánico',
+                'descripcion': 'Jersey 100% algodón orgánico. Transpirable, sostenible, atemporal. Para el que compra conscientemente.',
+                'estado': 'DISP',
+                'precio': 35.00,
+                'talla': 'M',
+                'category': 'jerseis',
+                'image_group': 'jersey_algodon'
+            },
+            {
+                'user': 'roberto',
+                'nombre': 'Jersey Crop Moderno',
+                'descripcion': 'Jersey cropped contemporáneo perfecto para estilos modernos. Corto en largo, grande en impacto.',
+                'estado': 'DISP',
+                'precio': 26.00,
+                'talla': 'S',
+                'category': 'camisetas',
+                'image_group': 'jersey_crop'
+            },
+            {
+                'user': 'andres',
+                'nombre': 'Jersey Gris Cómodo',
+                'descripcion': 'Jersey gris suave que se adapta a ti. Sin límites, solo libertad.',
+                'estado': 'DISP',
+                'precio': 32.00,
+                'talla': 'L',
+                'category': 'jerseis',
+                'image_group': 'jeans_grey'
+            },
+            {
+                'user': 'beatriz',
+                'nombre': 'Jersey Rayas Clásicas',
+                'descripcion': 'Rayas atemporales en colores clásicos. Elegancia simple que nunca pasa de moda.',
+                'estado': 'DISP',
+                'precio': 30.00,
+                'talla': 'M',
+                'category': 'jerseis',
+                'image_group': 'jersey_stripped'
+            },
+            {
+                'user': 'maria',
+                'nombre': 'Camiseta Metal Rock',
+                'descripcion': 'Viste tu estilo con esta camiseta inspirada en metal. Descarada, auténtica, sin disculpas.',
+                'estado': 'DISP',
+                'precio': 27.00,
+                'talla': 'M',
+                'category': 'camisetas',
+                'image_group': 'metal_shirt'
+            },
+            {
+                'user': 'santiago',
+                'nombre': 'Vaqueros Azul Marino Patrimonio',
+                'descripcion': 'Vaquero azul marino con patrimonio. Construido para durar generaciones. Un básico de armario con alma.',
+                'estado': 'DISP',
+                'precio': 52.00,
+                'talla': 'M',
+                'category': 'pantalones',
+                'image_group': 'n_jeans'
+            },
+            {
+                'user': 'roberto',
+                'nombre': 'Polo Marrón Elegante',
+                'descripcion': 'Polo marrón elegante para cualquier ocasión. De casual a refinado, lo hace todo.',
+                'estado': 'DISP',
+                'precio': 40.00,
+                'talla': 'L',
+                'category': 'camisetas',
+                'image_group': 'polo_brown'
+            },
+            {
+                'user': 'andres',
+                'nombre': 'Camisa Look Secundario',
+                'descripcion': 'Camisa versátil perfecta para capas o usada sola. Tu nueva prenda favorita.',
+                'estado': 'DISP',
+                'precio': 36.00,
+                'talla': 'L',
+                'category': 'camisetas',
+                'image_group': 'shirt2'
             },
         ]
 
@@ -248,42 +378,46 @@ class Command(BaseCommand):
 
         # Create conversations and messages
         conv1 = Conversation.objects.create(
-            producto=products.get(0),
+            producto=products[0],
             usuario1=users['santiago'],
             usuario2=users['roberto']
         )
         Mensaje.objects.create(
             conversation=conv1,
             sender=users['roberto'],
-            contenido='¿Siguen disponibles los vaqueros?'
+            contenido='¡Los vaqueros baggy son perfectos! ¿Siguen disponibles?'
         )
         Mensaje.objects.create(
             conversation=conv1,
             sender=users['santiago'],
-            contenido='Sí, todavía están disponibles.'
+            contenido='Sí, están disponibles. Gastados pero con mucha vida aún.'
+        )
+        Mensaje.objects.create(
+            conversation=conv1,
+            sender=users['roberto'],
+            contenido='¡Me los llevo! ¿Puedes enviar a Barcelona?'
         )
 
         conv2 = Conversation.objects.create(
-            producto=products.get(2),
+            producto=products[2],
             usuario1=users['andres'],
             usuario2=users['beatriz']
         )
         Mensaje.objects.create(
             conversation=conv2,
             sender=users['beatriz'],
-            contenido='Me encanta la chaqueta de pana, ¿puedo verla en persona?'
+            contenido='¡Amo la chaqueta de pana! Ese color es exactamente lo que buscaba.'
         )
         Mensaje.objects.create(
             conversation=conv2,
             sender=users['andres'],
-            contenido='Sí, podemos quedar en Jerez esta tarde.'
+            contenido='Es una prenda excelente. Muy cálida para el invierno.'
         )
 
-        # Create sales and reviews (keep all products available but create sample data)
+        # Create sales and reviews
         from decimal import Decimal
         import uuid
-
-        # Create a sample sale (but DON'T soft-delete the product)
+        
         venta1 = Venta.objects.create(
             comprador=users['roberto'],
             vendedor=users['santiago'],
@@ -295,31 +429,38 @@ class Command(BaseCommand):
             estado_pago='pagado',
             stripe_payment_intent=f'pi_test_{uuid.uuid4().hex[:12]}'
         )
+        products[0].estado = 'VEND'
+        products[0].deleted_at = timezone.now()
+        products[0].save()
+        
+        venta2 = Venta.objects.create(
+            comprador=users['beatriz'],
+            vendedor=users['andres'],
+            product=products[2],
+            precio_base=Decimal('75.00'),
+            impuesto=Decimal('7.50'),
+            tarifa_servicio=Decimal('3.75'),
+            importe_total=Decimal('86.25'),
+            estado_pago='pagado',
+            stripe_payment_intent=f'pi_test_{uuid.uuid4().hex[:12]}'
+        )
+        products[2].estado = 'VEND'
+        products[2].deleted_at = timezone.now()
+        products[2].save()
 
-        # Create reviews (keep all products showing)
+        # Create reviews
         resena1 = Resena.objects.create(
             escritor=users['roberto'],
             recibidor=users['santiago'],
             venta=venta1,
-            contenido='¡Perfecto, tal y como se describe!',
+            contenido='¡Vaqueros vintage hermosos! Exactamente como se describen. El vendedor es un verdadero profesional. ¡Cinco estrellas!',
             puntuacion=5
         )
-        
-        # Create a second review from another user
         resena2 = Resena.objects.create(
-            escritor=users['andres'],
-            recibidor=users['santiago'],
-            venta=None,
-            contenido='Gran vendedor, muy profesional y rápido.',
-            puntuacion=5
-        )
-        
-        # Create a third review to show on profile
-        resena3 = Resena.objects.create(
             escritor=users['beatriz'],
-            recibidor=users['santiago'],
-            venta=None,
-            contenido='Muy buena comunicación, recomendado!',
+            recibidor=users['andres'],
+            venta=venta2,
+            contenido='La chaqueta de pana es perfecta. Alta calidad, excelente ajuste. ¡Volvería a comprar!',
             puntuacion=5
         )
 
@@ -329,6 +470,12 @@ class Command(BaseCommand):
             tipo='venta',
             contenido='Roberto compró tus Vaqueros Baggy Vintage!',
             object_id=venta1.id
+        )
+        Notification.objects.create(
+            user=users['andres'],
+            tipo='venta',
+            contenido='Beatriz compró tu Chaqueta de Pana!',
+            object_id=venta2.id
         )
 
         self.stdout.write(self.style.SUCCESS('✓ Database populated (populate_db_3)'))
