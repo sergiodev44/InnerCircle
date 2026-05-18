@@ -73,7 +73,7 @@
   <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.75rem;">
     <h2 style="margin:0; font-family:var(--ic-serif); font-size:1.4rem; font-weight:300;">Resenas</h2>
     {% if profile.user.pk == request.user.pk %}
-      <a href="{% url 'inner_circle:resena_create' pk=request.user.profile.pk %}" class="btn-ic-ghost" style="font-size:.72rem; padding:.4rem .9rem;">+ Anadir</a>
+      <a href="{% url 'inner_circle:resena_create' pk=request.user.profile.pk %}" class="btn-ic-ghost" style="font-size:.72rem; padding:.4rem .9rem; display:none;">+ Anadir</a>
     {% endif %}
   </div>
   

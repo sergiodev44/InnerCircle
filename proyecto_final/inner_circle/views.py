@@ -212,7 +212,7 @@ class productListView(ListView):
     model = Product
     template_name = "productList.html"
     context_object_name = "productos"
-    paginate_by = 12
+    paginate_by = 8
     
     def get_queryset(self):
         cleanup_abandoned_carts()
@@ -266,7 +266,7 @@ class amigosProductListView(LoginRequiredMixin, ListView):
     model = Product
     template_name = "productList.html"
     context_object_name = "productos"
-    paginate_by = 12
+    paginate_by = 6
     
     def get_queryset(self):
         cleanup_abandoned_carts()
@@ -381,7 +381,7 @@ class misProductosListView(LoginRequiredMixin, ListView):
     model = Product
     template_name = "misProducts.html"
     context_object_name = "productos"
-    paginate_by = 12
+    paginate_by = 6
     
     def get_queryset(self):
         # Show only active (not deleted) products for the current user

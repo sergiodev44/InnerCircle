@@ -16,64 +16,73 @@
 
   <!-- Sidebar filters -->
   <aside class="ic-sidebar">
-    <form method="get" action="">
-
-      <div class="ic-filter-group">
-        <span class="ic-filter-title">Buscar</span>
-        <input type="text" name="nombre" value="{{ request.GET.nombre }}" class="ic-input" placeholder="Nombre…" style="font-size:.82rem;">
-      </div>
-
-      <div class="ic-filter-group">
-        <span class="ic-filter-title">Ordenar</span>
-        <select name="sort" class="ic-input" style="font-size:.82rem;" onchange="this.form.submit()">
-          {% for value, label in search_form.sort.field.choices %}
-            <option value="{{ value }}" {% if request.GET.sort == value %}selected{% endif %}>{{ label }}</option>
-          {% endfor %}
-        </select>
-      </div>
-
-      <div class="ic-filter-group">
-        <span class="ic-filter-title">Categoría</span>
-        {% for value, label in search_form.category.field.choices %}
-          <label class="ic-filter-option">
-            <input class="ic-filter-radio" type="radio" name="category" value="{{ value }}" {% if request.GET.category == value %}checked{% endif %} onchange="this.form.submit()">
-            <span>{{ label }}</span>
-          </label>
-        {% endfor %}
-      </div>
-
-      <div class="ic-filter-group">
-        <span class="ic-filter-title">Talla</span>
-        {% for value, label in search_form.talla.field.choices %}
-          {% if value %}
-          <label class="ic-filter-option">
-            <input class="ic-filter-radio" type="radio" name="talla" value="{{ value }}" {% if request.GET.talla == value %}checked{% endif %} onchange="this.form.submit()">
-            <span>{{ label }}</span>
-          </label>
-          {% endif %}
-        {% endfor %}
-      </div>
-
-      <div class="ic-filter-group">
-        <span class="ic-filter-title">Precio</span>
-        <div style="display:flex; gap:.4rem; align-items:center;">
-          <input type="number" name="precio_min" value="{{ request.GET.precio_min }}" placeholder="Mín" class="ic-input" style="width:75px; font-size:.82rem; padding:.5rem .6rem;">
-          <span style="color:var(--ic-muted);">–</span>
-          <input type="number" name="precio_max" value="{{ request.GET.precio_max }}" placeholder="Máx" class="ic-input" style="width:75px; font-size:.82rem; padding:.5rem .6rem;">
-        </div>
-      </div>
-
-      <button type="submit" class="btn-ic" style="width:100%; margin-bottom:.6rem;">Aplicar</button>
-
+    <button type="button" class="ic-filter-toggle-btn" onclick="var p=document.getElementById('ic-filters-panel');p.classList.toggle('open');this.querySelector('.ic-filter-chevron').classList.toggle('open');">
+      <i class="bi bi-funnel"></i> Filtros
       {% if request.GET.nombre or request.GET.category or request.GET.talla or request.GET.precio_min or request.GET.precio_max or request.GET.sort %}
-        {% if current_tab == 'amigos' %}
-          <a href="{% url 'inner_circle:amigos_product_list' %}" class="btn-ic-ghost" style="width:100%; text-align:center; display:block;">Limpiar</a>
-        {% else %}
-          <a href="{% url 'inner_circle:producto_list' %}" class="btn-ic-ghost" style="width:100%; text-align:center; display:block;">Limpiar</a>
-        {% endif %}
+        <span class="ic-filter-active-dot"></span>
       {% endif %}
+      <i class="bi bi-chevron-down ic-filter-chevron {% if request.GET.nombre or request.GET.category or request.GET.talla or request.GET.precio_min or request.GET.precio_max or request.GET.sort %}open{% endif %}"></i>
+    </button>
+    <div class="ic-filters-panel {% if request.GET.nombre or request.GET.category or request.GET.talla or request.GET.precio_min or request.GET.precio_max or request.GET.sort %}open{% endif %}" id="ic-filters-panel">
+      <form method="get" action="">
 
-    </form>
+        <div class="ic-filter-group">
+          <span class="ic-filter-title">Buscar</span>
+          <input type="text" name="nombre" value="{{ request.GET.nombre }}" class="ic-input" placeholder="Nombre…" style="font-size:.82rem;">
+        </div>
+
+        <div class="ic-filter-group">
+          <span class="ic-filter-title">Ordenar</span>
+          <select name="sort" class="ic-input" style="font-size:.82rem;" onchange="this.form.submit()">
+            {% for value, label in search_form.sort.field.choices %}
+              <option value="{{ value }}" {% if request.GET.sort == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="ic-filter-group">
+          <span class="ic-filter-title">Categoría</span>
+          {% for value, label in search_form.category.field.choices %}
+            <label class="ic-filter-option">
+              <input class="ic-filter-radio" type="radio" name="category" value="{{ value }}" {% if request.GET.category == value %}checked{% endif %} onchange="this.form.submit()">
+              <span>{{ label }}</span>
+            </label>
+          {% endfor %}
+        </div>
+
+        <div class="ic-filter-group">
+          <span class="ic-filter-title">Talla</span>
+          {% for value, label in search_form.talla.field.choices %}
+            {% if value %}
+            <label class="ic-filter-option">
+              <input class="ic-filter-radio" type="radio" name="talla" value="{{ value }}" {% if request.GET.talla == value %}checked{% endif %} onchange="this.form.submit()">
+              <span>{{ label }}</span>
+            </label>
+            {% endif %}
+          {% endfor %}
+        </div>
+
+        <div class="ic-filter-group">
+          <span class="ic-filter-title">Precio</span>
+          <div style="display:flex; gap:.4rem; align-items:center;">
+            <input type="number" name="precio_min" value="{{ request.GET.precio_min }}" placeholder="Mín" class="ic-input" style="width:75px; font-size:.82rem; padding:.5rem .6rem;">
+            <span style="color:var(--ic-muted);">–</span>
+            <input type="number" name="precio_max" value="{{ request.GET.precio_max }}" placeholder="Máx" class="ic-input" style="width:75px; font-size:.82rem; padding:.5rem .6rem;">
+          </div>
+        </div>
+
+        <button type="submit" class="btn-ic" style="width:100%; margin-bottom:.6rem;">Aplicar</button>
+
+        {% if request.GET.nombre or request.GET.category or request.GET.talla or request.GET.precio_min or request.GET.precio_max or request.GET.sort %}
+          {% if current_tab == 'amigos' %}
+            <a href="{% url 'inner_circle:amigos_product_list' %}" class="btn-ic-ghost" style="width:100%; text-align:center; display:block;">Limpiar</a>
+          {% else %}
+            <a href="{% url 'inner_circle:producto_list' %}" class="btn-ic-ghost" style="width:100%; text-align:center; display:block;">Limpiar</a>
+          {% endif %}
+        {% endif %}
+
+      </form>
+    </div>
   </aside>
 
   <!-- Product grid -->

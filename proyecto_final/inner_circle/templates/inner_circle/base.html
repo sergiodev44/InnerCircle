@@ -59,9 +59,27 @@
         </div>
       {% endif %}
 
-      <button class="ic-nav-mobile-toggle btn-ic-ghost" style="padding:.4rem .7rem">
+      <button class="ic-nav-mobile-toggle btn-ic-ghost" id="icNavToggle" style="padding:.4rem .7rem">
         <i class="bi bi-list" style="font-size:1.2rem"></i>
       </button>
+    </div>
+
+    <div class="ic-mobile-menu" id="icMobileMenu">
+      {% if user.is_authenticated %}
+        <a href="{% url 'inner_circle:producto_list' %}">Everything</a>
+        <a href="{% url 'inner_circle:mis_productos' pk=request.user.profile.pk %}">Mis Productos</a>
+        <a href="{% url 'inner_circle:ventas_list' pk=request.user.profile.pk %}">Ventas</a>
+        <a href="{% url 'inner_circle:mensajes_list' %}">Mensajes</a>
+        <a href="{% url 'inner_circle:product_create' %}">+ Publicar</a>
+        <a href="{% url 'inner_circle:profile_notis' pk=request.user.profile.pk %}">
+          Notificaciones{% if unread_notifications_count > 0 %} <span class="ic-notif-dot"></span>{% endif %}
+        </a>
+        <a href="{% url 'inner_circle:profile_detail' pk=request.user.profile.pk %}">Mi Perfil</a>
+        <a href="{% url 'logout' %}">Cerrar Sesión</a>
+      {% else %}
+        <a href="{% url 'login' %}">Entrar</a>
+        <a href="{% url 'inner_circle:user_create' %}">Registrarse</a>
+      {% endif %}
     </div>
   </nav>
 
@@ -119,6 +137,20 @@
   {% endblock footer %}
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    (function () {
+      var toggle = document.getElementById('icNavToggle');
+      var menu = document.getElementById('icMobileMenu');
+      if (toggle && menu) {
+        toggle.addEventListener('click', function () {
+          menu.classList.toggle('open');
+          var icon = toggle.querySelector('i');
+          icon.className = menu.classList.contains('open') ? 'bi bi-x' : 'bi bi-list';
+          icon.style.fontSize = '1.2rem';
+        });
+      }
+    })();
+  </script>
   {% block extra_js %}{% endblock %}
 </body>
 </html>
