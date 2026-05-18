@@ -63,15 +63,15 @@ class Command(BaseCommand):
         # Hemingway character users with creative descriptions
         users_data = [
             {'username': 'santiago', 'email': 'santiago@test.com', 'mobile': 111111111, 'tag': 'Santiago', 
-             'bio': '⛵ Weathered and wise. Selling authentic, timeless pieces. Like the sea, minimal and powerful.', 'pfp': 'male_ai_pfp_1.png'},
-            {'username': 'robert', 'email': 'robert@test.com', 'mobile': 222222222, 'tag': 'Robert', 
-             'bio': '🌅 Every garment tells a story. Clean lines, pure style. Life gives you second chances.', 'pfp': 'male_ai_pfp_2.png'},
-            {'username': 'harry', 'email': 'harry@test.com', 'mobile': 333333333, 'tag': 'Harry', 
-             'bio': '❄️ Scaling new heights with every collection. Premium pieces for the journey.', 'pfp': 'male_ai_pfp_3.png'},
-            {'username': 'brett', 'email': 'brett@test.com', 'mobile': 444444444, 'tag': 'Brett', 
-             'bio': '🌹 For whom the bell tolls? For style seekers like you. Vintage finds daily!', 'pfp': 'female_ai_pfp_1.png'},
+             'bio': ' Experimentado y sabio. Vendo piezas auténticas y atemporales. Como el mar, minimalista y poderoso.', 'pfp': 'male_ai_pfp_1.png'},
+            {'username': 'roberto', 'email': 'roberto@test.com', 'mobile': 222222222, 'tag': 'Roberto', 
+             'bio': ' Cada prenda cuenta una historia. Líneas limpias, estilo puro. La vida da segundas oportunidades.', 'pfp': 'male_ai_pfp_2.png'},
+            {'username': 'enrique', 'email': 'enrique@test.com', 'mobile': 333333333, 'tag': 'Enrique', 
+             'bio': ' Alcanzando nuevas alturas con cada colección. Prendas premium para el viaje.', 'pfp': 'male_ai_pfp_3.png'},
+            {'username': 'berta', 'email': 'berta@test.com', 'mobile': 444444444, 'tag': 'Berta', 
+             'bio': ' ¿Por quién doblan las campanas? Para buscadores de estilo como tú. ¡Hallazgos vintage diarios!', 'pfp': 'female_ai_pfp_1.png'},
             {'username': 'maria', 'email': 'maria@test.com', 'mobile': 555555555, 'tag': 'Maria', 
-             'bio': '✨ A clean well-lighted place to find fashion gems. Organized chaos, beautiful order.', 'pfp': 'female_ai_pfp_.png'},
+             'bio': ' Un lugar bien iluminado para encontrar joyas de moda. Caos organizado, belleza ordenada.', 'pfp': 'female_ai_pfp_.png'},
         ]
 
         users = {}
@@ -125,8 +125,8 @@ class Command(BaseCommand):
         products_data = [
             {
                 'user': 'santiago',
-                'nombre': 'Baggy Jeans Vintage',
-                'descripcion': 'Classic baggy jeans with a timeless appeal. Comfortable and durable, perfect for that effortless 90s look. Like Hemingway\'s prose - simple, powerful, unforgettable.',
+                'nombre': 'Pantalones Baggy Vintage',
+                'descripcion': 'Pantalones baggy clásicos con un atractivo atemporal. Cómodos y duraderos, perfectos para ese look desenfadado de los 90. Simple, poderoso e inolvidable.',
                 'estado': 'DISP',
                 'precio': 45.00,
                 'talla': 'M',
@@ -134,9 +134,9 @@ class Command(BaseCommand):
                 'image_group': 'baggy_jeans'
             },
             {
-                'user': 'robert',
-                'nombre': 'Cashmere Touch Sweater',
-                'descripcion': 'Luxurious cashmere-blend sweater for those chilly mornings. Soft as a whispered memory, elegant as the sunrise itself.',
+                'user': 'roberto',
+                'nombre': 'Jersey de Cachemira',
+                'descripcion': 'Lujoso jersey de mezcla de cachemira para esas mañanas frías. Suave como un recuerdo susurrado, elegante como el amanecer mismo.',
                 'estado': 'DISP',
                 'precio': 65.00,
                 'talla': 'L',
@@ -144,9 +144,9 @@ class Command(BaseCommand):
                 'image_group': 'cashmere'
             },
             {
-                'user': 'harry',
-                'nombre': 'Corduroy Peak Jacket',
-                'descripcion': 'Timeless corduroy in earthy tones. Built to last through all seasons, like the mountain that inspired its name.',
+                'user': 'enrique',
+                'nombre': 'Chaqueta Pana Clásica',
+                'descripcion': 'Pana atemporal en tonos terrosos. Construida para durar todas las estaciones, como la montaña que inspiró su nombre.',
                 'estado': 'DISP',
                 'precio': 75.00,
                 'talla': 'L',
@@ -154,9 +154,9 @@ class Command(BaseCommand):
                 'image_group': 'corduroy'
             },
             {
-                'user': 'brett',
-                'nombre': 'Country Spirit Shirt',
-                'descripcion': 'Rugged country shirt with character. Every stain tells a story. Feel the earth beneath your feet.',
+                'user': 'berta',
+                'nombre': 'Camiseta Campestre',
+                'descripcion': 'Camiseta campestre robusta con carácter. Cada mancha cuenta una historia. Siente la tierra bajo tus pies.',
                 'estado': 'DISP',
                 'precio': 38.00,
                 'talla': 'M',
@@ -165,8 +165,8 @@ class Command(BaseCommand):
             },
             {
                 'user': 'maria',
-                'nombre': 'Crop Top Essential',
-                'descripcion': 'Clean, minimal crop top perfect for layering. Versatile, timeless, essential. One piece, infinite possibilities.',
+                'nombre': 'Top Corto Básico',
+                'descripcion': 'Top corto limpio y minimalista perfecto para combinar. Versátil, atemporal, esencial. Una prenda, infinitas posibilidades.',
                 'estado': 'DISP',
                 'precio': 22.00,
                 'talla': 'S',
@@ -175,8 +175,8 @@ class Command(BaseCommand):
             },
             {
                 'user': 'santiago',
-                'nombre': 'Jersey Fitted Navy',
-                'descripcion': 'Fitted navy jersey that flatters every silhouette. Smooth like a perfectly crafted sentence.',
+                'nombre': 'Jersey Ajustado Azul Marino',
+                'descripcion': 'Jersey azul marino ajustado que favorece cada silueta. Suave como una frase perfectamente elaborada.',
                 'estado': 'DISP',
                 'precio': 28.00,
                 'talla': 'M',
@@ -184,9 +184,9 @@ class Command(BaseCommand):
                 'image_group': 'fit_jersey'
             },
             {
-                'user': 'robert',
-                'nombre': 'Graphic Statement Tee',
-                'descripcion': 'Bold graphic design on premium cotton. Express yourself without saying a word. Let the shirt speak for you.',
+                'user': 'roberto',
+                'nombre': 'Camiseta Estampada',
+                'descripcion': 'Diseño gráfico audaz en algodón premium. Exprésate sin decir una palabra. Que la camiseta hable por ti.',
                 'estado': 'DISP',
                 'precio': 24.00,
                 'talla': 'L',
@@ -194,9 +194,9 @@ class Command(BaseCommand):
                 'image_group': 'g_shirt'
             },
             {
-                'user': 'harry',
-                'nombre': 'Comfortable Hoodie',
-                'descripcion': 'Warm, cozy hoodie for those moments when you need comfort. Like a good book on a cold night.',
+                'user': 'enrique',
+                'nombre': 'Sudadera Cómoda',
+                'descripcion': 'Sudadera cálida y acogedora para esos momentos en que necesitas confort. Como un buen libro en una noche fría.',
                 'estado': 'DISP',
                 'precio': 55.00,
                 'talla': 'XL',
@@ -204,9 +204,9 @@ class Command(BaseCommand):
                 'image_group': 'hoodie'
             },
             {
-                'user': 'brett',
-                'nombre': 'Black Jeans Premium',
-                'descripcion': 'Perfectly faded black jeans. Worn in but not worn out. Every wear adds character.',
+                'user': 'berta',
+                'nombre': 'Pantalones Negros Premium',
+                'descripcion': 'Pantalones negros perfectamente desteñidos. Usados pero no gastados. Cada uso añade carácter.',
                 'estado': 'DISP',
                 'precio': 50.00,
                 'talla': 'M',
@@ -215,8 +215,8 @@ class Command(BaseCommand):
             },
             {
                 'user': 'maria',
-                'nombre': 'Grey Jeans Vintage',
-                'descripcion': 'Soft grey wash with that lived-in feeling. Comfortable from day one. Like an old friend you just reconnected with.',
+                'nombre': 'Pantalones Grises Vintage',
+                'descripcion': 'Lavado gris suave con esa sensación de vivido. Cómodos desde el primer día. Como un viejo amigo con el que acabas de reconectarte.',
                 'estado': 'DISP',
                 'precio': 48.00,
                 'talla': 'L',
@@ -225,8 +225,8 @@ class Command(BaseCommand):
             },
             {
                 'user': 'santiago',
-                'nombre': 'Jersey Cotton Organic',
-                'descripcion': 'Pure organic cotton jersey. Breathable, sustainable, timeless. For the conscious dresser.',
+                'nombre': 'Jersey Algodón Orgánico',
+                'descripcion': 'Jersey de algodón orgánico puro. Transpirable, sostenible, atemporal. Para el vestidor consciente.',
                 'estado': 'DISP',
                 'precio': 35.00,
                 'talla': 'M',
@@ -234,9 +234,9 @@ class Command(BaseCommand):
                 'image_group': 'jersey_algodon'
             },
             {
-                'user': 'robert',
-                'nombre': 'Crop Jersey Modern',
-                'descripcion': 'Contemporary cropped jersey perfect for modern styling. Short on length, big on impact.',
+                'user': 'roberto',
+                'nombre': 'Jersey Corto Moderno',
+                'descripcion': 'Jersey corto contemporáneo perfecto para un estilo moderno. Corto de largo, grande en impacto.',
                 'estado': 'DISP',
                 'precio': 26.00,
                 'talla': 'S',
@@ -244,9 +244,9 @@ class Command(BaseCommand):
                 'image_group': 'jersey_crop'
             },
             {
-                'user': 'harry',
-                'nombre': 'Grey Jersey Comfort',
-                'descripcion': 'Soft grey jersey that moves with you. No boundaries, just freedom.',
+                'user': 'enrique',
+                'nombre': 'Jersey Gris Confort',
+                'descripcion': 'Jersey gris suave que se mueve contigo. Sin límites, solo libertad.',
                 'estado': 'DISP',
                 'precio': 32.00,
                 'talla': 'L',
@@ -254,9 +254,9 @@ class Command(BaseCommand):
                 'image_group': 'jeans_grey'
             },
             {
-                'user': 'brett',
-                'nombre': 'Striped Jersey Classic',
-                'descripcion': 'Timeless stripes in classic colors. Simple elegance that never goes out of style.',
+                'user': 'berta',
+                'nombre': 'Jersey Rayas Clásico',
+                'descripcion': 'Rayas atemporales en colores clásicos. Elegancia simple que nunca pasa de moda.',
                 'estado': 'DISP',
                 'precio': 30.00,
                 'talla': 'M',
@@ -265,8 +265,8 @@ class Command(BaseCommand):
             },
             {
                 'user': 'maria',
-                'nombre': 'Metal Band Shirt',
-                'descripcion': 'Rock your style with this metal-inspired shirt. Edgy, authentic, unapologetic.',
+                'nombre': 'Camiseta Banda Metal',
+                'descripcion': 'Estiliza tu look con esta camiseta inspirada en metal. Descarada, auténtica, sin disculpas.',
                 'estado': 'DISP',
                 'precio': 27.00,
                 'talla': 'M',
@@ -275,8 +275,8 @@ class Command(BaseCommand):
             },
             {
                 'user': 'santiago',
-                'nombre': 'Navy Jeans Heritage',
-                'descripcion': 'Navy denim with heritage. Built to last generations. A wardrobe staple with soul.',
+                'nombre': 'Pantalones Azul Marino Herencia',
+                'descripcion': 'Denim azul marino con herencia. Construido para durar generaciones. Un básico de guardarropa con alma.',
                 'estado': 'DISP',
                 'precio': 52.00,
                 'talla': 'M',
@@ -284,9 +284,9 @@ class Command(BaseCommand):
                 'image_group': 'n_jeans'
             },
             {
-                'user': 'robert',
-                'nombre': 'Polo Brown Elegance',
-                'descripcion': 'Elegant brown polo for any occasion. From casual to refined, this does it all.',
+                'user': 'roberto',
+                'nombre': 'Polo Marrón Elegante',
+                'descripcion': 'Polo marrón elegante para cualquier ocasión. De lo casual a lo refinado, lo hace todo.',
                 'estado': 'DISP',
                 'precio': 40.00,
                 'talla': 'L',
@@ -294,9 +294,9 @@ class Command(BaseCommand):
                 'image_group': 'polo_brown'
             },
             {
-                'user': 'harry',
-                'nombre': 'Shirt Secondary Look',
-                'descripcion': 'Versatile shirt perfect for layering or wearing alone. Your new favorite piece.',
+                'user': 'enrique',
+                'nombre': 'Camiseta Look Secundario',
+                'descripcion': 'Camiseta versátil perfecta para combinar o usar sola. Tu nueva prenda favorita.',
                 'estado': 'DISP',
                 'precio': 36.00,
                 'talla': 'L',
@@ -396,15 +396,15 @@ class Command(BaseCommand):
             product_key += 1
 
         # Create friendships
-        users['santiago'].friends.add(users['robert'])
-        users['santiago'].friends.add(users['harry'])
-        users['robert'].friends.add(users['brett'])
-        users['harry'].friends.add(users['maria'])
+        users['santiago'].friends.add(users['roberto'])
+        users['santiago'].friends.add(users['enrique'])
+        users['roberto'].friends.add(users['berta'])
+        users['enrique'].friends.add(users['maria'])
 
         # Create friend requests
         fr1 = FriendRequest.objects.create(
-            sender=users['brett'],
-            recibidor2=users['robert'],
+            sender=users['berta'],
+            recibidor2=users['roberto'],
             status='pendiente'
         )
         fr2 = FriendRequest.objects.create(
@@ -417,38 +417,38 @@ class Command(BaseCommand):
         conv1 = Conversation.objects.create(
             producto=products[0],
             usuario1=users['santiago'],
-            usuario2=users['robert']
+            usuario2=users['roberto']
         )
         Mensaje.objects.create(
             conversation=conv1,
-            sender=users['robert'],
-            contenido='Those baggy jeans are perfect! Are they still available?'
+            sender=users['roberto'],
+            contenido='¡Esos pantalones baggy son perfectos! ¿Siguen disponibles?'
         )
         Mensaje.objects.create(
             conversation=conv1,
             sender=users['santiago'],
-            contenido='Yes, they are. Worn but with lots of life left in them.'
+            contenido='Sí, lo están. Usados pero con mucha vida por delante.'
         )
         Mensaje.objects.create(
             conversation=conv1,
-            sender=users['robert'],
-            contenido='I\'ll take them! Can you ship to Barcelona?'
+            sender=users['roberto'],
+            contenido='¡Me los llevo! ¿Puedes enviar a Barcelona?'
         )
 
         conv2 = Conversation.objects.create(
             producto=products[2],
-            usuario1=users['harry'],
-            usuario2=users['brett']
+            usuario1=users['enrique'],
+            usuario2=users['berta']
         )
         Mensaje.objects.create(
             conversation=conv2,
-            sender=users['brett'],
-            contenido='Love the corduroy! That color is exactly what I\'ve been looking for.'
+            sender=users['berta'],
+            contenido='¡Amo la pana! Ese color es exactamente lo que buscaba.'
         )
         Mensaje.objects.create(
             conversation=conv2,
-            sender=users['harry'],
-            contenido='It\'s a great piece. Very warm for winter.'
+            sender=users['enrique'],
+            contenido='Es una prenda fantástica. Muy abrigada para invierno.'
         )
 
         # Create sales and reviews
@@ -456,7 +456,7 @@ class Command(BaseCommand):
         import uuid
         
         venta1 = Venta.objects.create(
-            comprador=users['robert'],
+            comprador=users['roberto'],
             vendedor=users['santiago'],
             product=products[0],
             precio_base=Decimal('45.00'),
@@ -471,8 +471,8 @@ class Command(BaseCommand):
         products[0].save()
         
         venta2 = Venta.objects.create(
-            comprador=users['brett'],
-            vendedor=users['harry'],
+            comprador=users['berta'],
+            vendedor=users['enrique'],
             product=products[2],
             precio_base=Decimal('75.00'),
             impuesto=Decimal('7.50'),
@@ -487,17 +487,17 @@ class Command(BaseCommand):
 
         # Create reviews
         resena1 = Resena.objects.create(
-            escritor=users['robert'],
+            escritor=users['roberto'],
             recibidor=users['santiago'],
             venta=venta1,
-            contenido='Beautiful vintage jeans! Exactly as described. The seller is a true professional. Five stars!',
+            contenido='¡Pantalones vintage hermosos! Exactamente como se describían. El vendedor es un profesional. ¡Cinco estrellas!',
             puntuacion=5
         )
         resena2 = Resena.objects.create(
-            escritor=users['brett'],
-            recibidor=users['harry'],
+            escritor=users['berta'],
+            recibidor=users['enrique'],
             venta=venta2,
-            contenido='Corduroy jacket is perfection. High quality, great fit. Would buy from again!',
+            contenido='La chaqueta de pana es perfecta. Alta calidad, excelente ajuste. ¡Volvería a comprar!',
             puntuacion=5
         )
 
@@ -505,13 +505,13 @@ class Command(BaseCommand):
         Notification.objects.create(
             user=users['santiago'],
             tipo='venta',
-            contenido='Robert purchased your Baggy Jeans Vintage!',
+            contenido='¡Roberto compró tus Pantalones Baggy Vintage!',
             object_id=venta1.id
         )
         Notification.objects.create(
-            user=users['harry'],
+            user=users['enrique'],
             tipo='venta',
-            contenido='Brett purchased your Corduroy Peak Jacket!',
+            contenido='¡Berta compró tu Chaqueta Pana Clásica!',
             object_id=venta2.id
         )
 
