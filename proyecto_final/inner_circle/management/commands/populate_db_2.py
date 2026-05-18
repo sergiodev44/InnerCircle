@@ -391,8 +391,21 @@ class Command(BaseCommand):
                     else:
                         self.stdout.write(self.style.ERROR(f'    ✗ Failed to add image {image_path.name}'))
             else:
-                self.stdout.write(self.style.WARNING(f"  No images found for group: {image_group_name}"))
-            
+                # Fallback: reuse already-processed images from products/ directory
+                products_dir = base_media / 'products'
+                existing = sorted(products_dir.glob(f'{image_group_name}_*.jpg')) if products_dir.exists() else []
+                if existing:
+                    self.stdout.write(f"  Using {len(existing)} existing images from products/ for {product.nombre}")
+                    for i, img_path in enumerate(existing):
+                        ProductImage.objects.create(
+                            product=product,
+                            order=i,
+                            image=f'products/{img_path.name}'
+                        )
+                        self.stdout.write(self.style.SUCCESS(f'    ✓ Reused {img_path.name}'))
+                else:
+                    self.stdout.write(self.style.WARNING(f"  No images found for group: {image_group_name}"))
+
             product_key += 1
 
         # Create friendships
