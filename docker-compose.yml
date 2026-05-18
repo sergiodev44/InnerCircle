@@ -22,7 +22,8 @@ services:
     build: .
     container_name: innercircle_app
     command: >
-      sh -c "python manage.py migrate &&
+      sh -c "python manage.py collectstatic --noinput &&
+             python manage.py migrate &&
              gunicorn --bind 0.0.0.0:8000 --workers 4 --timeout 120 mysite.wsgi:application"
     environment:
       - CSRF_TRUSTED_ORIGINS=https://sergiodaw2.tech,https://www.sergiodaw2.tech
@@ -49,7 +50,7 @@ services:
     volumes:
       - ./proyecto_final:/app:delegated
       - static_volume:/app/staticfiles
-      - media_volume:/app/media
+      - ./proyecto_final/media:/app/media:delegated
     depends_on:
       db:
         condition: service_healthy
@@ -65,7 +66,7 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - static_volume:/app/staticfiles:ro
-      - media_volume:/app/media:ro
+      - ./proyecto_final/media:/app/media:ro
       - ./fullchain.pem:/etc/nginx/certs/fullchain.pem:ro
       - ./privkey.pem:/etc/nginx/certs/privkey.pem:ro
     depends_on:
