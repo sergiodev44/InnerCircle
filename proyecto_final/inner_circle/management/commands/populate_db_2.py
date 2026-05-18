@@ -39,6 +39,16 @@ class Command(BaseCommand):
             'jerseis': Category.objects.create(nombre='Jerseis', descripcion='Jerseis y prendas de punto'),
         }
 
+        # Create admin user
+        admin_user = User.objects.create_superuser(
+            username='admin',
+            email='admin@test.com',
+            password='admin1234',
+            mobile=999999999,
+            is_staff=True,
+            is_superuser=True
+        )
+
         # Copy AI PFPs to profiles folder if they don't exist
         base_media = Path(settings.MEDIA_ROOT)
         ai_pfps_dir = base_media / 'ai_pfps'
