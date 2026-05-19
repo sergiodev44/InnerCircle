@@ -6,31 +6,35 @@ from django.core.mail import send_mail
 from django.conf import settings
 import uuid
 
-# Parte del user
+"""Esta son las señales que uso en muchas secciones de InnerCircle"""
+
+
+"""Sección de señales que afectan al usuario"""
 
 @receiver(post_save, sender=User)
 def create_profile(sender, instance, created, **kwargs):
+    """auto crear perfil al crear un usuario"""
     if created:
         Profile.objects.create(user=instance)
 
 
 @receiver(post_save, sender=User)
 def send_verification_email(sender, instance, created, **kwargs):
-    """Send email verification link when user signs up"""
+    """Enviar un correo de verificación cuando el usaurio se registra"""
     if created and instance.email:
-        # Generate UUID token (dashes are URL-safe, won't be MIME-mangled)
+        
         token = str(uuid.uuid4())
         instance.email_verification_token = token
         instance.save()
         
-        # Build verification link
+       
         verification_link = f"http://localhost:8000/inner/verify-email/?uid={instance.pk}&token={token}"
         
-        # Email content
+        
         subject = 'Verify your email - InnerCircle'
         message = f"Hi {instance.username},\n\nVerify your email:\n{verification_link}\n\nExpires in 24 hours."
         
-        # Send email
+        
         try:
             send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [instance.email])
         except Exception as e:
@@ -42,7 +46,9 @@ def create_profile_extra(sender, user, request, **kwargs):
     Profile.objects.get_or_create(user=user)
 
 
-# Parte de las notis
+"""Sección de señales que afectan las notificaciones"""
+"""Esta señales en conjunto notifican al usuario cuando
+este recibe un mensaje, vende un producto, recibe una reseña o solicitud de amistad"""
 
 @receiver(post_save, sender=Mensaje)
 def notificar_mensaje(sender, instance, created, **kwargs):

@@ -2,7 +2,7 @@ from .models import Notification
 
 
 def notifications_context(request):
-    """Agregar count de notificaciones no leídas a cada template"""
+    """Agrega la suma de las notificaciones no leidas a los template"""
     if request.user.is_authenticated:
         unread_count = Notification.objects.filter(
             user=request.user, 
