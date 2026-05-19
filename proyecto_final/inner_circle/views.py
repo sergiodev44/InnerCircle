@@ -28,7 +28,7 @@ from django.conf import settings
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 def cleanup_abandoned_carts():
-    """Release products from abandoned carts (unpaid for >15 minutes)"""
+    """Función para limpiar los productos abandonados después de 15 min"""
     cutoff_time = timezone.now() - timedelta(minutes=1)
     abandoned = Venta.objects.filter(
         estado_pago='no_pagado',
@@ -42,7 +42,7 @@ def cleanup_abandoned_carts():
             venta.save()
 
 def can_report_user(user):
-    """Check if user can report (max 3 per hour)"""
+    """Comprobante de que el usuario puede reportar o excede el límite"""
     one_hour_ago = timezone.now() - timedelta(hours=1)
     recent_reports = Report.objects.filter(
         reporter=user,
@@ -52,18 +52,17 @@ def can_report_user(user):
 
 
 def can_send_message(user):
-    """Check if user can send message (max 3 per 1 minute for testing)"""
+    """Comprobante de que el usuario puede enviar un mensaje o excede el límite"""
     one_min_ago = timezone.now() - timedelta(minutes=1)
     recent_messages = Mensaje.objects.filter(
         sender=user,
         created_at__gte=one_min_ago
     ).count()
-    print(f"DEBUG: User {user.username} has {recent_messages} messages in last min. Can send: {recent_messages < 3}")
     return recent_messages < 15
 
 
 def get_rate_limit_timeout(user):
-    """Get minutes until user can send next message (0 if ok to send)"""
+    """Calcula minutos restantes hasta que el usuario pueda volver a enviar un mensaje"""
     one_min_ago = timezone.now() - timedelta(minutes=1)
     oldest_msg = Mensaje.objects.filter(
         sender=user,
@@ -73,48 +72,44 @@ def get_rate_limit_timeout(user):
     if not oldest_msg or oldest_msg.created_at < one_min_ago:
         return 0
     
-    # Seconds until oldest message leaves the 1-minute window
     time_left = oldest_msg.created_at + timedelta(minutes=1) - timezone.now()
     seconds = int(time_left.total_seconds()) + 1
     return max(1, seconds)
 
 
 def check_and_ban_spammer(user, action_type):
-    """Auto-ban user if they violate rate limit TWICE in same 1 minute"""
-    # Refresh user from DB to get latest last_rate_limit_warning
+    """Autoban al usuario que rompa el rate limit de mensajes
+    2 veces en el mismo minuto"""
     user.refresh_from_db()
     
     one_min_ago = timezone.now() - timedelta(minutes=1)
     
-    print(f"DEBUG: Checking ban status for {user.username}. last_rate_limit_warning={user.last_rate_limit_warning}")
     
-    # Check if user already has a recent violation (stored in last_rate_limit_warning)
+    """comprueba si el user ha sobrepasado el rate limit recientemente"""
     if user.last_rate_limit_warning:
         time_since_warning = timezone.now() - user.last_rate_limit_warning
-        print(f"DEBUG: Time since warning: {time_since_warning}. Is < 1 min? {time_since_warning < timedelta(minutes=1)}")
         if time_since_warning < timedelta(minutes=1):
-            # Second violation within a minute = permanent ban
+            """Si es < 1 min = ban"""
             user.is_banned = True
             user.save()
             from django.db import connection
             connection.commit()
-            print(f"DEBUG: PERMANENTLY BANNED {user.username} for second rate limit violation")
             return True
     
-    # First violation: mark the timestamp
-    print(f"DEBUG: Setting first violation warning for {user.username}")
+    
     user.last_rate_limit_warning = timezone.now()
     user.save()
     from django.db import connection
     connection.commit()
-    print(f"DEBUG: First violation for {user.username}. Warning issued. last_rate_limit_warning={user.last_rate_limit_warning}")
     return False
 
 class HomeView(LoginRequiredMixin, TemplateView):
+    """Pantalla principal de InnerCircle"""
     template_name = "home.html"
 
-# USER
-class userCreateView(CreateView,):
+
+class userCreateView(CreateView):
+    """Vista para crear usuario"""
     model = User
     form_class = UserForm
     template_name = "UserForm.html"
@@ -122,7 +117,7 @@ class userCreateView(CreateView,):
 
 
 class VerifyEmailView(View):
-    """Simple email verification view"""
+    """Vista simple de verificación del email"""
     def get(self, request):
         uid = request.GET.get('uid')
         token = request.GET.get('token')
@@ -135,29 +130,29 @@ class VerifyEmailView(View):
         except User.DoesNotExist:
             return render(request, 'inner_circle/email_verification_failed.html')
         
-        # Check if token matches
+        """comparar de tokens"""
         if user.email_verification_token == token:
             user.email_verified = True
-            user.email_verification_token = None  # Clear token after use
+            user.email_verification_token = None
             user.save()
             return render(request, 'inner_circle/email_verified.html', {'user': user})
         
         return render(request, 'inner_circle/email_verification_failed.html')
 
 class ResendVerificationEmailView(LoginRequiredMixin, View):
-    """Resend verification email to user"""
+    """Reenvío del email de verificación"""
     def get(self, request, pk):
         try:
             user = User.objects.get(pk=pk)
         except User.DoesNotExist:
             return redirect('inner_circle:profile_detail', pk=request.user.profile.pk)
         
-        # Generate new token
+        """genera nuevo token"""
         token = str(uuid.uuid4())
         user.email_verification_token = token
         user.save()
         
-        # Send email
+        """envía el email"""
         verification_link = f"http://localhost:8000/inner/verify-email/?uid={user.pk}&token={token}"
         subject = 'Verify your email - InnerCircle'
         message = f"Hi {user.username},\n\nVerify your email:\n{verification_link}\n\nExpires in 24 hours."
@@ -169,8 +164,9 @@ class ResendVerificationEmailView(LoginRequiredMixin, View):
         
         return redirect('inner_circle:profile_detail', pk=pk)
 
-# PROFILE
+
 class profileDetailView(DetailView):
+    """Vista del detalle del perfil de usuario"""
     model = Profile
     template_name = "profileDetail.html"
     context_object_name = "profile"
@@ -187,6 +183,7 @@ class profileDetailView(DetailView):
         return context
     
 class profileUpdateView(LoginRequiredMixin,UserPassesTestMixin,UpdateView):
+    """Vista para actualizar el Perfil"""
     model = Profile
     template_name = "profileForm.html"
     form_class = ProfileForm
@@ -199,16 +196,17 @@ class profileUpdateView(LoginRequiredMixin,UserPassesTestMixin,UpdateView):
         )
     
 class profileDeleteView(LoginRequiredMixin,UserPassesTestMixin,DeleteView):
+    """Vista para eliminar el Perfil"""
     model = Profile
     template_name = "profileDelete.html"
     def test_func(self):
         return self.request.user.pk == self.get_object().user.pk
     success_url = reverse_lazy("inner_circle:producto_list")
-    # success_url = reverse_lazy("logout")
+    # success_url = debería redirigir a logout, para v.1.1.0
     
 
-# PRODUCTS
 class productListView(ListView):
+    """Vista para listar los productos"""
     model = Product
     template_name = "productList.html"
     context_object_name = "productos"
@@ -218,18 +216,19 @@ class productListView(ListView):
         cleanup_abandoned_carts()
         queryset = Product.objects.exclude(user=self.request.user).exclude(estado__in=['RESV', 'VEND'])
         
-        # Exclude blocked users from showing their products
+        """Excluimos los productos de los usuarios bloqueados"""
         if self.request.user.is_authenticated:
             blocked_users = self.request.user.bloqueados.values_list('blocked', flat=True)
             queryset = queryset.exclude(user__in=blocked_users)
             
-            # Also exclude users who have blocked the current user
+            """Excluimos los productos de los usuarios que nos han bloqueado"""
             blocking_users = BlockedUser.objects.filter(blocked=self.request.user).values_list('blocker', flat=True)
             queryset = queryset.exclude(user__in=blocking_users)
         
         return self._apply_filters(queryset)
     
     def _apply_filters(self, queryset):
+        "filtros para los productos"
         nombre = self.request.GET.get('nombre', '').strip()
         precio_min = self.request.GET.get('precio_min', '')
         precio_max = self.request.GET.get('precio_max', '')
@@ -248,7 +247,7 @@ class productListView(ListView):
         if category:
             queryset = queryset.filter(category__nombre=category)
         
-        # Apply sorting
+        "ordenar los productos"
         if sort == 'precio_asc':
             queryset = queryset.order_by('precio')
         elif sort == 'precio_desc':
@@ -263,6 +262,8 @@ class productListView(ListView):
         return context
     
 class amigosProductListView(LoginRequiredMixin, ListView):
+    "View para Listar los productos de nuestros amigos"
+    "Funciona casi igual que productListView"
     model = Product
     template_name = "productList.html"
     context_object_name = "productos"
@@ -272,11 +273,11 @@ class amigosProductListView(LoginRequiredMixin, ListView):
         cleanup_abandoned_carts()
         queryset = Product.objects.filter(user__in=self.request.user.friends.all()).exclude(estado='VEND')
         
-        # Exclude blocked users
+        
         blocked_users = self.request.user.bloqueados.values_list('blocked', flat=True)
         queryset = queryset.exclude(user__in=blocked_users)
         
-        # Also exclude users who have blocked the current user
+        
         blocking_users = BlockedUser.objects.filter(blocked=self.request.user).values_list('blocker', flat=True)
         queryset = queryset.exclude(user__in=blocking_users)
         
@@ -301,7 +302,7 @@ class amigosProductListView(LoginRequiredMixin, ListView):
         if category:
             queryset = queryset.filter(category__nombre=category)
         
-        # Apply sorting
+        
         if sort == 'precio_asc':
             queryset = queryset.order_by('precio')
         elif sort == 'precio_desc':
@@ -317,6 +318,7 @@ class amigosProductListView(LoginRequiredMixin, ListView):
     
     
 class productDetailView(DetailView):
+    """Vista para el detalle del producto"""
     model = Product
     template_name = "productDetail.html"
     context_object_name = "producto"
@@ -328,6 +330,7 @@ class productDetailView(DetailView):
         return context
 
 class productCreateView(LoginRequiredMixin,CreateView):
+    """Vista para crear productos"""
     model = Product
     form_class = ProductForm
     template_name = "productForm.html"
@@ -337,7 +340,8 @@ class productCreateView(LoginRequiredMixin,CreateView):
         return super().form_valid(form) 
        
     
-class productUpdateView(LoginRequiredMixin,UserPassesTestMixin,UpdateView,):
+class productUpdateView(LoginRequiredMixin,UserPassesTestMixin,UpdateView):
+    """Vista para actualizar el Productos"""
     model = Product
     form_class = ProductForm
     template_name = "productForm.html"
@@ -345,13 +349,9 @@ class productUpdateView(LoginRequiredMixin,UserPassesTestMixin,UpdateView,):
     def test_func(self):
         return self.request.user.pk == self.get_object().user.pk
     
-# class productDeleteView(LoginRequiredMixin,DeleteView):
-#     model = Product
-#     template_name = "productDelete.html"
-#     success_url = reverse_lazy("inner_circle:producto_list")
-    
-    
+   
 class productDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para eliminar Productos"""
     template_name = "productDelete.html"
     
     def test_func(self):
@@ -371,20 +371,20 @@ class productDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
         product = self.get_object()
         if not self.test_func():
             return redirect('inner_circle:producto_list')
-        # Soft delete: mark with deleted_at timestamp
+        """Marcamos los softdeletes para después"""
         product.deleted_at = timezone.now()
         product.save()
         return redirect('inner_circle:mis_productos', pk=request.user.pk)
     
 
 class misProductosListView(LoginRequiredMixin, ListView):
+    """Vista para listar los productos que el usuario está vendiendo"""
     model = Product
     template_name = "misProducts.html"
     context_object_name = "productos"
     paginate_by = 6
     
     def get_queryset(self):
-        # Show only active (not deleted) products for the current user
         queryset = Product.objects.filter(user=self.request.user)
         return self._apply_filters(queryset)
     
@@ -407,7 +407,6 @@ class misProductosListView(LoginRequiredMixin, ListView):
         if category:
             queryset = queryset.filter(category__nombre=category)
         
-        # Apply sorting
         if sort == 'precio_asc':
             queryset = queryset.order_by('precio')
         elif sort == 'precio_desc':
@@ -421,20 +420,15 @@ class misProductosListView(LoginRequiredMixin, ListView):
         return context
     
 
-# VENTAS
 
-# REMEMBER #
-### Esta bien necesita revisión ###
-
-# v2
 class ventaCreateView(LoginRequiredMixin, View):
+    """Vista para crear una Venta"""
     @transaction.atomic
     def post(self, request, *args, **kwargs):
-        """Create venta with row-level locking to prevent double-selling"""
-        # Lock product row to prevent race conditions
+        """Bloqueamos la fila para las ventas multiples de un producto (race conditions)"""
         product = Product.objects.select_for_update().get(pk=self.kwargs['pk'])
         
-        # Double-check product status after acquiring lock
+        """Comprobante del estatus del producto después del bloqueo"""
         if product.estado != 'DISP':
             return redirect('inner_circle:producto_list')
         
@@ -444,19 +438,19 @@ class ventaCreateView(LoginRequiredMixin, View):
             product=product,
             precio_base=product.precio,
         )
-        # Calculate tax, fee, and total
+    
         venta.calculate_totals()
         venta.save()
 
-        # Mark product as reserved (NOT sold yet - that happens after payment succeeds)
+        """Marca el prodcuto como reservado"""
         product.estado = 'RESV'
         product.save()
-        # Redirect to Stripe checkout instead of detail
+        """Redirección al checkout de Stripe"""
         return redirect('inner_circle:checkout', pk=venta.pk)
     
     def get(self, request, *args, **kwargs):
         product = Product.objects.get(pk=self.kwargs['pk'])
-        # Create a temporary venta to show the breakdown
+
         venta = Venta(
             precio_base=product.precio,
         )
@@ -467,6 +461,7 @@ class ventaCreateView(LoginRequiredMixin, View):
     
 
 class ventaDetailView(LoginRequiredMixin,UserPassesTestMixin,DetailView):
+    """Vista para el Detalle de la venta"""
     model = Venta
     template_name = "ventaDetail.html"
 
@@ -481,7 +476,7 @@ class ventaDetailView(LoginRequiredMixin,UserPassesTestMixin,DetailView):
     
 
 class stripeCheckoutView(LoginRequiredMixin, DetailView):
-    """Stripe checkout page - creates PaymentIntent and displays payment form"""
+    """Vista para el checkout de Stripe que muestra el formulario para pagar"""
     model = Venta
     template_name = "inner_circle/checkout.html"
     context_object_name = "venta"
@@ -493,14 +488,15 @@ class stripeCheckoutView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         venta = self.get_object()
         
-        # Only the buyer can access checkout
+        """Solo el comprador puede acceder al cehckout"""
         if self.request.user != venta.comprador:
             raise PermissionError("Only the buyer can access checkout")
         
-        # Create Stripe Payment Intent
+        
+        """Crea el payment intent de Stripe"""
         try:
             intent = stripe.PaymentIntent.create(
-                amount=int(venta.importe_total * 100),  # Convert to cents
+                amount=int(venta.importe_total * 100), 
                 currency='eur',
                 metadata={
                     'venta_id': venta.pk,
@@ -521,13 +517,14 @@ class stripeCheckoutView(LoginRequiredMixin, DetailView):
     
 
 class ventasList(LoginRequiredMixin, TemplateView):
+    """Vista para listar las ventas"""
     template_name = "inner_circle/ventas_list.html"
     paginate_by = 10
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # Paginate ventas (sales as seller)
+        """Paginador simple de ventas (vendedor)"""
         ventas = Venta.objects.filter(vendedor=self.request.user)
         page = self.request.GET.get('page', 1)
         paginator = Paginator(ventas, self.paginate_by)
@@ -538,7 +535,7 @@ class ventasList(LoginRequiredMixin, TemplateView):
         except EmptyPage:
             ventas = paginator.page(paginator.num_pages)
         
-        # Paginate compras (purchases as buyer) - use different page param
+        """Paginador simple de compras(comprador)"""
         compras = Venta.objects.filter(comprador=self.request.user)
         page_compras = self.request.GET.get('page_compras', 1)
         paginator_compras = Paginator(compras, self.paginate_by)
@@ -556,7 +553,7 @@ class ventasList(LoginRequiredMixin, TemplateView):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class stripeWebhookView(View):
-    """Handle Stripe webhooks for payment confirmation"""
+    """Gestiona el webhook de Stripe para la confirmación del pago"""
     def post(self, request):
         payload = request.body
         sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
@@ -570,7 +567,7 @@ class stripeWebhookView(View):
         except stripe.error.SignatureVerificationError:
             return JsonResponse({'error': 'Invalid signature'}, status=400)
         
-        # Handle payment_intent.payment_failed event - release product back to DISP
+        """Si el pago fallo, el producto pasa ha estar disponible"""
         if event['type'] == 'payment_intent.payment_failed':
             try:
                 payment_intent = event['data']['object']
@@ -587,36 +584,38 @@ class stripeWebhookView(View):
                         venta_id_int = int(venta_id)
                         with transaction.atomic():
                             product = Product.objects.select_for_update().get(prods=venta_id_int)
-                            # Release product back to available if payment fails
+                            
                             if product.estado == 'RESV':
                                 product.estado = 'DISP'
                                 product.save()
-                                print(f"   ✅ Released product {product.pk} back to DISP")
+                                print(f"   ✅ Producto {product.pk} está DISP")
                     except Product.DoesNotExist:
-                        print(f"   ⚠️  Product not found for venta: {venta_id_int}")
+                        print(f"   ⚠️  Product no encontrado para venta: {venta_id_int}")
                     except ValueError:
-                        print(f"   ❌ Invalid venta_id format: {venta_id}")
+                        print(f"   ❌ Formato inválido de venta_id: {venta_id}")
             except Exception as e:
-                print(f"❌ Error processing payment_intent.payment_failed: {str(e)}")
+                print(f"❌ Error procesamiento de pago, payment_intent.payment_failed: {str(e)}")
         
-        # Handle payment_intent.succeeded event
+        
         elif event['type'] == 'payment_intent.succeeded':
             try:
                 payment_intent = event['data']['object']
                 
-                # Access Stripe object using bracket notation
+                
                 venta_id = None
                 if 'metadata' in payment_intent and 'venta_id' in payment_intent['metadata']:
                     venta_id = payment_intent['metadata']['venta_id']
                 
-                print(f"🔔 Webhook received payment_intent.succeeded")
+                print(f"🔔 Webhook recibido payment_intent.succeeded")
                 print(f"   Payment Intent ID: {payment_intent['id']}")
                 print(f"   Venta ID from metadata: {venta_id}")
                 
                 if venta_id:
                     try:
                         venta_id_int = int(venta_id)
-                        # Use atomic transaction to ensure product status updates consistently with payment
+                    
+                        """Usamos transacciones atómicas para que el estatus de producto
+                        se actualize consistentemente con los pagos"""
                         with transaction.atomic():
                             venta = Venta.objects.select_for_update().get(pk=venta_id_int)
                             print(f"   ✅ Found venta: {venta.pk}")
@@ -624,13 +623,13 @@ class stripeWebhookView(View):
                             venta.estado_pago = 'pagado'
                             venta.save()
                             
-                            # Mark product as SOLD (finalize the sale) - soft delete
+                            """Marcamos el producto cómo vendido y softdelete"""
                             product = venta.product
                             product.estado = 'VEND'
                             product.deleted_at = timezone.now()
                             product.save()
-                            print(f"   ✅ Updated venta.estado_pago to 'pagado'")
-                            print(f"   ✅ Soft-deleted product {product.pk} (marked as VEND)")
+                            print(f"   ✅ Actualizado venta.estado_pago to 'pagado'")
+                            print(f"   ✅ Soft-deleted producto {product.pk} (marcado cómo VEND)")
                             
                             # Send email to seller only when payment succeeds
                             subject = f'¡Tu producto {product.nombre} fue vendido!'
@@ -646,16 +645,16 @@ Ve a tu panel de ventas para más detalles.
                             try:
                                 send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [venta.vendedor.email])
                             except Exception as e:
-                                print(f"Failed to send payment confirmation email: {e}")
+                                print(f"Fallo al enviar email de comfirmación del pago: {e}")
                     except Venta.DoesNotExist:
-                        print(f"   ❌ Venta not found with id: {venta_id_int}")
+                        print(f"   ❌ Venta no encontrado con id: {venta_id_int}")
                     except ValueError:
                         print(f"   ❌ Invalid venta_id format: {venta_id}")
                 else:
                     print(f"   ⚠️  No venta_id in metadata")
                     
             except Exception as e:
-                print(f"❌ Error processing payment_intent.succeeded: {str(e)}")
+                print(f"❌ Error procesando payment_intent.succeeded: {str(e)}")
                 import traceback
                 traceback.print_exc()
         
@@ -663,16 +662,14 @@ Ve a tu panel de ventas para más detalles.
 
 
 class stripePaymentStatusView(LoginRequiredMixin, View):
-    """Check payment status and update venta"""
+    """Comprabar el estado del pago y actualizar la venta"""
     def post(self, request, pk):
         try:
             venta = Venta.objects.get(pk=pk)
             
-            # Only buyer can check status
             if request.user != venta.comprador:
                 return JsonResponse({'error': 'Unauthorized'}, status=403)
             
-            # Check payment intent status
             if venta.stripe_payment_intent:
                 intent = stripe.PaymentIntent.retrieve(venta.stripe_payment_intent)
                 
@@ -695,15 +692,17 @@ class stripePaymentStatusView(LoginRequiredMixin, View):
             return JsonResponse({'error': 'Venta not found'}, status=404)
 
 
-# RESEÑAS
+
 
 class resenaDetailView(LoginRequiredMixin,UserPassesTestMixin,DetailView):
+    """Vista para el detalle de una reseña"""
     model = Resena
     template_name = "resenaDetail.html"
     def test_func(self):
         return self.request.user.pk == self.get_object().user.pk
     
 class resenaCreateView(LoginRequiredMixin,UserPassesTestMixin,CreateView):
+    """Vista para crear una reseña"""
     model = Resena
     form_class = ResenaForm
     template_name = "resenaForm.html"
@@ -728,10 +727,8 @@ class resenaCreateView(LoginRequiredMixin,UserPassesTestMixin,CreateView):
         return context
     
 
-# class resenaDetailView:
-#     pass
-
 class resenaDeleteView(LoginRequiredMixin, UserPassesTestMixin,DeleteView):
+    """Vista para borra una Reseña"""
     model = Resena
     template_name = "resenaDelete.html"
     success_url = reverse_lazy("inner_circle:producto_list")
@@ -739,8 +736,9 @@ class resenaDeleteView(LoginRequiredMixin, UserPassesTestMixin,DeleteView):
         return self.request.user.pk == self.get_object().user.pk
     
 
-# FriendRequest
+
 class frequestCreateView(LoginRequiredMixin,CreateView):
+    """Vista para enviar una petición de amistad"""
     model = FriendRequest
     template_name = "fRequestForm.html"
     form_class = FriendRequestForm
@@ -757,9 +755,9 @@ class frequestCreateView(LoginRequiredMixin,CreateView):
         kwargs={"pk" : self.request.user.profile.pk}
         )
   
-# REMEMBER #
-### Esta bien necesita revisión ###
+
 class frRequestResponseView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para visualizar la petición de amistad"""
     def test_func(self):
         fr = FriendRequest.objects.get(pk=self.kwargs['pk'])
         return self.request.user == fr.recibidor2
@@ -777,9 +775,9 @@ class frRequestResponseView(LoginRequiredMixin, UserPassesTestMixin, View):
         return redirect('inner_circle:profile_detail', pk=request.user.profile.pk)
     
 
-# REMEMBER #
-### Esta bien necesita revisión ###
+
 class friendDeleteView(LoginRequiredMixin, View):
+    """Vista para eliminar un amigo"""
 
     def post(self, request, *args, **kwargs):
         amigo = User.objects.get(pk=self.kwargs['pk'])
@@ -792,8 +790,8 @@ class friendDeleteView(LoginRequiredMixin, View):
     
 
     
-# Notifications
 class profileNotis(LoginRequiredMixin, TemplateView):
+    "Vista para los notificaciones del Perfil de usuario"
     template_name = "inner_circle/profile_notis.html"
 
     def get_context_data(self, **kwargs):
@@ -806,23 +804,19 @@ class profileNotis(LoginRequiredMixin, TemplateView):
         context['compras']= Venta.objects.filter(comprador=self.request.user)
         context['notificaciones'] = Notification.objects.filter(user=self.request.user)
         
-        # Marcar notificaciones como leídas cuando el usuario las ve
         Notification.objects.filter(user=self.request.user, leido=False).update(leido=True)
 
         return context
     
     
-# Mensajes
-# REMEMBER #
-### Esta bien necesita revisión ###
-
 class conversacionDetailView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para el Detalle de la Conversación"""
     
     def test_func(self):
         conversation = Conversation.objects.get(pk=self.kwargs['conversation_id'])
         user_in_conversation = self.request.user in [conversation.usuario1, conversation.usuario2]
         
-        # Check if either user is blocked
+        """Check si algunos de los participates ha bloqueado al otro"""
         otro_user = conversation.usuario2 if self.request.user == conversation.usuario1 else conversation.usuario1
         is_blocked = BlockedUser.objects.filter(
             Q(blocker=self.request.user, blocked=otro_user) |
@@ -838,7 +832,7 @@ class conversacionDetailView(LoginRequiredMixin, UserPassesTestMixin, View):
         
         mensajes = conversation.mensajes.all()
         
-        # Check rate limit status
+        
         rate_limited = not can_send_message(request.user)
         timeout_minutes = get_rate_limit_timeout(request.user) if rate_limited else 0
         
@@ -848,16 +842,16 @@ class conversacionDetailView(LoginRequiredMixin, UserPassesTestMixin, View):
                 time_since = timezone.now() - request.user.last_rate_limit_warning
                 print(f"DEBUG: GET rate limited - warning was {int(time_since.total_seconds())}s ago")
                 if time_since < timedelta(hours=1):
-                    # Second timeout within 1 hour = permanent ban
+                    
                     print(f"DEBUG: BANNING {request.user.username}")
                     request.user.is_banned = True
                     request.user.save()
-                    # Middleware will catch next request, but redirect now
+                    
                     from django.contrib.auth import logout
                     logout(request)
                     return redirect('inner_circle:banned')
             else:
-                # First timeout: record warning
+                
                 print(f"DEBUG: First timeout for {request.user.username} - saving warning")
                 request.user.last_rate_limit_warning = timezone.now()
                 request.user.save()
@@ -877,18 +871,17 @@ class conversacionDetailView(LoginRequiredMixin, UserPassesTestMixin, View):
         request.user.refresh_from_db()
         
         if not can_send_message(request.user):
-            # Rate limit exceeded - check if this is a second violation
+            
             if request.user.last_rate_limit_warning:
                 time_since = timezone.now() - request.user.last_rate_limit_warning
                 print(f"DEBUG: Second violation? Warning was {int(time_since.total_seconds())}s ago")
                 if time_since < timedelta(hours=1):
-                    # Second rate limit hit within 1 hour = permanent ban
+                    
                     print(f"DEBUG: BANNING {request.user.username}")
                     request.user.is_banned = True
                     request.user.save()
                     return HttpResponse("Tu cuenta ha sido suspendida permanentemente por abuso.", status=429)
             
-            # First violation: save warning and show timeout
             print(f"DEBUG: First violation for {request.user.username}")
             request.user.last_rate_limit_warning = timezone.now()
             request.user.save()
@@ -914,16 +907,16 @@ class conversacionDetailView(LoginRequiredMixin, UserPassesTestMixin, View):
 
 
 class iniciarConversacionView(LoginRequiredMixin, View):
+    """Vista simple para iniciar una conversación"""
     
     def get(self, request, *args, **kwargs):
         producto = Product.objects.get(pk=self.kwargs['product_pk'])
         otro_user = User.objects.get(pk=self.kwargs['user_pk'])
         
-        # Validar que no sea el mismo usuario
+        
         if request.user == otro_user:
             return redirect('inner_circle:producto_detail', pk=producto.pk)
         
-        # Check if blocked
         is_blocked = BlockedUser.objects.filter(
             Q(blocker=request.user, blocked=otro_user) |
             Q(blocker=otro_user, blocked=request.user)
@@ -932,7 +925,6 @@ class iniciarConversacionView(LoginRequiredMixin, View):
         if is_blocked:
             return redirect('inner_circle:producto_detail', pk=producto.pk)
         
-        # get_or_create conversation
         conversation, created = Conversation.objects.get_or_create(
             producto=producto,
             usuario1=request.user,
@@ -943,19 +935,20 @@ class iniciarConversacionView(LoginRequiredMixin, View):
 
 
 class mensajeCreateView(LoginRequiredMixin, CreateView):
+    """Vista para crear un mensaje"""
     model = Mensaje
     form_class = MensajeForm
     template_name = "inner_circle/mensajeForm.html"
     
     def dispatch(self, request, *args, **kwargs):
-        # Rate limit check at dispatch level (catches all attempts)
+        
         if request.method == 'POST':
             print(f"DEBUG DISPATCH: User {request.user.username} attempting to send message")
             if not can_send_message(request.user):
                 print(f"DEBUG DISPATCH: Rate limit exceeded for {request.user.username}, banning...")
-                # Ban them immediately for trying to bypass
+                
                 check_and_ban_spammer(request.user, 'message')
-                # Refresh to verify ban
+                
                 request.user.refresh_from_db()
                 print(f"DEBUG DISPATCH: User {request.user.username} is_banned after ban check: {request.user.is_banned}")
                 return HttpResponse("Has excedido el límite de mensajes. Tu cuenta ha sido suspendida temporalmente.", status=429)
@@ -971,7 +964,7 @@ class mensajeCreateView(LoginRequiredMixin, CreateView):
         producto = Product.objects.get(pk=self.request.POST.get('producto'))
         otro_user = User.objects.get(pk=self.request.POST.get('receptor'))
         
-        # Crear o obtener la conversation
+       
         conversation, created = Conversation.objects.get_or_create(
             producto=producto,
             usuario1=self.request.user,
@@ -983,7 +976,6 @@ class mensajeCreateView(LoginRequiredMixin, CreateView):
         
         result = super().form_valid(form)
         
-        # Final check for spam and auto-ban
         check_and_ban_spammer(self.request.user, 'message')
         
         return result
@@ -1000,9 +992,9 @@ class mensajeCreateView(LoginRequiredMixin, CreateView):
 
 
 
-# REMEMBER #
-### Esta bien necesita revisión ###
+
 class mensajesListView(LoginRequiredMixin, TemplateView):
+    """Vista para listar los mensajes"""
     template_name = "inner_circle/mensajesList.html"
     paginate_by = 10
     
@@ -1014,7 +1006,7 @@ class mensajesListView(LoginRequiredMixin, TemplateView):
             Q(usuario1=usuario) | Q(usuario2=usuario)
         ).prefetch_related('mensajes')
         
-        # Pagination
+        """Paginador"""
         page = self.request.GET.get('page', 1)
         paginator = Paginator(conversaciones, self.paginate_by)
         try:
@@ -1026,32 +1018,30 @@ class mensajesListView(LoginRequiredMixin, TemplateView):
         
         context['conversaciones'] = conversaciones
         
-        # Add disputes (como comprador y vendedor)
         context['buyer_disputes'] = Dispute.objects.filter(comprador=usuario).order_by('-created_at')
         context['seller_disputes'] = Dispute.objects.filter(vendedor=usuario).order_by('-created_at')
         
         return context
 
 
-# REPORT & BLOCK
 
 class BlockUserView(LoginRequiredMixin, View):
-    """Block a user - local block, doesn't go to admin"""
+    """Un usuario bloquea localmente a otro usuario"""
     def post(self, request, *args, **kwargs):
         user_to_block = User.objects.get(pk=self.kwargs['pk'])
         
-        # Check if already blocked
+        
         if BlockedUser.objects.filter(blocker=request.user, blocked=user_to_block).exists():
             return redirect('inner_circle:profile_detail', pk=user_to_block.profile.pk)
         
-        # Create the block
+        
         BlockedUser.objects.create(blocker=request.user, blocked=user_to_block)
         
         return redirect('inner_circle:profile_detail', pk=user_to_block.profile.pk)
 
 
 class UnblockUserView(LoginRequiredMixin, View):
-    """Unblock a user"""
+    """Desbloquear a un usuario"""
     def post(self, request, *args, **kwargs):
         user_to_unblock = User.objects.get(pk=self.kwargs['pk'])
         
@@ -1061,21 +1051,21 @@ class UnblockUserView(LoginRequiredMixin, View):
 
 
 class ReportUserView(LoginRequiredMixin, CreateView):
-    """Report a user - goes to admin for review"""
+    """Denunciar a un usuario, pendiente a revisión del admin"""
     model = Report
     form_class = ReportForm
     template_name = "inner_circle/reportUserForm.html"
     
     def dispatch(self, request, *args, **kwargs):
-        # Rate limit check at dispatch level
+        
         if request.method == 'POST':
             if not can_report_user(request.user):
-                # Ban them immediately and explicitly
+                
                 print(f"DEBUG REPORT: Rate limit exceeded for {request.user.username}, banning NOW")
                 request.user.is_banned = True
                 request.user.save()
                 from django.db import connection
-                connection.commit()  # Force DB commit
+                connection.commit()  
                 print(f"DEBUG REPORT: User {request.user.username} is_banned set to True and saved to DB")
                 return HttpResponse("Has excedido el límite de reportes. Tu cuenta ha sido suspendida permanentemente.", status=429)
         
@@ -1084,7 +1074,7 @@ class ReportUserView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         reported_user = User.objects.get(pk=self.kwargs['pk'])
         
-        # Check if already reported by this user
+        
         if Report.objects.filter(reporter=self.request.user, reported_user=reported_user).exists():
             form.add_error(None, "Ya has reportado a este usuario")
             return self.form_invalid(form)
@@ -1094,7 +1084,7 @@ class ReportUserView(LoginRequiredMixin, CreateView):
         
         result = super().form_valid(form)
         
-        # Final check for spam and auto-ban
+        
         check_and_ban_spammer(self.request.user, 'report')
         
         return result
@@ -1110,20 +1100,22 @@ class ReportUserView(LoginRequiredMixin, CreateView):
 
 
 class BannedView(TemplateView):
-    """View shown to banned users"""
+    """Vista para monstrar users baneados"""
     template_name = "inner_circle/banned.html"
 
 
-# ==================== DISPUTE SYSTEM ====================
+
 
 class DisputeCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
-    """Buyer files a dispute with optional evidence"""
+    """View para el sistema de disputas donde el usuario
+    puede poner una reclamación y evidencias opcionales"""
+    
     model = Dispute
     form_class = DisputeForm
     template_name = "inner_circle/dispute_form.html"
     
     def test_func(self):
-        """Only buyer can file dispute"""
+        """Solo el buyer puede enviar una reclamación"""
         venta = Venta.objects.get(pk=self.kwargs['venta_pk'])
         return self.request.user == venta.comprador
     
@@ -1135,7 +1127,7 @@ class DisputeCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     def form_valid(self, form):
         venta = Venta.objects.get(pk=self.kwargs['venta_pk'])
         
-        # Prevent duplicate disputes
+        """Evitar disputas diplicadas"""
         if Dispute.objects.filter(venta=venta).exists():
             form.add_error(None, "Ya existe una reclamación para esta compra")
             return self.form_invalid(form)
@@ -1145,7 +1137,6 @@ class DisputeCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         form.instance.vendedor = venta.vendedor
         result = super().form_valid(form)
         
-        # Notify seller that buyer filed dispute
         Notification.objects.create(
             user=venta.vendedor,
             tipo='dispute',
@@ -1161,7 +1152,7 @@ class DisputeCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
 
 
 class DisputeDetailView(LoginRequiredMixin, UserPassesTestMixin, View):
-    """View & manage dispute - buyer sees complaint, seller can respond"""
+    """View para gestionar los detalles de la disputa"""
     template_name = "inner_circle/dispute_detail.html"
     
     def test_func(self):
@@ -1172,7 +1163,8 @@ class DisputeDetailView(LoginRequiredMixin, UserPassesTestMixin, View):
     def get(self, request, *args, **kwargs):
         dispute = Dispute.objects.get(pk=self.kwargs['pk'])
         
-        # Auto-resolve if timeout & notify both parties
+        
+        """Auto-resolve después de 14 más notifiación"""
         if dispute.auto_resolve_if_timeout():
             Notification.objects.create(
                 user=dispute.comprador,
@@ -1199,10 +1191,9 @@ class DisputeDetailView(LoginRequiredMixin, UserPassesTestMixin, View):
         return render(request, self.template_name, context)
     
     def post(self, request, *args, **kwargs):
-        """Seller responds to dispute"""
+        """Vendedor responde a la disputa"""
         dispute = Dispute.objects.get(pk=self.kwargs['pk'])
         
-        # Only seller can respond
         if request.user != dispute.vendedor:
             return redirect('inner_circle:dispute_detail', pk=dispute.pk)
         
@@ -1212,7 +1203,7 @@ class DisputeDetailView(LoginRequiredMixin, UserPassesTestMixin, View):
             dispute.estado = 'RESPONDIDO'
             dispute.save()
             
-            # Notify buyer that seller responded
+            
             Notification.objects.create(
                 user=dispute.comprador,
                 tipo='dispute',
@@ -1224,7 +1215,7 @@ class DisputeDetailView(LoginRequiredMixin, UserPassesTestMixin, View):
 
 
 class DisputeListView(LoginRequiredMixin, ListView):
-    """List all disputes for buyer & seller"""
+    """Lista con todos las disputas como Comprador y Vendedor"""
     model = Dispute
     template_name = "inner_circle/dispute_list.html"
     context_object_name = "disputes"
@@ -1237,7 +1228,7 @@ class DisputeListView(LoginRequiredMixin, ListView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Count by role
+        """Cuenta disputas por role"""
         context['buyer_disputes'] = Dispute.objects.filter(
             comprador=self.request.user
         ).count()

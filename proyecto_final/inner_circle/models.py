@@ -8,15 +8,16 @@ from datetime import timedelta
 import stripe
 from django.conf import settings
 
+"""Aquí están todos los models de InnerCircle"""
 
-# Image Validation Constants
+"""Variables creadas para el control del tamaño y formato de las imagenes"""
 MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5MB
 ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'avif']
 
 
-# Soft Delete QuerySet & Manager
+
 class SoftDeleteQuerySet(models.QuerySet):
-    """QuerySet that filters out soft-deleted products"""
+    """Filtro de productos que ya están vendidos, no borrados de la db"""
     def active(self):
         return self.filter(deleted_at__isnull=True)
     
@@ -25,7 +26,7 @@ class SoftDeleteQuerySet(models.QuerySet):
 
 
 class SoftDeleteManager(models.Manager):
-    """Manager that returns only active (not soft-deleted) products by default"""
+    """Manager que devuelve los productos que pasan el filtro de softdeleted"""
     def get_queryset(self):
         return SoftDeleteQuerySet(self.model, using=self._db).active()
     
@@ -34,7 +35,7 @@ class SoftDeleteManager(models.Manager):
 
 
 def validate_image_size(file):
-    """Validate image file size (prevent large uploads)"""
+    """Validador del tamaño de la imagen"""
     if file.size > MAX_IMAGE_SIZE:
         raise ValidationError(
             f'Imagen muy grande. Máximo {MAX_IMAGE_SIZE // (1024*1024)}MB. '
@@ -43,13 +44,13 @@ def validate_image_size(file):
 
 
 class User(AbstractUser):
+    "Clase custom del Usuario base de Django"
     mobile = models.IntegerField()
-    #Atributo para el tema de la amistad
     friends = models.ManyToManyField('self', symmetrical=True, blank=True)
     is_banned = models.BooleanField(default=False)
     email_verified = models.BooleanField(default=False)
     email_verification_token = models.CharField(max_length=255, blank=True, null=True)
-    last_rate_limit_warning = models.DateTimeField(blank=True, null=True)  # Track rate limit violations
+    last_rate_limit_warning = models.DateTimeField(blank=True, null=True)
     
     @property
     def promedio_rating(self):
@@ -60,9 +61,9 @@ class User(AbstractUser):
         return None
 
 class Profile(models.Model):
+    """Clase de Perfil de Usuario"""
     user = models.OneToOneField(User,on_delete=models.CASCADE)
     nombre_tag = models.CharField(max_length=200)
-    # max length?
     bio = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     img_perfil = models.ImageField(
@@ -74,6 +75,7 @@ class Profile(models.Model):
     )
 
 class Category(models.Model):
+    """Clase Categoría para adminstrar de forma más óptima este atributo de los producots"""
     CATEGORIAS = [
         ('Camisas','Camisas'),
         ('Camisetas', 'Camisetas'),
@@ -93,9 +95,7 @@ class Category(models.Model):
 
 class Product(models.Model):
     """
-    no incluir zapatos porque no van por tallas
-    productos con medidas específicas por ejemplo correas, 
-    deberían tener un campo opcional de extra info en el form no?
+    Clase central de InnerCircle que gestiona los Productos y sus atributos
     """
     ESTADO_PRODUCTO = [("DISP","disponible"), ("RESV","reservado"), ("VEND","vendido")]
     TALLAS = [("S", "pequeña"), ("M", "mediana"), ("L", "grande"), ("XL", "muy grande")]
@@ -128,8 +128,7 @@ class Product(models.Model):
 
 class ProductImage(models.Model):
     """
-    Multiple images per product (1-4 images)
-    Just upload and order, no categorization needed
+    Clase que permite gestionar la subida de imágenes para productos
     """
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="images")
     image = models.ImageField(
@@ -139,7 +138,7 @@ class ProductImage(models.Model):
             validate_image_size,
         ]
     )
-    order = models.PositiveIntegerField(default=0)  # For ordering images
+    order = models.PositiveIntegerField(default=0) 
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -155,12 +154,12 @@ class Venta(models.Model):
     comprador = models.ForeignKey(User,on_delete=models.CASCADE, related_name="comprador")
     vendedor = models.ForeignKey(User,on_delete=models.CASCADE, related_name="vendedor")
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="prods" )
-    precio_base = models.DecimalField(max_digits=6, decimal_places=2)  # Product price
-    impuesto = models.DecimalField(max_digits=6, decimal_places=2, default=0)  # Tax (10% by default)
-    tarifa_servicio = models.DecimalField(max_digits=6, decimal_places=2, default=0)  # Service fee (5% by default)
-    importe_total = models.DecimalField(max_digits=6, decimal_places=2)  # Total charged
+    precio_base = models.DecimalField(max_digits=6, decimal_places=2)  
+    impuesto = models.DecimalField(max_digits=6, decimal_places=2, default=0) 
+    tarifa_servicio = models.DecimalField(max_digits=6, decimal_places=2, default=0)  
+    importe_total = models.DecimalField(max_digits=6, decimal_places=2)  
     estado_pago = models.CharField(choices=ESTADO_PAGO, default="no_pagado")
-    stripe_payment_intent = models.CharField(max_length=255, blank=True, null=True)  # Stripe payment ID
+    stripe_payment_intent = models.CharField(max_length=255, blank=True, null=True) 
     created_at = models.DateTimeField(auto_now_add=True)
 
     
@@ -171,16 +170,16 @@ class Venta(models.Model):
     
     @property
     def TAX_RATE(self):
-        """Tax rate: 10%"""
+        """Tasa de Impuestos"""
         return Decimal('0.10')
     
     @property
     def SERVICE_FEE_RATE(self):
-        """Service fee rate: 5%"""
+        """% que InnerCircle gana por venta"""
         return Decimal('0.05')
     
     def calculate_totals(self):
-        """Calculate tax, service fee, and total"""
+        """Calcula el precio total a pagar"""
         self.impuesto = (self.precio_base * self.TAX_RATE).quantize(Decimal('0.01'))
         self.tarifa_servicio = (self.precio_base * self.SERVICE_FEE_RATE).quantize(Decimal('0.01'))
         self.importe_total = self.precio_base + self.impuesto + self.tarifa_servicio
@@ -188,6 +187,7 @@ class Venta(models.Model):
      
 
 class Resena(models.Model):
+    """Clase para que el comprador pueda escribir una reseña al vendedor"""
     escritor = models.ForeignKey(User,on_delete=models.CASCADE, null=True, related_name="escritor")
     recibidor = models.ForeignKey(User,on_delete=models.CASCADE, null=True, related_name="recibidor")
     venta = models.ForeignKey(Venta, on_delete=models.CASCADE, related_name="venta")
@@ -198,23 +198,22 @@ class Resena(models.Model):
     class Meta:
         unique_together = ["escritor", "venta"]
 
-# Idea opcional es meter como mensajes para negociar precios,
-#  interacción vendedor / comprador ??? TBD
 
 
 class FriendRequest(models.Model):
+    """Clase para las peticiones de amistad"""
     estado_peticion = [("pendiente", "pendiente"), ("aceptada", "aceptada"), ("rechazada", "rechazada")]
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="envia_solicitud")
     recibidor2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name="recibe_solicitud")
     status = models.CharField(choices=estado_peticion, default="pendiente")
     sent_at = models.DateTimeField(auto_now_add=True)
-    # añadir un mensaje opcional?
 
     class Meta:
         unique_together = ["sender", "recibidor2"]
 
 
 class Conversation(models.Model):
+    """Clase para las conversación sobre un productos entre vendedor y comprador"""
     producto = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="conversaciones")
     usuario1 = models.ForeignKey(User, on_delete=models.CASCADE, related_name="conv_usuario1")
     usuario2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name="conv_usuario2")
@@ -229,7 +228,7 @@ class Conversation(models.Model):
 
 
 class Dispute(models.Model):
-    """Minimal dispute system: buyer complaint → auto-resolve or manual decision"""
+    """Sistema de disputas/reclamaciones simple"""
     RAZONES = [
         ('fake_product', 'Producto falso/no auténtico'),
         ('never_received', 'Nunca llegó'),
@@ -250,7 +249,6 @@ class Dispute(models.Model):
     descripcion = models.TextField()
     estado = models.CharField(max_length=20, choices=ESTADO, default='ABIERTO')
     
-    # Evidence files - can be None
     comprador_evidence = models.FileField(
         upload_to="disputes/",
         null=True,
@@ -276,7 +274,8 @@ class Dispute(models.Model):
         return f"Dispute #{self.id} - {self.venta.product.nombre}"
     
     def auto_resolve_if_timeout(self):
-        """Auto-resolve + refund after 14 days if seller hasn't responded"""
+        """Auto-resolver de disputas después de 14 días
+        si el vendedor no responde o el admin no la resuelve"""
         if self.estado == 'ABIERTO' and timezone.now() - self.created_at > timedelta(days=14):
             self.estado = 'REEMBOLSADO'
             self.resolved_at = timezone.now()
@@ -286,7 +285,7 @@ class Dispute(models.Model):
         return False
     
     def process_refund(self):
-        """Process Stripe refund"""
+        """Reembolso de Stripe"""
         if self.refund_processed or not self.venta.stripe_payment_intent:
             return False
         try:
@@ -304,6 +303,7 @@ class Dispute(models.Model):
 
 
 class Mensaje(models.Model):
+    """Clase que gestiona los mensajes de las conversaciones"""
     conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, null=True, blank=True, related_name="mensajes")
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="m_enviados")
     contenido = models.TextField()
@@ -318,6 +318,7 @@ class Mensaje(models.Model):
 
 
 class Notification(models.Model):
+    """Sistema de notificaciones a usuarios sobre su activad, disputas, ventas y mensajes"""
     TIPO_CHOICES = [
         ('mensaje', 'Nuevo mensaje'),
         ('venta', 'Nueva venta'),
@@ -338,7 +339,7 @@ class Notification(models.Model):
 
 
 class BlockedUser(models.Model):
-    """User A blocks User B - local/personal blocking"""
+    """Clase para que usuarios bloqueen a usuarios"""
     blocker = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bloqueados")
     blocked = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bloqueado_por")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -351,6 +352,9 @@ class BlockedUser(models.Model):
 
 
 class Report(models.Model):
+    """Clase de reportes, donde usuarios pueden denunciar a los vendedores
+     por malas prñacticas"""
+    
     REASON_CHOICES = [
         ('scam', 'Estafa/Fraude'),
         ('harassment', 'Acoso/Insultos'),

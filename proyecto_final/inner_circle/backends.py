@@ -6,8 +6,8 @@ User = get_user_model()
 
 class BannedUserBackend(ModelBackend):
     """
-    Custom authentication backend that prevents banned users from logging in.
-    Banned users have is_active=False set by admin.
+    Backend de autorización perosnalizado que evita que usuarios baneados hagan log in.
+    Los usurios baneados deben de ser perdonados por el admin
     """
     
     def authenticate(self, request, username=None, password=None, **kwargs):
@@ -17,8 +17,8 @@ class BannedUserBackend(ModelBackend):
             return None
         
         # Check if user is banned (is_active=False means banned)
+        """si el is_active=True significa que está baneado"""
         if not user.is_active:
-            # Don't authenticate banned users
             return None
         
         return user

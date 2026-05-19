@@ -2,10 +2,11 @@ from django.contrib import admin
 from .models import User, Profile, Product, Category, Venta, Resena, FriendRequest, Conversation, Mensaje, Notification, BlockedUser, Report, Dispute
 from django.utils import timezone
 
-# Register your models here.
+"""Admin de Django para InnerCircle"""
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
+    """Clase de admin para el usuario"""
     list_display = ('username', 'email', 'mobile', 'is_banned')
     search_fields = ('username', 'email')
     list_filter = ('is_banned',)
@@ -23,60 +24,71 @@ class UserAdmin(admin.ModelAdmin):
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
+    """Clase de admin para el perfil de usuario"""
     list_display = ('nombre_tag', 'user', 'created_at')
     search_fields = ('nombre_tag', 'user__username')
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
+    """Clase de admin para los productos"""
     list_display = ('nombre', 'user', 'precio', 'estado', 'created_at')
     search_fields = ('nombre', 'user__username')
     list_filter = ('estado', 'category', 'created_at')
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
+    """Clase de admin para categorías (opcional)"""
     list_display = ('nombre',)
 
 @admin.register(Venta)
 class VentaAdmin(admin.ModelAdmin):
+    """Clase de admin para las ventas"""
     list_display = ('id', 'comprador', 'vendedor', 'product', 'importe_total', 'estado_pago', 'created_at')
     search_fields = ('comprador__username', 'vendedor__username', 'product__nombre')
     list_filter = ('estado_pago', 'created_at')
 
 @admin.register(Resena)
 class ResenaAdmin(admin.ModelAdmin):
+    """Clase de admin para las reseñas"""
     list_display = ('id', 'escritor', 'recibidor', 'puntuacion', 'created_at')
     search_fields = ('escritor__username', 'recibidor__username')
 
 @admin.register(FriendRequest)
 class FriendRequestAdmin(admin.ModelAdmin):
+    """Clase de admin para las peticiones de amistad"""
     list_display = ('sender', 'recibidor2', 'status', 'sent_at')
     search_fields = ('sender__username', 'recibidor2__username')
     list_filter = ('status',)
 
 @admin.register(Conversation)
 class ConversationAdmin(admin.ModelAdmin):
+    """Clase de admin para las conversaciones"""
     list_display = ('id', 'producto', 'usuario1', 'usuario2', 'created_at')
     search_fields = ('producto__nombre', 'usuario1__username', 'usuario2__username')
 
 @admin.register(Mensaje)
 class MensajeAdmin(admin.ModelAdmin):
+    """Clase de admin paros mensajes de las conversaciones"""
     list_display = ('id', 'sender', 'conversation', 'created_at')
     search_fields = ('sender__username', 'conversation__id')
 
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
+    """Clase de admin para las notificaciones"""
     list_display = ('id', 'user', 'tipo', 'leido', 'created_at')
     search_fields = ('user__username', 'tipo')
     list_filter = ('tipo', 'leido', 'created_at')
 
 @admin.register(BlockedUser)
 class BlockedUserAdmin(admin.ModelAdmin):
+    """Clase de admin para los usaurios bloqueados"""
     list_display = ('blocker', 'blocked', 'created_at')
     search_fields = ('blocker__username', 'blocked__username')
     readonly_fields = ('created_at',)
 
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
+    """Clase de admin para los reportes"""
     list_display = ('id', 'reporter', 'reported_user', 'reason', 'status', 'created_at')
     search_fields = ('reporter__username', 'reported_user__username')
     list_filter = ('status', 'reason', 'created_at')
@@ -92,6 +104,7 @@ class ReportAdmin(admin.ModelAdmin):
 
 @admin.register(Dispute)
 class DisputeAdmin(admin.ModelAdmin):
+    """Clase de admin para las disputas"""
     list_display = ('id', 'venta', 'comprador', 'vendedor', 'razon', 'estado', 'created_at', 'refund_processed')
     search_fields = ('comprador__username', 'vendedor__username', 'venta__product__nombre')
     list_filter = ('estado', 'razon', 'created_at')
@@ -109,21 +122,20 @@ class DisputeAdmin(admin.ModelAdmin):
                     count += 1
                     dispute.save()
                     
-                    # Notificaciones para ambas partes
                     Notification.objects.create(
                         user=dispute.comprador,
                         tipo='dispute',
-                        contenido=f'✓ Reclamación #{dispute.id} RESUELTA: ¡Ganas! Recibirás un reembolso de €{dispute.venta.importe_total}.',
+                        contenido=f' Reclamación #{dispute.id} RESUELTA: ¡Ganas! Recibirás un reembolso de €{dispute.venta.importe_total}.',
                         object_id=dispute.id
                     )
                     Notification.objects.create(
                         user=dispute.vendedor,
                         tipo='dispute',
-                        contenido=f'✗ Reclamación #{dispute.id} RESUELTA: El comprador gana. Se procesó un reembolso de €{dispute.venta.importe_total}.',
+                        contenido=f' Reclamación #{dispute.id} RESUELTA: El comprador gana. Se procesó un reembolso de €{dispute.venta.importe_total}.',
                         object_id=dispute.id
                     )
-        self.message_user(request, f"✓ {count} reclamación(es): Comprador gana + refund procesado")
-    buyer_wins_with_refund.short_description = "✓ COMPRADOR GANA (refund + REEMBOLSADO)"
+        self.message_user(request, f" {count} reclamación(es): Comprador gana + refund procesado")
+    buyer_wins_with_refund.short_description = " COMPRADOR GANA (refund + REEMBOLSADO)"
     
     def seller_wins_reject_claim(self, request, queryset):
         """Vendedor gana: sin refund"""
@@ -132,18 +144,17 @@ class DisputeAdmin(admin.ModelAdmin):
             resolved_at=timezone.now()
         )
         for dispute in queryset.filter(estado='RECHAZADO'):
-            # Notificaciones para ambas partes
             Notification.objects.create(
                 user=dispute.comprador,
                 tipo='dispute',
-                contenido=f'✗ Reclamación #{dispute.id} RESUELTA: Tu reclamación fue rechazada. No se procesará reembolso.',
+                contenido=f' Reclamación #{dispute.id} RESUELTA: Tu reclamación fue rechazada. No se procesará reembolso.',
                 object_id=dispute.id
             )
             Notification.objects.create(
                 user=dispute.vendedor,
                 tipo='dispute',
-                contenido=f'✓ Reclamación #{dispute.id} RESUELTA: ¡Ganas! Tu reclamación fue rechazada a tu favor.',
+                contenido=f' Reclamación #{dispute.id} RESUELTA: ¡Ganas! Tu reclamación fue rechazada a tu favor.',
                 object_id=dispute.id
             )
-        self.message_user(request, f"✓ {updated} reclamación(es): Vendedor gana, sin refund (RECHAZADO)")
-    seller_wins_reject_claim.short_description = "✗ VENDEDOR GANA (sin refund - RECHAZADO)"
+        self.message_user(request, f" {updated} reclamación(es): Vendedor gana, sin refund (RECHAZADO)")
+    seller_wins_reject_claim.short_description = " VENDEDOR GANA (sin refund - RECHAZADO)"

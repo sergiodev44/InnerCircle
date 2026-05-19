@@ -8,7 +8,7 @@ from pathlib import Path
 from PIL import Image
 from io import BytesIO
 
-# Register HEIC support
+"""Script para auto-poblar la aplicación cortesía de Sonnet"""
 try:
     import pillow_heif
     pillow_heif.register_heif_opener()
@@ -20,7 +20,6 @@ class Command(BaseCommand):
     help = 'Populate database with Hemingway-inspired test data and product images'
 
     def handle(self, *args, **options):
-        # Clear existing data (order matters due to foreign key constraints)
         ProductImage.objects.all().delete()
         Product.objects.all_including_deleted().delete()
         Venta.objects.all().delete()
@@ -29,7 +28,6 @@ class Command(BaseCommand):
         Category.objects.all().delete()
         User.objects.all().delete()
         
-        # Create categories
         categories = {
             'camisetas': Category.objects.create(nombre='Camisetas', descripcion='T-shirts y camisetas'),
             'pantalones': Category.objects.create(nombre='Pantalones', descripcion='Pantalones y jeans'),
@@ -38,7 +36,6 @@ class Command(BaseCommand):
             'jerseis': Category.objects.create(nombre='Jerseis', descripcion='Jerseis y prendas de punto'),
         }
 
-        # Copy AI PFPs to profiles folder if they don't exist
         ai_pfps_dir = Path('/home/sergio/Desktop/InnerCircle/proyecto_final/media/ai_pfps')
         profiles_dir = Path('/home/sergio/Desktop/InnerCircle/proyecto_final/media/profiles')
         
@@ -48,7 +45,6 @@ class Command(BaseCommand):
                 if not dest_file.exists():
                     shutil.copy2(pfp_file, dest_file)
 
-        # Hemingway character users with creative descriptions
         users_data = [
             {'username': 'santiago', 'email': 'santiago@test.com', 'mobile': 111111111, 'tag': 'Santiago', 
              'bio': '⛵ Weathered and wise. Selling authentic, timeless pieces. Like the sea, minimal and powerful.', 'pfp': 'male_ai_pfp_1.png'},
@@ -77,15 +73,13 @@ class Command(BaseCommand):
             profile.save()
             users[user_info['username']] = user
 
-        # Get all images from media/my_clothes
         clothes_dir = Path('/home/sergio/Desktop/InnerCircle/proyecto_final/media/my_clothes')
         
-        # Group images by base name (without _f, _b suffix and extension)
         image_groups = {}
         if clothes_dir.exists():
             for image_file in sorted(clothes_dir.iterdir()):
                 if image_file.is_file():
-                    # Extract base name (e.g., "baggy_jeans" from "baggy_jeans_f.HEIC")
+                   
                     stem = image_file.stem  # Name without extension
                     
                     # Check if it ends with _f or _b

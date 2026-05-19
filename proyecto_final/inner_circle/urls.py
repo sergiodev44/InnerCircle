@@ -11,6 +11,8 @@ from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, 
 
 app_name = "inner_circle"
 
+"""Lista de los endpoints de InnerCircle y sus views asociadas"""
+
 urlpatterns = [
     # Home
     path('home/', HomeView.as_view(), name="home"),
@@ -20,7 +22,7 @@ urlpatterns = [
     path('verify-email/', VerifyEmailView.as_view(), name="verify_email"),
     path('resend-verification/<int:pk>/', ResendVerificationEmailView.as_view(), name="resend_verification_email"),
     
-    # Password Reset (Django built-in)
+    # Reseteo de la contraseña
     path('password-reset/', PasswordResetView.as_view(template_name='inner_circle/password_reset_form.html'), name="password_reset"),
     path('password-reset/done/', PasswordResetDoneView.as_view(template_name='inner_circle/password_reset_done.html'), name="password_reset_done"),
     path('password-reset/<uidb64>/<token>/', PasswordResetConfirmView.as_view(template_name='inner_circle/password_reset_confirm.html'), name="password_reset_confirm"),
@@ -32,7 +34,7 @@ urlpatterns = [
     path('perfil/<int:pk>/eliminar/', profileDeleteView.as_view(), name="profile_delete"),
 
 
-    # Products
+    # Productos
     path('', productListView.as_view(), name="producto_list"),
     path('mis-productos/<int:pk>/', misProductosListView.as_view(), name=("mis_productos") ),
     path('productos/amigos/', amigosProductListView.as_view(), name="amigos_product_list"),
@@ -66,13 +68,13 @@ urlpatterns = [
     path('conversacion/iniciar/<int:product_pk>/<int:user_pk>/', iniciarConversacionView.as_view(), name="iniciar_conversacion"),
     path('mensajes/', mensajesListView.as_view(), name="mensajes_list"),
     
-    # Block & Report
+    # Bloqueos & Reportes
     path('perfil/<int:pk>/bloquear/', BlockUserView.as_view(), name="block_user"),
     path('perfil/<int:pk>/desbloquear/', UnblockUserView.as_view(), name="unblock_user"),
     path('perfil/<int:pk>/reportar/', ReportUserView.as_view(), name="report_user"),
     path('banned/', BannedView.as_view(), name="banned"),
     
-    # Disputes
+    # Disputas
     path('venta/<int:venta_pk>/dispute/crear/', DisputeCreateView.as_view(), name="dispute_create"),
     path('dispute/<int:pk>/', DisputeDetailView.as_view(), name="dispute_detail"),
     path('disputes/', DisputeListView.as_view(), name="dispute_list"),

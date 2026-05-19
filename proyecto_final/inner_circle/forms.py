@@ -5,6 +5,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 
 class UserForm(UserCreationForm):
+     "Formulario para crear usuarios"
      class Meta:
         model = User
         fields = ["username", "email", "mobile"]
@@ -17,6 +18,7 @@ class UserForm(UserCreationForm):
 
 
 class ProfileForm(forms.ModelForm):
+    "Formulario para actualizar perfil de usuarios"
     class Meta:
         model = Profile
         fields = ["nombre_tag", "bio", "img_perfil"]
@@ -28,6 +30,7 @@ class ProfileForm(forms.ModelForm):
 
 
 class ProductForm(forms.ModelForm):
+    "Formulario para crear y actualizar productos"
     class Meta:
         model = Product
         fields = ["nombre","descripcion","estado","precio","talla","category","img_prod"]
@@ -42,6 +45,7 @@ class ProductForm(forms.ModelForm):
 
 
 class ResenaForm(forms.ModelForm):
+    "Formulario para crear Reseñas"
     class Meta:
         model = Resena
         fields = ["contenido","puntuacion"]
@@ -52,6 +56,7 @@ class ResenaForm(forms.ModelForm):
 
 
 class FriendRequestForm(forms.ModelForm):
+    "Formulario para enviar peticiones de amistad"
     class Meta:
         model = FriendRequest
         fields = ["recibidor2"]
@@ -61,6 +66,7 @@ class FriendRequestForm(forms.ModelForm):
 
 
 class MensajeForm(forms.ModelForm):
+    "Formulario para enviar mensajes"
     class Meta:
         model = Mensaje
         fields = ["contenido"]
@@ -70,6 +76,7 @@ class MensajeForm(forms.ModelForm):
 
 
 class ProductSearchForm(forms.Form):
+    "Formulario para activar filtros de búsqueda de productos"
     SORT_CHOICES = [
         ('', 'Novedades'),
         ('precio_asc', 'Precio: menor a mayor'),
@@ -85,6 +92,7 @@ class ProductSearchForm(forms.Form):
 
 
 class ReportForm(forms.ModelForm):
+    "Formulario para enviar reportes"
     class Meta:
         model = Report
         fields = ["reason", "description"]
@@ -104,7 +112,7 @@ class ReportForm(forms.ModelForm):
 
 
 class DisputeForm(forms.ModelForm):
-    """Form for buyer to file dispute"""
+    "Formulario para poner una reclamación"
     class Meta:
         model = Dispute
         fields = ["razon", "descripcion", "comprador_evidence"]
@@ -124,7 +132,7 @@ class DisputeForm(forms.ModelForm):
 
 
 class DisputeResponseForm(forms.ModelForm):
-    """Form for seller to respond to dispute"""
+    "Formulario para repsonder a una reclamación para el vendedor"
     class Meta:
         model = Dispute
         fields = ["vendedor_response", "vendedor_evidence"]

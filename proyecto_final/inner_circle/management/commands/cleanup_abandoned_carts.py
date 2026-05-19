@@ -4,12 +4,12 @@ from datetime import timedelta
 from inner_circle.models import Venta, Product
 
 class Command(BaseCommand):
-    help = 'Release products from abandoned carts (unpaid for >15 minutes)'
+    help = 'Libera productos abandonados (RESV pero no pagados por > 15 minutos)'
 
     def handle(self, *args, **options):
         cutoff_time = timezone.now() - timedelta(minutes=15)
         
-        # Find abandoned Ventas: unpaid, created >15 min ago
+        """Busca productos abandonados"""
         abandoned = Venta.objects.filter(
             estado_pago='no_pagado',
             created_at__lt=cutoff_time
@@ -25,4 +25,4 @@ class Command(BaseCommand):
                 venta.save()
                 count += 1
         
-        self.stdout.write(self.style.SUCCESS(f'✅ Released {count} products from abandoned carts'))
+        self.stdout.write(self.style.SUCCESS(f'✅ {count} Productos liberados de los productos abandonados'))
